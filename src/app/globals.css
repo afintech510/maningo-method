@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #faf9f6;
+  --foreground: #1a1a1a;
+  --primary: #2d2d2d;
+  --primary-foreground: #ffffff;
+  --muted: #f0ede8;
+  --muted-foreground: #6b6b6b;
+  --accent: #c9a96e;
+  --destructive: #dc2626;
+  --success: #16a34a;
+  --warning: #d97706;
+  --border: #e5e2dc;
+  --ring: #c9a96e;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-playfair), serif;
+}
+
+/* Safe area padding for notched phones */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}

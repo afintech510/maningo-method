@@ -1,0 +1,10 @@
+node_modules
+.next
+.git
+build-plan
+tests
+*.md
+.env
+.env.local
+.env*.local
+nginx

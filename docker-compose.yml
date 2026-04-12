@@ -1,0 +1,27 @@
+services:
+  maningo:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
+        NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL:-https://maningo.hosthampton.com}
+    container_name: maningo_app
+    restart: unless-stopped
+    ports:
+      - "3003:3000"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - maningo_net
+
+networks:
+  maningo_net:
+    driver: bridge

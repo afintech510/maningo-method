@@ -1,0 +1,24 @@
+import Link from 'next/link';
+import { Card } from '@/components/ui/Card';
+
+export default function AdminPage() {
+  return (
+    <div className="px-4 py-6">
+      <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
+      <div className="space-y-3">
+        <Link href="/admin/classes">
+          <Card className="hover:border-primary transition-colors">
+            <p className="font-semibold">Classes</p>
+            <p className="text-sm text-muted-foreground">Create, edit, and manage classes</p>
+          </Card>
+        </Link>
+        <Link href="/admin/students">
+          <Card className="hover:border-primary transition-colors">
+            <p className="font-semibold">Students</p>
+            <p className="text-sm text-muted-foreground">View all registered students</p>
+          </Card>
+        </Link>
+      </div>
+    </div>
+  );
+}
