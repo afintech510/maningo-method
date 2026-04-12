@@ -477,14 +477,6 @@ function InquiryForm() {
   );
 }
 
-function CheckIcon() {
-  return (
-    <svg className="w-4 h-4 mt-0.5 text-[#c9a96e] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-    </svg>
-  );
-}
-
 function PricingCard({ label, price, per, note, highlight, popular }: {
   label: string; price: string; per: string; note: string; highlight?: boolean; popular?: boolean;
 }) {
