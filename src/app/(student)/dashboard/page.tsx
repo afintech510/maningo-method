@@ -101,7 +101,10 @@ export default async function DashboardPage() {
         {/* This Week's Schedule */}
         <div className="mt-8">
           <h2 className="text-lg font-semibold mb-3">This Week&apos;s Schedule</h2>
-          <WeeklySchedule />
+          <WeeklySchedule
+            bookedClassIds={upcoming.map((b) => b.class_id)}
+            hasCredits={credits > 0}
+          />
         </div>
 
         {/* Class History */}
