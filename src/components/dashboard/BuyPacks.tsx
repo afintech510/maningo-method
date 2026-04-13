@@ -32,7 +32,7 @@ export function BuyPacks() {
 
   return (
     <div>
-      <h2 className="text-lg font-semibold mb-3">Buy Class Credits</h2>
+      <h2 className="text-lg font-semibold mb-3">Add Class Credits</h2>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
         {PACKS.map((pack) => (
           <button

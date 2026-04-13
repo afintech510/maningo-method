@@ -6,15 +6,15 @@ export async function Header() {
   const isLoggedIn = !!auth;
 
   return (
-    <header className="hidden lg:flex items-center justify-between px-8 py-4 border-b border-border bg-white">
+    <header className="flex items-center justify-between px-5 py-3 border-b border-border bg-white">
       <Link href="/" className="text-xl font-serif font-bold tracking-tight">
         Maningo Method
       </Link>
-      <nav className="flex items-center gap-6 text-sm">
+      <nav className="hidden lg:flex items-center gap-6 text-sm">
         <Link href="/schedule" className="text-muted-foreground hover:text-foreground transition-colors">
           Schedule
         </Link>
-        <Link href="#contact" className="text-muted-foreground hover:text-foreground transition-colors">
+        <Link href="/#contact" className="text-muted-foreground hover:text-foreground transition-colors">
           Private Class
         </Link>
         {isLoggedIn ? (

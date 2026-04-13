@@ -82,20 +82,20 @@ export default async function DashboardPage() {
         {/* Credits Balance */}
         <CreditBalance credits={credits} />
 
-        {/* Buy More */}
+        {/* Upcoming Classes — first so user sees their bookings immediately */}
         <div className="mt-6">
+          <h2 className="text-lg font-semibold mb-3">My Upcoming Classes</h2>
+          <UpcomingBookings bookings={upcoming} />
+        </div>
+
+        {/* Add Credits */}
+        <div className="mt-8">
           <BuyPacks />
         </div>
 
         {/* Referral */}
         <div className="mt-6">
           <ReferralCard referralCode={referralCode} />
-        </div>
-
-        {/* Upcoming Classes */}
-        <div className="mt-8">
-          <h2 className="text-lg font-semibold mb-3">My Upcoming Classes</h2>
-          <UpcomingBookings bookings={upcoming} />
         </div>
 
         {/* This Week's Schedule */}

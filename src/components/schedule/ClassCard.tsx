@@ -39,9 +39,19 @@ export function ClassCard({
         />
       </div>
       <p className="font-medium mb-0.5">{classData.title}</p>
-      <p className="text-sm text-muted-foreground mb-4">
+      <p className="text-sm text-muted-foreground mb-2">
         {classData.duration_minutes} min
       </p>
+      <div className="flex items-start gap-2 mb-4 text-xs text-muted-foreground">
+        <svg className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+          <circle cx="12" cy="10" r="3" />
+        </svg>
+        <span>
+          <span className="font-medium text-foreground">Maningo Method</span>
+          <br />295 Montauk Hwy, Suite 7, Speonk, NY
+        </span>
+      </div>
       <BookingButton
         classId={classData.id}
         isFull={isFull}
