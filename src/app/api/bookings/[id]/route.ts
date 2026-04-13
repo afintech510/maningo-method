@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, isAuthError } from '@/lib/auth';
 import { logger, generateCorrelationId } from '@/lib/logger';
 
@@ -66,9 +67,25 @@ export async function PATCH(
       );
     }
 
-    // Email trigger will be added in Phase 3
-    log.info({ bookingId: params.id }, 'Booking cancelled');
-    return NextResponse.json({ booking: { id: params.id, status: 'cancelled' } });
+    // Refund 1 credit back to the student
+    const adminClient = createAdminClient();
+    const { data: profile } = await adminClient
+      .from('profiles')
+      .select('credits')
+      .eq('id', auth.user.id)
+      .single();
+
+    if (profile) {
+      await adminClient
+        .from('profiles')
+        .update({ credits: profile.credits + 1 })
+        .eq('id', auth.user.id);
+      log.info({ bookingId: params.id, credits_refunded: 1, new_balance: profile.credits + 1 }, 'Booking cancelled, credit refunded');
+    } else {
+      log.info({ bookingId: params.id }, 'Booking cancelled');
+    }
+
+    return NextResponse.json({ booking: { id: params.id, status: 'cancelled' }, credit_refunded: true });
   } catch (err) {
     log.error({ err }, 'PATCH /api/bookings/[id] failed');
     return NextResponse.json(
