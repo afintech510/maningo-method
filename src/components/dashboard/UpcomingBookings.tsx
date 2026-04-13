@@ -16,7 +16,6 @@ interface Booking {
   class_starts_at: string;
   class_duration_minutes: number;
   status: string;
-  payment_type: string;
 }
 
 interface UpcomingBookingsProps {

@@ -7,26 +7,24 @@ interface ClassCardProps {
   classData: {
     id: string;
     title: string;
+    description?: string;
     starts_at: string;
     duration_minutes: number;
     max_capacity: number;
     spots_remaining: number;
   };
   isAuthenticated: boolean;
-  hasSubscription: boolean;
+  hasCredits: boolean;
   bookedClassIds: string[];
-  pendingClassIds: string[];
 }
 
 export function ClassCard({
   classData,
   isAuthenticated,
-  hasSubscription,
+  hasCredits,
   bookedClassIds,
-  pendingClassIds,
 }: ClassCardProps) {
   const isBooked = bookedClassIds.includes(classData.id);
-  const isPending = pendingClassIds.includes(classData.id);
   const isFull = classData.spots_remaining <= 0;
 
   return (
@@ -48,9 +46,8 @@ export function ClassCard({
         classId={classData.id}
         isFull={isFull}
         isBooked={isBooked}
-        isPending={isPending}
-        hasSubscription={hasSubscription}
         isAuthenticated={isAuthenticated}
+        hasCredits={hasCredits}
       />
     </Card>
   );

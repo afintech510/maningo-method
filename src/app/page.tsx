@@ -173,11 +173,11 @@ export default function Home() {
           </p>
 
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto mb-8">
-            <PricingCard label="Intro Class" price="$20" per="/first class" note="Try us out" highlight />
-            <PricingCard label="Single Class" price="$40" per="/class" note="Drop in anytime" />
-            <PricingCard label="4-Pack" price="$140" per="$35/class" note="Save $20" />
-            <PricingCard label="8-Pack" price="$240" per="$30/class" note="Save $80" popular />
-            <PricingCard label="12-Pack" price="$320" per="$26.67/class" note="Save $160" />
+            <PricingCard label="Intro Class" price="$20" per="/first class" note="Try us out" packType="intro" highlight />
+            <PricingCard label="Single Class" price="$40" per="/class" note="Drop in anytime" packType="single" />
+            <PricingCard label="4-Pack" price="$140" per="$35/class" note="Save $20" packType="4pack" />
+            <PricingCard label="8-Pack" price="$240" per="$30/class" note="Save $80" packType="8pack" popular />
+            <PricingCard label="12-Pack" price="$320" per="$26.67/class" note="Save $160" packType="12pack" />
             <GiftCardOption />
           </div>
 
@@ -477,16 +477,42 @@ function InquiryForm() {
   );
 }
 
-function PricingCard({ label, price, per, note, highlight, popular }: {
-  label: string; price: string; per: string; note: string; highlight?: boolean; popular?: boolean;
+function PricingCard({ label, price, per, note, highlight, popular, packType }: {
+  label: string; price: string; per: string; note: string; highlight?: boolean; popular?: boolean; packType: string;
 }) {
+  const [loading, setLoading] = useState(false);
+
+  async function handleClick() {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/packs/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pack_type: packType }),
+      });
+      const data = await res.json();
+      if (data.checkout_url) {
+        window.location.href = data.checkout_url;
+      } else if (res.status === 401) {
+        window.location.href = '/register';
+      } else {
+        setLoading(false);
+      }
+    } catch {
+      setLoading(false);
+    }
+  }
+
   return (
-    <div className={`rounded-2xl p-5 sm:p-6 relative ${
+    <button
+      onClick={handleClick}
+      disabled={loading}
+      className={`rounded-2xl p-5 sm:p-6 relative text-left transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 ${
       popular
         ? 'border-2 border-[#c9a96e] bg-[#faf9f6]'
         : highlight
           ? 'border-2 border-[#2d2d2d] bg-[#2d2d2d] text-white'
-          : 'border border-[#e5e2dc] bg-[#faf9f6]'
+          : 'border border-[#e5e2dc] bg-[#faf9f6] hover:border-[#c9a96e]'
     }`}>
       {popular && (
         <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-[#c9a96e] text-white text-[10px] font-bold px-3 py-0.5 rounded-full tracking-wider">
@@ -498,8 +524,9 @@ function PricingCard({ label, price, per, note, highlight, popular }: {
       </p>
       <p className="text-3xl font-bold mb-0.5">{price}</p>
       <p className={`text-sm mb-2 ${highlight ? 'text-white/70' : 'text-[#6b6b6b]'}`}>{per}</p>
-      <p className={`text-xs ${highlight ? 'text-[#c9a96e]' : 'text-[#c9a96e]'} font-medium`}>{note}</p>
-    </div>
+      <p className="text-xs text-[#c9a96e] font-medium">{note}</p>
+      {loading && <p className="text-xs mt-1 animate-pulse">Redirecting to checkout...</p>}
+    </button>
   );
 }
 

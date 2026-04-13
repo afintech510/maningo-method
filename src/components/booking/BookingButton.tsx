@@ -5,37 +5,35 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/feedback/Toast';
 
-type BookingState = 'default' | 'processing' | 'booked' | 'full' | 'pending' | 'login';
-
 interface BookingButtonProps {
   classId: string;
   isFull: boolean;
   isBooked: boolean;
-  isPending: boolean;
-  hasSubscription: boolean;
   isAuthenticated: boolean;
+  hasCredits: boolean;
 }
 
 export function BookingButton({
   classId,
   isFull,
   isBooked,
-  isPending,
-  hasSubscription,
   isAuthenticated,
+  hasCredits,
 }: BookingButtonProps) {
   const router = useRouter();
   const { showToast } = useToast();
-  const [state, setState] = useState<BookingState>(
-    !isAuthenticated ? 'login' :
-    isBooked ? 'booked' :
-    isPending ? 'pending' :
-    isFull ? 'full' : 'default'
+  const [state, setState] = useState<'default' | 'processing' | 'booked'>(
+    isBooked ? 'booked' : 'default'
   );
 
   async function handleBook() {
     if (!isAuthenticated) {
-      router.push(`/login?return=/schedule`);
+      router.push('/login?return=/schedule');
+      return;
+    }
+
+    if (!hasCredits) {
+      router.push('/dashboard?buy=true');
       return;
     }
 
@@ -45,10 +43,7 @@ export function BookingButton({
       const res = await fetch('/api/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          class_id: classId,
-          payment_type: hasSubscription ? 'subscription' : 'drop_in',
-        }),
+        body: JSON.stringify({ class_id: classId }),
       });
 
       const data = await res.json();
@@ -59,44 +54,49 @@ export function BookingButton({
         return;
       }
 
-      if (hasSubscription) {
-        setState('booked');
-        showToast('Booked! See you there.');
-        router.refresh();
-      } else {
-        // Drop-in: redirect to checkout (placeholder for now)
-        setState('pending');
-        if (data.checkout_url) {
-          router.push(data.checkout_url);
-        }
-      }
+      setState('booked');
+      showToast('Booked! See you there.');
+      router.refresh();
     } catch {
       showToast('Something went wrong. Try again.', 'error');
       setState('default');
     }
   }
 
-  const buttonConfig: Record<BookingState, { label: string; variant: 'primary' | 'secondary' | 'ghost'; disabled: boolean }> = {
-    default: { label: 'Book This Class', variant: 'primary', disabled: false },
-    processing: { label: 'Booking...', variant: 'primary', disabled: true },
-    booked: { label: 'Booked', variant: 'secondary', disabled: true },
-    full: { label: 'Class Full', variant: 'ghost', disabled: true },
-    pending: { label: 'Completing payment...', variant: 'secondary', disabled: true },
-    login: { label: 'Log in to Book', variant: 'primary', disabled: false },
-  };
+  if (isFull) {
+    return <Button variant="ghost" size="lg" className="w-full" disabled>Class Full</Button>;
+  }
 
-  const config = buttonConfig[state];
+  if (state === 'booked' || isBooked) {
+    return <Button variant="secondary" size="lg" className="w-full" disabled>Booked</Button>;
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <Button variant="primary" size="lg" className="w-full" onClick={handleBook}>
+        Log in to Book
+      </Button>
+    );
+  }
+
+  if (!hasCredits) {
+    return (
+      <Button variant="primary" size="lg" className="w-full" onClick={handleBook}>
+        Buy Credits to Book
+      </Button>
+    );
+  }
 
   return (
     <Button
-      variant={config.variant}
+      variant="primary"
       size="lg"
       className="w-full"
-      disabled={config.disabled}
       loading={state === 'processing'}
+      disabled={state === 'processing'}
       onClick={handleBook}
     >
-      {config.label}
+      Book This Class
     </Button>
   );
 }

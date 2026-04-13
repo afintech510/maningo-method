@@ -7,8 +7,8 @@ import { cn } from '@/lib/utils';
 const NAV_ITEMS = [
   { label: 'Schedule', href: '/schedule', icon: CalendarIcon },
   { label: 'My Classes', href: '/dashboard', icon: BookmarkIcon },
-  { label: 'Subscribe', href: '/subscription', icon: StarIcon },
-  { label: 'Profile', href: '/login', icon: UserIcon },
+  { label: 'Private', href: '/#contact', icon: StarIcon },
+  { label: 'Account', href: '/dashboard', icon: UserIcon },
 ];
 
 export function MobileNav() {
@@ -18,10 +18,10 @@ export function MobileNav() {
     <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-border lg:hidden safe-bottom">
       <div className="flex items-center justify-around h-14">
         {NAV_ITEMS.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+          const isActive = pathname === item.href || (item.href !== '/#contact' && pathname.startsWith(item.href + '/'));
           return (
             <Link
-              key={item.href}
+              key={item.label}
               href={item.href}
               className={cn(
                 'flex flex-col items-center justify-center w-full h-full gap-0.5 text-xs transition-colors min-w-[44px] min-h-[44px]',
@@ -30,7 +30,7 @@ export function MobileNav() {
               aria-label={item.label}
             >
               <item.icon filled={isActive} />
-              {isActive && <span>{item.label}</span>}
+              <span className="text-[10px]">{item.label}</span>
             </Link>
           );
         })}

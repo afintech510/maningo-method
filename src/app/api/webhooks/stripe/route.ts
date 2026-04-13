@@ -45,11 +45,47 @@ export async function POST(request: NextRequest) {
         const session = event.data.object as any;
 
         if (session.mode === 'payment') {
-          // Drop-in payment completed
           const bookingId = session.metadata?.booking_id;
+          const packType = session.metadata?.pack_type;
+          const credits = session.metadata?.credits;
+          const studentId = session.metadata?.student_id;
           const paymentIntent = session.payment_intent as string;
 
-          if (bookingId) {
+          if (packType && credits && studentId) {
+            // Class pack purchase — add credits
+            const creditsNum = parseInt(credits, 10);
+
+            const { error: purchaseError } = await supabase
+              .from('credit_purchases')
+              .insert({
+                student_id: studentId,
+                pack_type: packType,
+                credits_added: creditsNum,
+                amount_paid_cents: session.amount_total || 0,
+                stripe_checkout_session_id: session.id,
+                stripe_payment_intent_id: paymentIntent,
+              });
+
+            if (purchaseError) {
+              log.error({ err: purchaseError }, 'Failed to record credit purchase');
+              return NextResponse.json({ error: 'DB error' }, { status: 500 });
+            }
+
+            // Add credits to profile
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('credits')
+              .eq('id', studentId)
+              .single();
+
+            await supabase
+              .from('profiles')
+              .update({ credits: (profile?.credits || 0) + creditsNum })
+              .eq('id', studentId);
+
+            log.info({ studentId, packType, credits: creditsNum }, 'Credits added');
+          } else if (bookingId) {
+            // Legacy drop-in booking confirmation
             const { error } = await supabase
               .from('bookings')
               .update({
@@ -65,8 +101,6 @@ export async function POST(request: NextRequest) {
               return NextResponse.json({ error: 'DB error' }, { status: 500 });
             }
             log.info({ bookingId }, 'Drop-in booking confirmed');
-          } else {
-            log.warn('checkout.session.completed (payment) missing booking_id');
           }
         } else if (session.mode === 'subscription') {
           // Subscription created

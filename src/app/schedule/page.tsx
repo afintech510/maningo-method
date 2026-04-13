@@ -1,20 +1,34 @@
 import { ClassSchedule } from '@/components/schedule/ClassSchedule';
 import { ToastProvider } from '@/components/feedback/Toast';
 import { getAuth } from '@/lib/auth';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { Header } from '@/components/layout/Header';
 import { MobileNav } from '@/components/layout/MobileNav';
 
 export default async function SchedulePage() {
   const auth = await getAuth();
 
-  // If authenticated, check subscription and bookings
-  const hasSubscription = false;
-  const bookedClassIds: string[] = [];
-  const pendingClassIds: string[] = [];
+  let hasCredits = false;
+  let bookedClassIds: string[] = [];
 
   if (auth) {
-    // These will be fetched client-side via the ClassSchedule component
-    // For now, pass empty arrays — the BookingButton handles its own state
+    const supabase = createAdminClient();
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('credits')
+      .eq('id', auth.user.id)
+      .single();
+
+    hasCredits = (profile?.credits || 0) > 0;
+
+    const { data: bookings } = await supabase
+      .from('bookings')
+      .select('class_id')
+      .eq('student_id', auth.user.id)
+      .eq('status', 'confirmed');
+
+    bookedClassIds = (bookings || []).map((b) => b.class_id);
   }
 
   return (
@@ -25,9 +39,8 @@ export default async function SchedulePage() {
         <ToastProvider>
           <ClassSchedule
             isAuthenticated={!!auth}
-            hasSubscription={hasSubscription}
+            hasCredits={hasCredits}
             bookedClassIds={bookedClassIds}
-            pendingClassIds={pendingClassIds}
           />
         </ToastProvider>
       </div>

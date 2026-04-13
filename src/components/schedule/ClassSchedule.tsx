@@ -10,6 +10,7 @@ import { format } from 'date-fns';
 interface ClassData {
   id: string;
   title: string;
+  description?: string;
   starts_at: string;
   duration_minutes: number;
   max_capacity: number;
@@ -18,16 +19,14 @@ interface ClassData {
 
 interface ClassScheduleProps {
   isAuthenticated: boolean;
-  hasSubscription: boolean;
+  hasCredits: boolean;
   bookedClassIds: string[];
-  pendingClassIds: string[];
 }
 
 export function ClassSchedule({
   isAuthenticated,
-  hasSubscription,
+  hasCredits,
   bookedClassIds,
-  pendingClassIds,
 }: ClassScheduleProps) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [classes, setClasses] = useState<ClassData[]>([]);
@@ -70,9 +69,8 @@ export function ClassSchedule({
               key={cls.id}
               classData={cls}
               isAuthenticated={isAuthenticated}
-              hasSubscription={hasSubscription}
+              hasCredits={hasCredits}
               bookedClassIds={bookedClassIds}
-              pendingClassIds={pendingClassIds}
             />
           ))
         )}
