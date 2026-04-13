@@ -22,7 +22,7 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-3">
             <Link
-              href="/login"
+              href="/dashboard"
               className="inline-flex items-center justify-center h-9 px-5 rounded-full bg-[#c9a96e] text-white text-sm font-medium hover:bg-[#b8955d] transition-colors"
             >
               Members
