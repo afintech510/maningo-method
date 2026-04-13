@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, isAuthError } from '@/lib/auth';
 import { getStripe, getOrCreateStripeCustomer } from '@/lib/stripe';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { getBaseUrl } from '@/lib/utils';
 import { logger, generateCorrelationId } from '@/lib/logger';
 
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest) {
   if (isAuthError(auth)) return auth;
 
   try {
-    const { pack_type } = await request.json();
+    const { pack_type, referral_code } = await request.json();
     const pack = PACKS[pack_type];
 
     if (!pack) {
@@ -28,6 +29,23 @@ export async function POST(request: NextRequest) {
         { error: { code: 'VALIDATION_ERROR', message: 'Invalid pack type.' } },
         { status: 400 }
       );
+    }
+
+    // Enforce intro class limit: 1 per user
+    if (pack_type === 'intro') {
+      const supabase = createAdminClient();
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('has_used_intro')
+        .eq('id', auth.user.id)
+        .single();
+
+      if (profile?.has_used_intro) {
+        return NextResponse.json(
+          { error: { code: 'INTRO_ALREADY_USED', message: 'You can only purchase one intro class.' } },
+          { status: 400 }
+        );
+      }
     }
 
     const priceId = process.env[pack.priceEnv];
@@ -43,17 +61,23 @@ export async function POST(request: NextRequest) {
     const stripe = getStripe();
     const baseUrl = getBaseUrl();
 
+    const metadata: Record<string, string> = {
+      student_id: auth.user.id,
+      pack_type,
+      credits: String(pack.credits),
+    };
+
+    if (referral_code) {
+      metadata.referral_code = referral_code;
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${baseUrl}/booking-success?type=pack&pack=${pack_type}`,
+      success_url: `${baseUrl}/booking-success?type=pack&pack=${pack_type}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/dashboard?cancelled=true`,
-      metadata: {
-        student_id: auth.user.id,
-        pack_type,
-        credits: String(pack.credits),
-      },
+      metadata,
     });
 
     log.info({ sessionId: session.id, pack_type }, 'Pack checkout created');

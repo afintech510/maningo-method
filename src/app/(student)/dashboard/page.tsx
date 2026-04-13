@@ -5,6 +5,8 @@ import { UpcomingBookings } from '@/components/dashboard/UpcomingBookings';
 import { ClassHistory } from '@/components/dashboard/ClassHistory';
 import { CreditBalance } from '@/components/dashboard/CreditBalance';
 import { BuyPacks } from '@/components/dashboard/BuyPacks';
+import { ReferralCard } from '@/components/dashboard/ReferralCard';
+import { WeeklySchedule } from '@/components/dashboard/WeeklySchedule';
 import { ToastProvider } from '@/components/feedback/Toast';
 import { Card } from '@/components/ui/Card';
 
@@ -14,14 +16,24 @@ export default async function DashboardPage() {
 
   const supabase = createAdminClient();
 
-  // Fetch profile with credits
+  // Fetch profile with credits and referral code
   const { data: profile } = await supabase
     .from('profiles')
-    .select('credits')
+    .select('credits, referral_code')
     .eq('id', auth.user.id)
     .single();
 
   const credits = profile?.credits || 0;
+
+  // Generate referral code if missing
+  let referralCode = profile?.referral_code;
+  if (!referralCode) {
+    referralCode = auth.user.id.substring(0, 8).toUpperCase();
+    await supabase
+      .from('profiles')
+      .update({ referral_code: referralCode })
+      .eq('id', auth.user.id);
+  }
 
   // Fetch all bookings
   const { data: bookingsData } = await supabase
@@ -75,17 +87,30 @@ export default async function DashboardPage() {
           <BuyPacks />
         </div>
 
+        {/* Referral */}
+        <div className="mt-6">
+          <ReferralCard referralCode={referralCode} />
+        </div>
+
         {/* Upcoming Classes */}
         <div className="mt-8">
-          <h2 className="text-lg font-semibold mb-3">Upcoming Classes</h2>
+          <h2 className="text-lg font-semibold mb-3">My Upcoming Classes</h2>
           <UpcomingBookings bookings={upcoming} />
         </div>
 
-        {/* Class History */}
+        {/* This Week's Schedule */}
         <div className="mt-8">
-          <h2 className="text-lg font-semibold mb-3">Class History</h2>
-          <ClassHistory bookings={history} />
+          <h2 className="text-lg font-semibold mb-3">This Week&apos;s Schedule</h2>
+          <WeeklySchedule />
         </div>
+
+        {/* Class History */}
+        {history.length > 0 && (
+          <div className="mt-8">
+            <h2 className="text-lg font-semibold mb-3">Class History</h2>
+            <ClassHistory bookings={history} />
+          </div>
+        )}
 
         {/* Purchase History */}
         {purchases && purchases.length > 0 && (
@@ -111,22 +136,16 @@ export default async function DashboardPage() {
 
         {/* Log Out */}
         <div className="mt-8 pb-4">
-          <LogoutButton />
+          <form action="/api/auth/logout" method="POST">
+            <button
+              type="submit"
+              className="w-full h-11 rounded-lg border border-border text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
+            >
+              Log Out
+            </button>
+          </form>
         </div>
       </ToastProvider>
     </div>
-  );
-}
-
-function LogoutButton() {
-  return (
-    <form action="/api/auth/logout" method="POST">
-      <button
-        type="submit"
-        className="w-full h-11 rounded-lg border border-border text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
-      >
-        Log Out
-      </button>
-    </form>
   );
 }
