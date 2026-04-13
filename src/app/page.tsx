@@ -21,14 +21,17 @@ export default function Home() {
             <Link href="#contact" className="text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">Contact</Link>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/login" className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors hidden sm:inline">
-              Log In
+            <Link
+              href="/login"
+              className="inline-flex items-center justify-center h-9 px-5 rounded-full bg-[#c9a96e] text-white text-sm font-medium hover:bg-[#b8955d] transition-colors"
+            >
+              Members
             </Link>
             <Link
-              href="/register"
+              href="/schedule"
               className="inline-flex items-center justify-center h-9 px-5 rounded-full bg-[#2d2d2d] text-white text-sm font-medium hover:bg-[#1a1a1a] transition-colors"
             >
-              Join Now
+              Book Class
             </Link>
           </div>
         </div>
@@ -177,7 +180,7 @@ export default function Home() {
             <PricingCard label="Single Class" price="$40" per="/class" note="Drop in anytime" packType="single" />
             <PricingCard label="4-Pack" price="$140" per="$35/class" note="Save $20" packType="4pack" />
             <PricingCard label="8-Pack" price="$240" per="$30/class" note="Save $80" packType="8pack" popular />
-            <PricingCard label="12-Pack" price="$320" per="$26.67/class" note="Save $160" packType="12pack" />
+            <PricingCard label="12-Pack" price="$312" per="$26/class" note="Save $168" packType="12pack" />
             <GiftCardOption />
           </div>
 
@@ -250,39 +253,64 @@ export default function Home() {
       <section id="contact" className="px-5 py-16 sm:py-20 bg-white">
         <div className="max-w-2xl mx-auto">
           <p className="text-[#c9a96e] text-sm font-medium tracking-[0.2em] uppercase text-center mb-3">
-            One-on-One Training
+            Private Training
           </p>
           <h2 className="text-3xl sm:text-4xl font-bold text-center mb-4">
             Private Session Inquiry
           </h2>
           <p className="text-center text-[#6b6b6b] mb-10 max-w-md mx-auto">
-            Interested in personalized instruction? Fill out the form and Chelsea will reach out within 24 hours.
+            Available as 1-on-1 or private group sessions. Fill out the form and Chelsea will reach out within 24 hours.
           </p>
           <InquiryForm />
         </div>
       </section>
 
-      {/* Location */}
+      {/* Find Classes */}
       <section className="px-5 py-16 sm:py-20">
         <div className="max-w-6xl mx-auto text-center">
           <p className="text-[#c9a96e] text-sm font-medium tracking-[0.2em] uppercase mb-3">
-            Find Us
+            Find Classes By
           </p>
-          <h2 className="text-3xl sm:text-4xl font-bold mb-8">Visit the Studio</h2>
-          <div className="inline-flex flex-col items-center rounded-2xl border border-[#e5e2dc] bg-white p-8 sm:p-10">
-            <p className="font-serif font-bold text-xl mb-2">Maningo Method</p>
-            <p className="text-[#6b6b6b]">295 Montauk Highway, Suite 7</p>
-            <p className="text-[#6b6b6b]">Speonk, NY 11972</p>
+          <h2 className="text-3xl sm:text-4xl font-bold mb-10">Maningo Method</h2>
+          <div className="grid sm:grid-cols-2 gap-5 max-w-2xl mx-auto">
+            {/* Host Hampton */}
             <a
               href="https://maps.google.com/?q=295+Montauk+Highway+Suite+7+Speonk+NY+11972"
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-[#c9a96e] hover:underline"
+              className="rounded-2xl border border-[#e5e2dc] bg-white p-6 hover:border-[#c9a96e] transition-colors text-left group"
             >
-              Get Directions
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M7 17L17 7M17 7H7M17 7V17" />
-              </svg>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-[#2d2d2d] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                  HH
+                </div>
+                <p className="font-semibold">Host Hampton</p>
+              </div>
+              <p className="text-sm text-[#6b6b6b]">295 Montauk Highway, Suite 7</p>
+              <p className="text-sm text-[#6b6b6b]">Speonk, NY 11972</p>
+              <p className="text-xs text-[#c9a96e] font-medium mt-3 group-hover:underline">
+                Get Directions &rarr;
+              </p>
+            </a>
+
+            {/* A Book Place */}
+            <a
+              href="https://maps.google.com/?q=489+E+Main+St+Riverhead+NY+11901"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-2xl border border-[#e5e2dc] bg-white p-6 hover:border-[#c9a96e] transition-colors text-left group"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-[#c9a96e] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                  AB
+                </div>
+                <p className="font-semibold">A Book Place</p>
+              </div>
+              <p className="text-sm text-[#6b6b6b]">489 E Main St</p>
+              <p className="text-sm text-[#6b6b6b]">Riverhead, NY 11901</p>
+              <p className="text-xs text-[#c9a96e] font-medium mt-3 group-hover:underline">
+                Get Directions &rarr;
+              </p>
             </a>
           </div>
         </div>
@@ -298,7 +326,7 @@ export default function Home() {
         />
         <div className="absolute inset-0 bg-[#1a1a1a]/65 flex flex-col items-center justify-center px-6 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-            Ready to start your practice?
+            Ready to move with intention?
           </h2>
           <p className="text-white/80 mb-8 max-w-md">
             Join the Maningo Method community. Your first class is just a few taps away.
@@ -307,7 +335,7 @@ export default function Home() {
             href="/register"
             className="inline-flex items-center justify-center h-12 px-10 rounded-full bg-[#c9a96e] text-white text-base font-medium hover:bg-[#b8955d] transition-colors"
           >
-            Create Your Account
+            Become A Member
           </Link>
         </div>
       </section>

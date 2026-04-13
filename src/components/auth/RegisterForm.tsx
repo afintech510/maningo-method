@@ -20,6 +20,7 @@ export function RegisterForm() {
     const data = {
       full_name: formData.get('full_name') as string,
       email: formData.get('email') as string,
+      phone: formData.get('phone') as string,
       password: formData.get('password') as string,
       confirmPassword: formData.get('confirmPassword') as string,
     };
@@ -41,7 +42,7 @@ export function RegisterForm() {
       email: data.email,
       password: data.password,
       options: {
-        data: { full_name: data.full_name },
+        data: { full_name: data.full_name, phone: data.phone },
       },
     });
 
@@ -85,6 +86,17 @@ export function RegisterForm() {
         autoComplete="email"
         placeholder="you@example.com"
         error={errors.email}
+        required
+      />
+
+      <Input
+        label="Phone"
+        name="phone"
+        type="tel"
+        inputMode="tel"
+        autoComplete="tel"
+        placeholder="(631) 555-1234"
+        error={errors.phone}
         required
       />
 

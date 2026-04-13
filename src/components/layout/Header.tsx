@@ -18,27 +18,25 @@ export async function Header() {
           Private Class
         </Link>
         {isLoggedIn ? (
-          <>
-            <Link href="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors">
-              My Classes
-            </Link>
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center justify-center h-9 px-5 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:opacity-90"
-            >
-              Dashboard
-            </Link>
-          </>
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center justify-center h-9 px-5 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:opacity-90"
+          >
+            Dashboard
+          </Link>
         ) : (
           <>
-            <Link href="/login" className="text-muted-foreground hover:text-foreground transition-colors">
-              Log In
+            <Link
+              href="/login"
+              className="inline-flex items-center justify-center h-9 px-5 rounded-full bg-[#c9a96e] text-white text-sm font-medium hover:bg-[#b8955d] transition-colors"
+            >
+              Members
             </Link>
             <Link
-              href="/register"
+              href="/schedule"
               className="inline-flex items-center justify-center h-9 px-5 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:opacity-90"
             >
-              Sign Up
+              Book Class
             </Link>
           </>
         )}
