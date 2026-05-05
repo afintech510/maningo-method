@@ -57,7 +57,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true, ignored: true });
   }
   // Prefer freshly-fetched metadata over the (potentially forged) webhook body
-  documentId = fresh.id;
+  const verifiedDocId: string = fresh.id || documentId;
+  documentId = verifiedDocId;
   studentId = fresh.metadata?.student_id || studentId;
 
   const ip =
@@ -68,9 +69,9 @@ export async function POST(request: NextRequest) {
   const supabase = createAdminClient();
   let pdfUrl: string | null = null;
   try {
-    pdfUrl = await getDocumentPdfUrl(documentId);
+    pdfUrl = await getDocumentPdfUrl(verifiedDocId);
   } catch (err) {
-    log.warn({ err, documentId }, 'Could not fetch completed PDF URL');
+    log.warn({ err, documentId: verifiedDocId }, 'Could not fetch completed PDF URL');
   }
 
   const update = {
