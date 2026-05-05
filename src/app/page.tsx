@@ -52,11 +52,14 @@ export default function Home() {
             <p className="text-[#c9a96e] text-sm font-medium tracking-[0.2em] uppercase mb-3">
               Pilates on the Edge of the Hamptons
             </p>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-[1.1] mb-4 max-w-2xl">
-              Full Body Mat Pilates/Sculpt Classes
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-[1.1] mb-5 max-w-2xl">
+              Full Body Mat Pilates <span className="text-[#c9a96e]">&#9670;</span> Sculpt Classes
             </h1>
-            <p className="text-white/80 text-lg mb-8 max-w-xl">
-              High-energy mat pilates experience designed for all levels. These group classes blend strength, control, and mindful movement, all set to fun motivating music. You will challenge your body, clear your mind, and leave feeling stronger and empowered.
+            <p className="text-[#c9a96e]/90 text-xs sm:text-sm font-medium tracking-[0.25em] uppercase mb-4">
+              Strength &times; Control &times; Mindful Movement &times; Music
+            </p>
+            <p className="text-white/80 text-lg mb-8 max-w-xl leading-relaxed">
+              A high-energy mat pilates experience designed for all levels. Challenge your body, clear your mind, and leave feeling stronger and empowered.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <Link
