@@ -439,11 +439,12 @@ function InquiryForm() {
         </div>
       </div>
       <div>
-        <label htmlFor="inquiry-phone" className="block text-sm font-medium mb-1.5">Phone (optional)</label>
+        <label htmlFor="inquiry-phone" className="block text-sm font-medium mb-1.5">Phone</label>
         <input
           id="inquiry-phone"
           name="phone"
           type="tel"
+          required
           inputMode="tel"
           className="w-full h-12 px-4 text-base rounded-lg border border-[#e5e2dc] bg-white focus:outline-none focus:ring-2 focus:ring-[#c9a96e] focus:border-transparent"
           placeholder="(631) 555-1234"
