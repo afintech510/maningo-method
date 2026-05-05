@@ -3,7 +3,6 @@ import { logger } from '@/lib/logger';
 import { BookingConfirmation } from '@/emails/BookingConfirmation';
 import { BookingCancellation } from '@/emails/BookingCancellation';
 import { ClassCancellation } from '@/emails/ClassCancellation';
-import { SubscriptionBookingsCancelled } from '@/emails/SubscriptionBookingsCancelled';
 import { createElement } from 'react';
 
 let resendInstance: Resend | null = null;
@@ -80,26 +79,6 @@ export async function sendClassCancellationBatch(
     );
   } catch (err) {
     logger.error({ err, count: recipients.length }, 'Failed to send class cancellation batch');
-  }
-}
-
-export async function sendSubscriptionBookingsCancelled(
-  to: string,
-  data: {
-    studentName: string;
-    cancelledBookings: Array<{ classTitle: string; classDate: string; classTime: string }>;
-  }
-) {
-  try {
-    const resend = getResend();
-    await resend.emails.send({
-      from: `Maningo Method <${FROM_EMAIL}>`,
-      to,
-      subject: 'Your upcoming bookings have been cancelled',
-      react: createElement(SubscriptionBookingsCancelled, data),
-    });
-  } catch (err) {
-    logger.error({ err, to }, 'Failed to send subscription bookings cancelled email');
   }
 }
 

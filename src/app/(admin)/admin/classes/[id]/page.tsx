@@ -95,9 +95,7 @@ export default function AdminClassDetailPage() {
                 </a>
               )}
               <div className="mt-1">
-                <Badge variant={e.payment_type === 'subscription' ? 'success' : 'neutral'}>
-                  {e.payment_type}
-                </Badge>
+                <Badge variant="neutral">{e.payment_type}</Badge>
               </div>
             </Card>
           ))}

@@ -327,8 +327,8 @@ export default function Home() {
               <p className="font-semibold text-sm mb-3">Studio</p>
               <p className="text-sm text-white/60">295 Montauk Highway, Suite 7</p>
               <p className="text-sm text-white/60">Speonk, NY 11972</p>
-              <a href="mailto:hello@maningomethod.com" className="text-sm text-[#c9a96e] hover:underline mt-2 block">
-                hello@maningomethod.com
+              <a href="mailto:chelsea@maningomethod.com" className="text-sm text-[#c9a96e] hover:underline mt-2 block">
+                chelsea@maningomethod.com
               </a>
             </div>
           </div>

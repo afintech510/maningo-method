@@ -10,7 +10,7 @@ export async function GET() {
 
   const { data: students, error } = await supabase
     .from('profiles')
-    .select('id, full_name, email, phone, created_at, subscriptions(status)')
+    .select('id, full_name, email, phone, created_at')
     .eq('role', 'student')
     .order('created_at', { ascending: false });
 
@@ -21,19 +21,5 @@ export async function GET() {
     );
   }
 
-  const result = (students || []).map((s) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const subs = (s as any).subscriptions;
-    const activeSub = Array.isArray(subs) ? subs.find((sub: { status: string }) => sub.status === 'active') : null;
-    return {
-      id: s.id,
-      full_name: s.full_name,
-      email: s.email,
-      phone: s.phone,
-      created_at: s.created_at,
-      subscription_status: activeSub ? 'active' : subs?.[0]?.status || null,
-    };
-  });
-
-  return NextResponse.json({ students: result });
+  return NextResponse.json({ students: students || [] });
 }

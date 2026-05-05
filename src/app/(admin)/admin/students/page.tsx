@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/feedback/Skeleton';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { Input } from '@/components/ui/Input';
@@ -13,7 +12,6 @@ interface Student {
   email: string;
   phone: string | null;
   created_at: string;
-  subscription_status: string | null;
 }
 
 export default function AdminStudentsPage() {
@@ -68,21 +66,9 @@ export default function AdminStudentsPage() {
         <div className="space-y-2">
           {filtered.map((student) => (
             <Card key={student.id}>
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="font-medium">{student.full_name}</p>
-                  <p className="text-sm text-muted-foreground">{student.email}</p>
-                </div>
-                {student.subscription_status && (
-                  <Badge
-                    variant={
-                      student.subscription_status === 'active' ? 'success' :
-                      student.subscription_status === 'past_due' ? 'warning' : 'neutral'
-                    }
-                  >
-                    {student.subscription_status}
-                  </Badge>
-                )}
+              <div>
+                <p className="font-medium">{student.full_name}</p>
+                <p className="text-sm text-muted-foreground">{student.email}</p>
               </div>
             </Card>
           ))}
