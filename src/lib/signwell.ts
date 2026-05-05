@@ -85,6 +85,17 @@ export async function getDocumentPdfUrl(documentId: string): Promise<string | nu
   return data.file_url || data.url || null;
 }
 
+// Re-fetch the document status from SignWell. Used to defend against forged
+// webhook payloads when the signing secret is not available from the API.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function getDocument(documentId: string): Promise<any | null> {
+  const res = await fetch(`${SW_BASE}/documents/${documentId}`, {
+    headers: { 'X-Api-Key': getKey() },
+  });
+  if (!res.ok) return null;
+  return res.json();
+}
+
 export function verifySignWellWebhook(rawBody: string, signature: string | null, secret: string | undefined): boolean {
   if (!secret) return true; // not configured; accept (we'll match doc ID)
   if (!signature) return false;

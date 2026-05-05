@@ -15,11 +15,11 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Maningo Method — Pilates",
+  title: "Maningo Method — Mat Pilates / Sculpt in Speonk, NY",
   description:
-    "Book Pilates classes at Maningo Method studio in Speonk, NY. Drop-in or unlimited monthly membership.",
+    "High-energy mat Pilates and sculpt classes in Speonk, NY. Drop-in $25, 5-pack $112, 10-pack $200. All levels welcome.",
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_BASE_URL || "https://maningo.hosthampton.com"
+    process.env.NEXT_PUBLIC_BASE_URL || "https://www.maningomethod.com"
   ),
 };
 
