@@ -52,11 +52,11 @@ export default function Home() {
             <p className="text-[#c9a96e] text-sm font-medium tracking-[0.2em] uppercase mb-3">
               Pilates on the Edge of the Hamptons
             </p>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-[1.1] mb-4 max-w-xl">
-              A lifestyle of strength, grace & balance
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-[1.1] mb-4 max-w-2xl">
+              Full Body Mat Pilates/Sculpt Classes
             </h1>
-            <p className="text-white/80 text-lg mb-8 max-w-md">
-              Small-group classes designed to strengthen, lengthen, and restore. Your body will thank you.
+            <p className="text-white/80 text-lg mb-8 max-w-xl">
+              High-energy mat pilates experience designed for all levels. These group classes blend strength, control, and mindful movement, all set to fun motivating music. You will challenge your body, clear your mind, and leave feeling stronger and empowered.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <Link
@@ -84,21 +84,16 @@ export default function Home() {
         <h2 className="text-3xl sm:text-4xl font-bold text-center mb-12">
           Classes for Every Body
         </h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid sm:grid-cols-2 gap-5 max-w-3xl mx-auto">
           <ClassTypeCard
             image="https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?w=600&q=80"
-            title="Mat Pilates"
-            description="Build core strength and flexibility using your body weight on the mat. Perfect for all levels."
+            title="Mat Pilates/Sculpt"
+            description="Full body mat Pilates class in a high-energy group setting. Expect strength-focused, low-impact movement, upbeat music, and a strong mind-body connection. All levels welcome."
           />
           <ClassTypeCard
-            image="https://images.unsplash.com/photo-1562088287-bde35a1ea917?w=600&q=80"
-            title="Reformer Pilates"
-            description="Dynamic resistance training on the reformer for deeper muscle engagement and faster results."
-          />
-          <ClassTypeCard
-            image="https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=600&q=80"
+            image="https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?w=600&q=80"
             title="Private Sessions"
-            description="One-on-one instruction tailored to your goals. Ideal for recovery, prenatal, or accelerated progress."
+            description="One-on-one instruction tailored to your goals."
           />
         </div>
       </section>
@@ -121,19 +116,11 @@ export default function Home() {
             <h2 className="text-3xl sm:text-4xl font-bold mb-6">
               Meet Chelsea
             </h2>
-            <p className="text-white/80 leading-relaxed mb-4">
-              Chelsea is a certified Pilates instructor with a passion for helping people move better and feel stronger.
-              With years of experience in both mat and reformer Pilates, she brings precision, warmth, and a deep
-              understanding of body mechanics to every session.
-            </p>
             <p className="text-white/80 leading-relaxed mb-6">
-              Her approach blends classical Pilates principles with modern movement science, creating classes that
-              challenge your body while respecting its limits. Whether you&apos;re a complete beginner or a seasoned
-              practitioner, Chelsea meets you where you are and helps you grow.
+              My classes are rooted in my background as a lacrosse coach—I teach Pilates the way I coach: with energy, clarity, and purpose. Expect a modern, athletic style that challenges your strength while sharpening your mindset, all set to fun, motivating music. With experience teaching both reformer and mat, I bring a well-rounded intentional approach to every class. We finish with a grounding mindfulness reset, because how you think is just as important as how you move. This is a space where every body is welcome, and every person is capable of getting stronger.
             </p>
             <p className="text-[#c9a96e] font-medium italic">
-              &ldquo;Pilates isn&apos;t about perfection — it&apos;s about showing up, moving with intention, and
-              leaving stronger than you came.&rdquo;
+              &ldquo;It feels hard because it is hard, but YOU CAN DO HARD THINGS.&rdquo;
             </p>
           </div>
         </div>
@@ -150,8 +137,8 @@ export default function Home() {
         <div className="grid sm:grid-cols-3 gap-8 text-center">
           {[
             { step: '01', title: 'Browse Classes', desc: 'Check the schedule and find a class that fits your day.' },
-            { step: '02', title: 'Reserve Your Spot', desc: 'Subscribers book instantly. Drop-ins pay $35 at checkout.' },
-            { step: '03', title: 'Show Up & Move', desc: 'Small classes, personal attention, real results.' },
+            { step: '02', title: 'Reserve Your Spot', desc: 'Members book with credits. Drop-ins pay $25 at checkout.' },
+            { step: '03', title: 'Show Up & Move', desc: 'Energetic group classes, motivating music, real results.' },
           ].map((item) => (
             <div key={item.step}>
               <span className="text-4xl font-bold text-[#c9a96e]/30">{item.step}</span>
@@ -175,12 +162,10 @@ export default function Home() {
             Buy a pack and book at your pace. The more you commit, the more you save.
           </p>
 
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto mb-8">
-            <PricingCard label="Intro Class" price="$20" per="/first class" note="Try us out" packType="intro" highlight />
-            <PricingCard label="Single Class" price="$40" per="/class" note="Drop in anytime" packType="single" />
-            <PricingCard label="4-Pack" price="$140" per="$35/class" note="Save $20" packType="4pack" />
-            <PricingCard label="8-Pack" price="$240" per="$30/class" note="Save $80" packType="8pack" popular />
-            <PricingCard label="12-Pack" price="$312" per="$26/class" note="Save $168" packType="12pack" />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto mb-8">
+            <PricingCard label="Drop-In" price="$25" per="/class" note="Try a class" packType="single" highlight />
+            <PricingCard label="5-Pack" price="$112" per="$22.40/class" note="Save 10%" packType="5pack" />
+            <PricingCard label="10-Pack" price="$200" per="$20/class" note="Save 20%" packType="10pack" popular />
             <GiftCardOption />
           </div>
 
@@ -219,28 +204,24 @@ export default function Home() {
         <h2 className="text-3xl sm:text-4xl font-bold text-center mb-10">FAQ</h2>
         <div className="space-y-3">
           <FAQItem
-            question="Do I need experience to take a class?"
-            answer="Not at all! Our classes welcome all levels. Chelsea provides modifications for beginners and progressions for advanced students, so everyone gets an effective workout."
-          />
-          <FAQItem
             question="What should I bring?"
-            answer="Just yourself and comfortable clothing you can move in. We provide all equipment — mats, props, and reformers. Grippy socks are recommended but not required."
+            answer="Bring a mat and a little towel. All other equipment is provided and there are extra mats if needed. Footwear, please wear either grippy socks or barefoot."
           />
           <FAQItem
             question="How do I cancel a booking?"
-            answer="You can cancel directly from your dashboard up until class time. Your spot will be released so someone else can book."
+            answer="You can cancel directly from your dashboard up until 12 hours before your class. The cancellation policy is below."
           />
           <FAQItem
-            question="What's the cancellation policy for subscriptions?"
-            answer="You can cancel your monthly subscription at any time through your account. There are no cancellation fees or long-term contracts."
+            question="What is the cancellation policy?"
+            answer="You can cancel your class up until 12 hours prior to your class. If any emergencies come up, please let me know and we will refund your credit."
           />
           <FAQItem
             question="How many students are in each class?"
-            answer="We keep classes intentionally small — typically 8 to 16 students — so Chelsea can give personalized attention and corrections."
+            answer="There is a maximum of 20 people in each class."
           />
           <FAQItem
             question="Can I try a class before subscribing?"
-            answer="Absolutely! Book a drop-in class for $35 to experience the studio. If you love it (you will), you can subscribe anytime."
+            answer="Absolutely! Book a drop-in class for $25 to experience the studio. If you love it (you will), you can grab a 5-pack or 10-pack for bigger savings."
           />
           <FAQItem
             question="Do you offer private sessions?"
@@ -272,13 +253,13 @@ export default function Home() {
             Find Classes By
           </p>
           <h2 className="text-3xl sm:text-4xl font-bold mb-10">Maningo Method</h2>
-          <div className="grid sm:grid-cols-2 gap-5 max-w-2xl mx-auto">
+          <div className="max-w-md mx-auto">
             {/* Host Hampton */}
             <a
               href="https://maps.google.com/?q=295+Montauk+Highway+Suite+7+Speonk+NY+11972"
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-2xl border border-[#e5e2dc] bg-white p-6 hover:border-[#c9a96e] transition-colors text-left group"
+              className="block rounded-2xl border border-[#e5e2dc] bg-white p-6 hover:border-[#c9a96e] transition-colors text-left group"
             >
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 rounded-full bg-[#2d2d2d] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
@@ -288,26 +269,6 @@ export default function Home() {
               </div>
               <p className="text-sm text-[#6b6b6b]">295 Montauk Highway, Suite 7</p>
               <p className="text-sm text-[#6b6b6b]">Speonk, NY 11972</p>
-              <p className="text-xs text-[#c9a96e] font-medium mt-3 group-hover:underline">
-                Get Directions &rarr;
-              </p>
-            </a>
-
-            {/* A Book Place */}
-            <a
-              href="https://maps.google.com/?q=489+E+Main+St+Riverhead+NY+11901"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-2xl border border-[#e5e2dc] bg-white p-6 hover:border-[#c9a96e] transition-colors text-left group"
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-[#c9a96e] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                  AB
-                </div>
-                <p className="font-semibold">A Book Place</p>
-              </div>
-              <p className="text-sm text-[#6b6b6b]">489 E Main St</p>
-              <p className="text-sm text-[#6b6b6b]">Riverhead, NY 11901</p>
               <p className="text-xs text-[#c9a96e] font-medium mt-3 group-hover:underline">
                 Get Directions &rarr;
               </p>
@@ -347,7 +308,7 @@ export default function Home() {
             <div>
               <p className="font-serif font-bold text-lg mb-3">Maningo Method</p>
               <p className="text-white/60 text-sm leading-relaxed">
-                Pilates classes in Speonk, NY. Building strength, grace, and balance — one class at a time.
+                Mat Pilates/Sculpt all levels class in Speonk, NY.
               </p>
             </div>
             <div>

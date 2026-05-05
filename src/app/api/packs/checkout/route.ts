@@ -7,10 +7,9 @@ import { logger, generateCorrelationId } from '@/lib/logger';
 
 const PACKS: Record<string, { priceEnv: string; credits: number; label: string }> = {
   intro: { priceEnv: 'STRIPE_INTRO_PRICE_ID', credits: 1, label: 'Intro Class' },
-  single: { priceEnv: 'STRIPE_DROPIN_PRICE_ID', credits: 1, label: 'Single Class' },
-  '4pack': { priceEnv: 'STRIPE_4PACK_PRICE_ID', credits: 4, label: '4-Class Pack' },
-  '8pack': { priceEnv: 'STRIPE_8PACK_PRICE_ID', credits: 8, label: '8-Class Pack' },
-  '12pack': { priceEnv: 'STRIPE_12PACK_PRICE_ID', credits: 12, label: '12-Class Pack' },
+  single: { priceEnv: 'STRIPE_DROPIN_PRICE_ID', credits: 1, label: 'Drop-in Class' },
+  '5pack': { priceEnv: 'STRIPE_5PACK_PRICE_ID', credits: 5, label: '5-Class Pack' },
+  '10pack': { priceEnv: 'STRIPE_10PACK_PRICE_ID', credits: 10, label: '10-Class Pack' },
 };
 
 export async function POST(request: NextRequest) {

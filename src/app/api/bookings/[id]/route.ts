@@ -26,10 +26,10 @@ export async function PATCH(
 
     const supabase = createClient();
 
-    // Verify ownership
+    // Verify ownership and load class start time
     const { data: booking, error: fetchError } = await supabase
       .from('bookings')
-      .select('id, student_id, status')
+      .select('id, student_id, status, classes(start_time)')
       .eq('id', params.id)
       .single();
 
@@ -52,6 +52,24 @@ export async function PATCH(
         { error: { code: 'ALREADY_CANCELLED', message: 'This booking is already cancelled.' } },
         { status: 409 }
       );
+    }
+
+    // Enforce 12-hour cancellation cutoff
+    const classStart = (booking as { classes?: { start_time?: string } }).classes?.start_time;
+    if (classStart) {
+      const hoursUntilClass = (new Date(classStart).getTime() - Date.now()) / (1000 * 60 * 60);
+      if (hoursUntilClass < 12) {
+        return NextResponse.json(
+          {
+            error: {
+              code: 'CANCELLATION_WINDOW_CLOSED',
+              message:
+                'Classes can only be cancelled up to 12 hours before start time. For emergencies, please contact Chelsea directly to refund your credit.',
+            },
+          },
+          { status: 400 }
+        );
+      }
     }
 
     const { error: updateError } = await supabase

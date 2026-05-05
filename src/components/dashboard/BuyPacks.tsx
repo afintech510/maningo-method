@@ -3,11 +3,9 @@
 import { useState } from 'react';
 
 const PACKS = [
-  { type: 'intro', label: 'Intro Class', price: '$20', credits: 1 },
-  { type: 'single', label: 'Single Class', price: '$40', credits: 1 },
-  { type: '4pack', label: '4-Pack', price: '$140', credits: 4 },
-  { type: '8pack', label: '8-Pack', price: '$240', credits: 8 },
-  { type: '12pack', label: '12-Pack', price: '$320', credits: 12 },
+  { type: 'single', label: 'Drop-In', price: '$25', credits: 1 },
+  { type: '5pack', label: '5-Pack', price: '$112', credits: 5 },
+  { type: '10pack', label: '10-Pack', price: '$200', credits: 10 },
 ];
 
 export function BuyPacks() {
