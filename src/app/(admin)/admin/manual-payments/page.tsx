@@ -119,7 +119,7 @@ function PaymentRow({ p, busy, onAct }: { p: Payment; busy: boolean; onAct: (id:
             <Button size="sm" onClick={() => onAct(p.id, 'mark_paid')} loading={busy}>
               Mark Paid
             </Button>
-            <Button size="sm" variant="outline" onClick={() => onAct(p.id, 'cancel')} loading={busy}>
+            <Button size="sm" variant="ghost" onClick={() => onAct(p.id, 'cancel')} loading={busy}>
               Cancel
             </Button>
           </div>
