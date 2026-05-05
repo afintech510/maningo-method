@@ -61,6 +61,10 @@ export function WeeklySchedule({ bookedClassIds, hasCredits }: WeeklySchedulePro
       const data = await res.json();
 
       if (!res.ok) {
+        if (data.error?.code === 'WAIVER_REQUIRED') {
+          router.push('/waiver/sign');
+          return;
+        }
         showToast(data.error?.message || 'Something went wrong', 'error');
       } else {
         showToast(`Booked! ${confirmClass.title} confirmed.`);

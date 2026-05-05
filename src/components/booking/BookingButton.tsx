@@ -49,6 +49,10 @@ export function BookingButton({
       const data = await res.json();
 
       if (!res.ok) {
+        if (data.error?.code === 'WAIVER_REQUIRED') {
+          router.push('/waiver/sign');
+          return;
+        }
         showToast(data.error?.message || 'Something went wrong', 'error');
         setState('default');
         return;

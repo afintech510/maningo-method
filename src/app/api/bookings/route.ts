@@ -21,13 +21,25 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check credits
+    // Check credits + waiver
     const adminClient = createAdminClient();
     const { data: profile } = await adminClient
       .from('profiles')
-      .select('credits')
+      .select('credits, waiver_signed_at')
       .eq('id', auth.user.id)
       .single();
+
+    if (!profile?.waiver_signed_at) {
+      return NextResponse.json(
+        {
+          error: {
+            code: 'WAIVER_REQUIRED',
+            message: 'Please sign the liability waiver before booking your first class.',
+          },
+        },
+        { status: 412 }
+      );
+    }
 
     if (!profile || profile.credits < 1) {
       return NextResponse.json(
