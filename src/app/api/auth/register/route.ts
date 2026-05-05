@@ -4,8 +4,10 @@ import { createClient } from '@/lib/supabase/server';
 import { registerSchema } from '@/validations/auth';
 import { logger, generateCorrelationId } from '@/lib/logger';
 
-const SMS_CONSENT_TEXT =
-  'I agree to receive class reminders, schedule changes, and (only if separately opted in for marketing) promotional text messages from Maningo Method. Message frequency varies. Message and data rates may apply. Reply STOP to opt out, HELP for help.';
+const SMS_TRANSACTIONAL_CONSENT_TEXT =
+  'I provide my prior express written consent to receive recurring transactional text messages (class reminders, schedule changes, account alerts) from Maningo Method, including by means of automated technology, at the mobile number I provided. Consent is not a condition of purchase. Message frequency varies. Message and data rates may apply. Reply STOP to opt out, HELP for help. Maningo Method does not share, sell, or transfer phone numbers or SMS opt-in data with third parties for marketing.';
+const SMS_MARKETING_CONSENT_TEXT =
+  'I provide my prior express written consent to receive recurring promotional text messages (offers, new classes, studio news) from Maningo Method, including by means of automated technology, at the mobile number I provided. Consent is not a condition of purchase. Message frequency varies. Message and data rates may apply. Reply STOP to opt out, HELP for help.';
 const TOS_VERSION = '2026-05-05';
 
 export async function POST(request: NextRequest) {
@@ -21,7 +23,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    const { full_name, email, phone, password, sms_consent, email_marketing_consent } = result.data;
+    const { full_name, email, phone, password, sms_consent, sms_marketing_consent, email_marketing_consent } = result.data;
 
     const ip =
       request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
@@ -45,6 +47,13 @@ export async function POST(request: NextRequest) {
     const userId = created.user.id;
     const now = new Date().toISOString();
 
+    const consentText = [
+      sms_consent ? SMS_TRANSACTIONAL_CONSENT_TEXT : null,
+      sms_marketing_consent ? SMS_MARKETING_CONSENT_TEXT : null,
+    ]
+      .filter(Boolean)
+      .join('\n\n') || null;
+
     const { error: profileErr } = await admin
       .from('profiles')
       .update({
@@ -53,12 +62,15 @@ export async function POST(request: NextRequest) {
         sms_consent,
         sms_consent_at: sms_consent ? now : null,
         sms_consent_ip: sms_consent ? ip : null,
-        sms_consent_text: sms_consent ? SMS_CONSENT_TEXT : null,
+        sms_consent_text: consentText,
+        sms_marketing_consent,
+        sms_marketing_consent_at: sms_marketing_consent ? now : null,
         email_marketing_consent,
         email_marketing_consent_at: email_marketing_consent ? now : null,
         tos_accepted_at: now,
         tos_accepted_ip: ip,
         tos_version: TOS_VERSION,
+        waiver_acknowledged: true,
       })
       .eq('id', userId);
 
@@ -73,7 +85,10 @@ export async function POST(request: NextRequest) {
       log.error({ err: signInErr }, 'Auto sign-in after register failed');
     }
 
-    log.info({ userId, sms_consent, email_marketing_consent }, 'New user registered with consent');
+    log.info(
+      { userId, sms_consent, sms_marketing_consent, email_marketing_consent },
+      'New user registered with consent'
+    );
     return NextResponse.json({ ok: true });
   } catch (err) {
     log.error({ err }, 'POST /api/auth/register failed');

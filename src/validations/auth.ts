@@ -6,8 +6,9 @@ export const registerSchema = z.object({
   phone: z.string().min(7, 'Phone number is required'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   confirmPassword: z.string(),
-  tos_accepted: z.literal(true, { message: 'You must accept the Terms and Privacy Policy to continue' }),
+  tos_accepted: z.literal(true, { message: 'You must accept the Terms, Privacy Policy, and Liability Waiver to continue' }),
   sms_consent: z.boolean().default(false),
+  sms_marketing_consent: z.boolean().default(false),
   email_marketing_consent: z.boolean().default(false),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Passwords do not match',

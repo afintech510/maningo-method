@@ -28,6 +28,7 @@ export function RegisterForm() {
       confirmPassword: formData.get('confirmPassword') as string,
       tos_accepted: formData.get('tos_accepted') === 'on',
       sms_consent: formData.get('sms_consent') === 'on',
+      sms_marketing_consent: formData.get('sms_marketing_consent') === 'on',
       email_marketing_consent: formData.get('email_marketing_consent') === 'on',
     };
 
@@ -95,8 +96,11 @@ export function RegisterForm() {
         <label className="flex items-start gap-3 text-sm cursor-pointer">
           <input type="checkbox" name="tos_accepted" required className="mt-0.5 h-4 w-4 rounded border-[#e5e2dc] text-[#c9a96e] focus:ring-[#c9a96e]" />
           <span className="text-[#2d2d2d]">
-            I agree to the <Link href="/terms" target="_blank" className="text-[#c9a96e] underline">Terms of Service</Link> and{' '}
-            <Link href="/privacy" target="_blank" className="text-[#c9a96e] underline">Privacy Policy</Link>. <span className="text-red-600">*</span>
+            I agree to the{' '}
+            <Link href="/terms" target="_blank" className="text-[#c9a96e] underline">Terms of Service</Link>,{' '}
+            <Link href="/privacy" target="_blank" className="text-[#c9a96e] underline">Privacy Policy</Link>, and the{' '}
+            <a href="/Maningo_Method_Pilates_Waiver_v3.pdf" target="_blank" rel="noopener noreferrer" className="text-[#c9a96e] underline">Liability Waiver</a> (which I&rsquo;ll sign electronically before my first class).{' '}
+            <span className="text-red-600">*</span>
           </span>
         </label>
         {errors.tos_accepted && <p className="text-xs text-red-600 pl-7 -mt-2">{errors.tos_accepted}</p>}
@@ -104,8 +108,14 @@ export function RegisterForm() {
         <label className="flex items-start gap-3 text-sm cursor-pointer">
           <input type="checkbox" name="sms_consent" className="mt-0.5 h-4 w-4 rounded border-[#e5e2dc] text-[#c9a96e] focus:ring-[#c9a96e]" />
           <span className="text-[#6b6b6b] leading-relaxed">
-            I agree to receive class reminders, schedule changes, and (only if separately opted in below) promotional text messages from Maningo Method.
-            Message frequency varies. Message and data rates may apply. Reply STOP to opt out. We do not share your phone number with third parties.
+            I agree to receive recurring transactional text messages (class reminders, schedule changes, account alerts) from Maningo Method, including by means of automated technology, at the mobile number above. Consent is not a condition of purchase. Message frequency varies. Msg &amp; data rates may apply. Reply STOP to opt out, HELP for help. We do not share your phone number with third parties.
+          </span>
+        </label>
+
+        <label className="flex items-start gap-3 text-sm cursor-pointer">
+          <input type="checkbox" name="sms_marketing_consent" className="mt-0.5 h-4 w-4 rounded border-[#e5e2dc] text-[#c9a96e] focus:ring-[#c9a96e]" />
+          <span className="text-[#6b6b6b] leading-relaxed">
+            I also agree to receive recurring promotional text messages (offers, new classes, studio news) from Maningo Method, including by means of automated technology. Consent is not a condition of purchase. Reply STOP to opt out.
           </span>
         </label>
 

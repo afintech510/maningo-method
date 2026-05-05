@@ -18,6 +18,12 @@ export default function AdminPage() {
             <p className="text-sm text-muted-foreground">View all registered students</p>
           </Card>
         </Link>
+        <Link href="/admin/manual-payments">
+          <Card className="hover:border-primary transition-colors">
+            <p className="font-semibold">Manual Payments</p>
+            <p className="text-sm text-muted-foreground">Cash, Zelle, and Venmo &mdash; mark paid to apply credits</p>
+          </Card>
+        </Link>
       </div>
     </div>
   );

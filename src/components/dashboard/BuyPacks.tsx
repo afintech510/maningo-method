@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 
 const PACKS = [
   { type: 'single', label: 'Drop-In', price: '$25', credits: 1 },
@@ -45,6 +46,10 @@ export function BuyPacks() {
           </button>
         ))}
       </div>
+      <p className="text-xs text-muted-foreground mt-2">
+        Prefer Venmo, Zelle, or cash?{' '}
+        <Link href="/checkout/manual?pack=5pack" className="text-[#c9a96e] hover:underline">Pay another way</Link>
+      </p>
     </div>
   );
 }
