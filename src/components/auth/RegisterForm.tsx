@@ -20,6 +20,7 @@ export function RegisterForm() {
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
+    const marketingOptIn = formData.get('marketing_opt_in') === 'on';
     const data = {
       full_name: formData.get('full_name') as string,
       email: formData.get('email') as string,
@@ -27,9 +28,9 @@ export function RegisterForm() {
       password: formData.get('password') as string,
       confirmPassword: formData.get('confirmPassword') as string,
       tos_accepted: formData.get('tos_accepted') === 'on',
-      sms_consent: formData.get('sms_consent') === 'on',
-      sms_marketing_consent: formData.get('sms_marketing_consent') === 'on',
-      email_marketing_consent: formData.get('email_marketing_consent') === 'on',
+      sms_consent: true, // transactional consent given by providing a phone for service messages
+      sms_marketing_consent: marketingOptIn,
+      email_marketing_consent: marketingOptIn,
     };
 
     const result = registerSchema.safeParse(data);
@@ -89,35 +90,25 @@ export function RegisterForm() {
           <input type="checkbox" name="tos_accepted" required className="mt-0.5 h-4 w-4 rounded border-[#e5e2dc] text-[#c9a96e] focus:ring-[#c9a96e]" />
           <span className="text-[#2d2d2d]">
             I agree to the{' '}
-            <Link href="/terms" target="_blank" className="text-[#c9a96e] underline">Terms of Service</Link>,{' '}
-            <Link href="/privacy" target="_blank" className="text-[#c9a96e] underline">Privacy Policy</Link>, and the{' '}
-            <a href="/Maningo_Method_Pilates_Waiver_v3.pdf" target="_blank" rel="noopener noreferrer" className="text-[#c9a96e] underline">Liability Waiver</a> (which I&rsquo;ll sign electronically before my first class).{' '}
+            <Link href="/terms" target="_blank" className="text-[#c9a96e] underline">Terms</Link>,{' '}
+            <Link href="/privacy" target="_blank" className="text-[#c9a96e] underline">Privacy Policy</Link>, and{' '}
+            <a href="/Maningo_Method_Pilates_Waiver_v3.pdf" target="_blank" rel="noopener noreferrer" className="text-[#c9a96e] underline">Liability Waiver</a>.{' '}
             <span className="text-red-600">*</span>
           </span>
         </label>
         {errors.tos_accepted && <p className="text-xs text-red-600 pl-7 -mt-2">{errors.tos_accepted}</p>}
 
         <label className="flex items-start gap-3 text-sm cursor-pointer">
-          <input type="checkbox" name="sms_consent" className="mt-0.5 h-4 w-4 rounded border-[#e5e2dc] text-[#c9a96e] focus:ring-[#c9a96e]" />
+          <input type="checkbox" name="marketing_opt_in" className="mt-0.5 h-4 w-4 rounded border-[#e5e2dc] text-[#c9a96e] focus:ring-[#c9a96e]" />
           <span className="text-[#6b6b6b] leading-relaxed">
-            I agree to receive recurring transactional text messages (class reminders, schedule changes, account alerts) from Maningo Method, including by means of automated technology, at the mobile number above. Consent is not a condition of purchase. Message frequency varies. Msg &amp; data rates may apply. Reply STOP to opt out, HELP for help. We do not share your phone number with third parties.
-          </span>
-        </label>
-
-        <label className="flex items-start gap-3 text-sm cursor-pointer">
-          <input type="checkbox" name="sms_marketing_consent" className="mt-0.5 h-4 w-4 rounded border-[#e5e2dc] text-[#c9a96e] focus:ring-[#c9a96e]" />
-          <span className="text-[#6b6b6b] leading-relaxed">
-            I also agree to receive recurring promotional text messages (offers, new classes, studio news) from Maningo Method, including by means of automated technology. Consent is not a condition of purchase. Reply STOP to opt out.
-          </span>
-        </label>
-
-        <label className="flex items-start gap-3 text-sm cursor-pointer">
-          <input type="checkbox" name="email_marketing_consent" className="mt-0.5 h-4 w-4 rounded border-[#e5e2dc] text-[#c9a96e] focus:ring-[#c9a96e]" />
-          <span className="text-[#6b6b6b] leading-relaxed">
-            Send me occasional emails about new classes, promotions, and studio news. (Optional &mdash; you can book without this.)
+            Send me promotional texts and emails (new classes, offers, studio news). Optional. Msg &amp; data rates may apply. Reply STOP to opt out.
           </span>
         </label>
       </div>
+
+      <p className="text-[11px] text-[#9a9a9a] leading-relaxed">
+        By creating an account you provide your number for class reminders, booking confirmations, and account alerts. We never share your number. Promotional messages only sent if you check the box above.
+      </p>
 
       <Button type="submit" loading={loading} className="w-full">
         {packParam ? 'Create Account & Continue to Payment' : 'Create Account'}
