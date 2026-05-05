@@ -2,12 +2,15 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
+import { useSearchParams } from 'next/navigation';
 import { registerSchema, type RegisterInput } from '@/validations/auth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
 export function RegisterForm() {
+  const searchParams = useSearchParams();
+  const packParam = searchParams?.get('pack') || null;
+
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof RegisterInput | 'root', string>>>({});
 
@@ -23,6 +26,9 @@ export function RegisterForm() {
       phone: formData.get('phone') as string,
       password: formData.get('password') as string,
       confirmPassword: formData.get('confirmPassword') as string,
+      tos_accepted: formData.get('tos_accepted') === 'on',
+      sms_consent: formData.get('sms_consent') === 'on',
+      email_marketing_consent: formData.get('email_marketing_consent') === 'on',
     };
 
     const result = registerSchema.safeParse(data);
@@ -37,21 +43,30 @@ export function RegisterForm() {
       return;
     }
 
-    const supabase = createClient();
-    const { error } = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
-      options: {
-        data: { full_name: data.full_name, phone: data.phone },
-      },
+    const res = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(result.data),
     });
-
-    if (error) {
-      setErrors({ root: error.message });
+    const json = await res.json();
+    if (!res.ok) {
+      setErrors({ root: json?.error?.message || 'Could not create account' });
       setLoading(false);
       return;
     }
 
+    if (packParam) {
+      const checkoutRes = await fetch('/api/packs/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pack_type: packParam }),
+      });
+      const checkoutJson = await checkoutRes.json();
+      if (checkoutJson?.checkout_url) {
+        window.location.href = checkoutJson.checkout_url;
+        return;
+      }
+    }
     window.location.href = '/dashboard';
   }
 
@@ -59,7 +74,9 @@ export function RegisterForm() {
     <form onSubmit={handleSubmit} className="w-full max-w-sm mx-auto space-y-4">
       <div className="text-center mb-6">
         <h1 className="text-2xl font-bold">Create Account</h1>
-        <p className="text-sm text-muted-foreground mt-1">Join Maningo Method</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          {packParam ? 'One step before checkout' : 'Join Maningo Method'}
+        </p>
       </div>
 
       {errors.root && (
@@ -68,65 +85,45 @@ export function RegisterForm() {
         </div>
       )}
 
-      <Input
-        label="Full Name"
-        name="full_name"
-        type="text"
-        autoComplete="name"
-        placeholder="Your full name"
-        error={errors.full_name}
-        required
-      />
+      <Input label="Full Name" name="full_name" type="text" autoComplete="name" placeholder="Your full name" error={errors.full_name} required />
+      <Input label="Email" name="email" type="email" inputMode="email" autoComplete="email" placeholder="you@example.com" error={errors.email} required />
+      <Input label="Phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="(631) 555-1234" error={errors.phone} required />
+      <Input label="Password" name="password" type="password" autoComplete="new-password" placeholder="At least 8 characters" error={errors.password} required />
+      <Input label="Confirm Password" name="confirmPassword" type="password" autoComplete="new-password" placeholder="Confirm your password" error={errors.confirmPassword} required />
 
-      <Input
-        label="Email"
-        name="email"
-        type="email"
-        inputMode="email"
-        autoComplete="email"
-        placeholder="you@example.com"
-        error={errors.email}
-        required
-      />
+      <div className="space-y-3 pt-2">
+        <label className="flex items-start gap-3 text-sm cursor-pointer">
+          <input type="checkbox" name="tos_accepted" required className="mt-0.5 h-4 w-4 rounded border-[#e5e2dc] text-[#c9a96e] focus:ring-[#c9a96e]" />
+          <span className="text-[#2d2d2d]">
+            I agree to the <Link href="/terms" target="_blank" className="text-[#c9a96e] underline">Terms of Service</Link> and{' '}
+            <Link href="/privacy" target="_blank" className="text-[#c9a96e] underline">Privacy Policy</Link>. <span className="text-red-600">*</span>
+          </span>
+        </label>
+        {errors.tos_accepted && <p className="text-xs text-red-600 pl-7 -mt-2">{errors.tos_accepted}</p>}
 
-      <Input
-        label="Phone"
-        name="phone"
-        type="tel"
-        inputMode="tel"
-        autoComplete="tel"
-        placeholder="(631) 555-1234"
-        error={errors.phone}
-        required
-      />
+        <label className="flex items-start gap-3 text-sm cursor-pointer">
+          <input type="checkbox" name="sms_consent" className="mt-0.5 h-4 w-4 rounded border-[#e5e2dc] text-[#c9a96e] focus:ring-[#c9a96e]" />
+          <span className="text-[#6b6b6b] leading-relaxed">
+            I agree to receive class reminders, schedule changes, and (only if separately opted in below) promotional text messages from Maningo Method.
+            Message frequency varies. Message and data rates may apply. Reply STOP to opt out. We do not share your phone number with third parties.
+          </span>
+        </label>
 
-      <Input
-        label="Password"
-        name="password"
-        type="password"
-        autoComplete="new-password"
-        placeholder="At least 8 characters"
-        error={errors.password}
-        required
-      />
-
-      <Input
-        label="Confirm Password"
-        name="confirmPassword"
-        type="password"
-        autoComplete="new-password"
-        placeholder="Confirm your password"
-        error={errors.confirmPassword}
-        required
-      />
+        <label className="flex items-start gap-3 text-sm cursor-pointer">
+          <input type="checkbox" name="email_marketing_consent" className="mt-0.5 h-4 w-4 rounded border-[#e5e2dc] text-[#c9a96e] focus:ring-[#c9a96e]" />
+          <span className="text-[#6b6b6b] leading-relaxed">
+            Send me occasional emails about new classes, promotions, and studio news. (Optional &mdash; you can book without this.)
+          </span>
+        </label>
+      </div>
 
       <Button type="submit" loading={loading} className="w-full">
-        Create Account
+        {packParam ? 'Create Account & Continue to Payment' : 'Create Account'}
       </Button>
 
       <p className="text-center text-sm text-muted-foreground">
         Already have an account?{' '}
-        <Link href="/login" className="text-foreground font-medium hover:underline">
+        <Link href={`/login${packParam ? `?pack=${packParam}` : ''}`} className="text-foreground font-medium hover:underline">
           Log in
         </Link>
       </p>

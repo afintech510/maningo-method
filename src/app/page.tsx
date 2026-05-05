@@ -207,28 +207,32 @@ export default function Home() {
         <h2 className="text-3xl sm:text-4xl font-bold text-center mb-10">FAQ</h2>
         <div className="space-y-3">
           <FAQItem
-            question="What should I bring?"
-            answer="Bring a mat and a little towel. All other equipment is provided and there are extra mats if needed. Footwear, please wear either grippy socks or barefoot."
+            question="What do I need to bring?"
+            answer="Just your mat and a small towel — that's it. We've got props, extras, and even spare mats if you forget. Wear grippy socks or just go barefoot, whatever feels right."
           />
           <FAQItem
-            question="How do I cancel a booking?"
-            answer="You can cancel directly from your dashboard up until 12 hours before your class. The cancellation policy is below."
+            question="How do I cancel a class?"
+            answer="Pop into your dashboard and cancel anytime up to 12 hours before class — your credit goes right back. Inside that 12-hour window? Shoot me a text or email if it's an emergency, I'm a real person."
           />
           <FAQItem
-            question="What is the cancellation policy?"
-            answer="You can cancel your class up until 12 hours prior to your class. If any emergencies come up, please let me know and we will refund your credit."
+            question="What's the cancellation policy?"
+            answer="Cancel up to 12 hours before class and you're all set. Life happens — if something genuinely comes up last-minute, message me and I'll usually refund your credit. Just please don't ghost a full class."
           />
           <FAQItem
-            question="How many students are in each class?"
-            answer="There is a maximum of 20 people in each class."
+            question="How big are the classes?"
+            answer="Capped at 20 spots. Big enough to feel the energy of a group class, small enough that I see you and can dial in your form."
           />
           <FAQItem
-            question="Can I try a class before subscribing?"
-            answer="Absolutely! Book a drop-in class for $25 to experience the studio. If you love it (you will), you can grab a 5-pack or 10-pack for bigger savings."
+            question="Never tried Pilates before — should I still come?"
+            answer="Yes. Honestly. All levels welcome and I'll meet you where you are. Grab a $25 drop-in for your first class and see how it feels — no commitment. If you love it, the 5- and 10-packs save you a chunk."
           />
           <FAQItem
             question="Do you offer private sessions?"
-            answer="Yes! Private one-on-one sessions are available for personalized instruction. Use the inquiry form below to get started."
+            answer="Yep. One-on-one is the fastest way to dial in form, work around an injury, or train for something specific. Fill out the inquiry form below and I'll be in touch within a day."
+          />
+          <FAQItem
+            question="Where is the studio?"
+            answer="Inside Host Hampton at 295 Montauk Highway, Suite 7, Speonk — easy parking, easy in-and-out, right on the way to or from town."
           />
         </div>
       </section>
@@ -283,8 +287,8 @@ export default function Home() {
       {/* Final CTA */}
       <section className="relative h-[350px] sm:h-[400px]">
         <Image
-          src="https://images.unsplash.com/photo-1607962837359-5e7e89f86776?w=1920&q=80"
-          alt="Pilates studio"
+          src="/mat-pilates-banner-bg.jpg"
+          alt="Mat Pilates class"
           fill
           className="object-cover"
         />
@@ -321,6 +325,8 @@ export default function Home() {
                 <Link href="#pricing" className="hover:text-white transition-colors">Pricing</Link>
                 <Link href="#faq" className="hover:text-white transition-colors">FAQ</Link>
                 <Link href="#contact" className="hover:text-white transition-colors">Private Sessions</Link>
+                <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+                <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
               </div>
             </div>
             <div>
@@ -487,7 +493,7 @@ function PricingCard({ label, price, per, note, highlight, popular, packType }: 
       if (data.checkout_url) {
         window.location.href = data.checkout_url;
       } else if (res.status === 401) {
-        window.location.href = '/register';
+        window.location.href = `/register?pack=${packType}`;
       } else {
         setLoading(false);
       }
@@ -523,33 +529,104 @@ function PricingCard({ label, price, per, note, highlight, popular, packType }: 
   );
 }
 
+type GiftOption = 'single' | '5pack' | '10pack' | 'custom';
+
+const GIFT_PRESETS: Record<Exclude<GiftOption, 'custom'>, { label: string; amount: number; sublabel: string }> = {
+  single: { label: 'Single', amount: 25, sublabel: '1 class' },
+  '5pack': { label: '5-Pack', amount: 112, sublabel: '5 classes' },
+  '10pack': { label: '10-Pack', amount: 200, sublabel: '10 classes' },
+};
+
 function GiftCardOption() {
-  const [amount, setAmount] = useState('');
+  const [option, setOption] = useState<GiftOption>('5pack');
+  const [customAmount, setCustomAmount] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const isPreset = option !== 'custom';
+  const total = isPreset
+    ? GIFT_PRESETS[option as Exclude<GiftOption, 'custom'>].amount
+    : Number(customAmount) || 0;
+  const canPurchase = isPreset ? true : total >= 10;
+
+  async function handlePurchase() {
+    if (!canPurchase) return;
+    setLoading(true);
+    try {
+      const body = isPreset
+        ? { type: 'preset', pack: option }
+        : { type: 'custom', amount_cents: Math.round(total * 100) };
+      const res = await fetch('/api/gift-packs/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (data.checkout_url) {
+        window.location.href = data.checkout_url;
+      } else if (res.status === 401) {
+        window.location.href = '/register';
+      } else {
+        setLoading(false);
+      }
+    } catch {
+      setLoading(false);
+    }
+  }
 
   return (
-    <div className="rounded-2xl border border-[#e5e2dc] bg-[#faf9f6] p-5 sm:p-6 flex flex-col">
-      <p className="text-xs font-medium uppercase tracking-wider text-[#6b6b6b] mb-2">Gift Card</p>
-      <p className="text-sm text-[#6b6b6b] mb-3">Give the gift of Pilates</p>
-      <div className="mt-auto">
-        <div className="flex items-center gap-2">
+    <div className="rounded-2xl border border-[#e5e2dc] bg-[#faf9f6] p-5 sm:p-6 flex flex-col col-span-2 lg:col-span-1">
+      <p className="text-xs font-medium uppercase tracking-wider text-[#6b6b6b] mb-1">Gift Pack</p>
+      <p className="text-sm text-[#6b6b6b] mb-4">Give the gift of Pilates</p>
+
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        {(['single', '5pack', '10pack', 'custom'] as GiftOption[]).map((opt) => {
+          const active = option === opt;
+          const label = opt === 'custom' ? 'Custom' : GIFT_PRESETS[opt as Exclude<GiftOption, 'custom'>].label;
+          return (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => setOption(opt)}
+              className={`h-9 px-3 rounded-full text-xs font-medium transition-colors ${
+                active
+                  ? 'bg-[#2d2d2d] text-white border-2 border-[#2d2d2d]'
+                  : 'bg-white border border-[#e5e2dc] text-[#6b6b6b] hover:border-[#c9a96e]'
+              }`}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+
+      {option === 'custom' ? (
+        <div className="flex items-center gap-2 mb-2">
           <span className="text-xl font-bold">$</span>
           <input
             type="number"
             min="10"
             step="5"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            value={customAmount}
+            onChange={(e) => setCustomAmount(e.target.value)}
             placeholder="Amount"
-            className="w-full h-10 px-3 text-base rounded-lg border border-[#e5e2dc] bg-white focus:outline-none focus:ring-2 focus:ring-[#c9a96e] focus:border-transparent"
+            className="w-full h-10 px-3 text-base rounded-lg border border-[#e5e2dc] bg-white focus:outline-none focus:ring-2 focus:ring-[#c9a96e]"
           />
         </div>
-        <button
-          disabled={!amount || Number(amount) < 10}
-          className="w-full mt-2 h-9 rounded-full bg-[#c9a96e] text-white text-sm font-medium hover:bg-[#b8955d] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          Purchase
-        </button>
-      </div>
+      ) : (
+        <div className="mb-2">
+          <p className="text-2xl font-bold">${GIFT_PRESETS[option].amount}</p>
+          <p className="text-xs text-[#6b6b6b]">{GIFT_PRESETS[option].sublabel}</p>
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={handlePurchase}
+        disabled={!canPurchase || loading}
+        className="w-full mt-auto h-9 rounded-full bg-[#c9a96e] text-white text-sm font-medium hover:bg-[#b8955d] disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        {loading ? 'Loading...' : 'Purchase Gift'}
+      </button>
     </div>
   );
 }

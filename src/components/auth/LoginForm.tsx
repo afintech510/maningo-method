@@ -2,12 +2,15 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { loginSchema, type LoginInput } from '@/validations/auth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
 export function LoginForm() {
+  const searchParams = useSearchParams();
+  const packParam = searchParams?.get('pack') || null;
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof LoginInput | 'root', string>>>({});
 
@@ -52,6 +55,18 @@ export function LoginForm() {
       return;
     }
 
+    if (packParam) {
+      const checkoutRes = await fetch('/api/packs/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pack_type: packParam }),
+      });
+      const checkoutJson = await checkoutRes.json();
+      if (checkoutJson?.checkout_url) {
+        window.location.href = checkoutJson.checkout_url;
+        return;
+      }
+    }
     // Full page redirect so the server picks up the new session cookie
     window.location.href = '/dashboard';
   }
@@ -100,7 +115,7 @@ export function LoginForm() {
         </Link>
         <p className="text-muted-foreground">
           New here?{' '}
-          <Link href="/register" className="text-foreground font-medium hover:underline">
+          <Link href={`/register${packParam ? `?pack=${packParam}` : ''}`} className="text-foreground font-medium hover:underline">
             Sign up
           </Link>
         </p>
