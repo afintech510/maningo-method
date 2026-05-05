@@ -12,21 +12,9 @@ const PACKS = [
 export function BuyPacks() {
   const [loading, setLoading] = useState<string | null>(null);
 
-  async function handlePurchase(packType: string) {
+  function handlePurchase(packType: string) {
     setLoading(packType);
-    try {
-      const res = await fetch('/api/packs/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pack_type: packType }),
-      });
-      const data = await res.json();
-      if (data.checkout_url) {
-        window.location.href = data.checkout_url;
-      }
-    } catch {
-      setLoading(null);
-    }
+    window.location.href = `/checkout/pay?kind=pack&pack=${packType}`;
   }
 
   return (

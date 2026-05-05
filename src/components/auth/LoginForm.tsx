@@ -56,16 +56,8 @@ export function LoginForm() {
     }
 
     if (packParam) {
-      const checkoutRes = await fetch('/api/packs/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pack_type: packParam }),
-      });
-      const checkoutJson = await checkoutRes.json();
-      if (checkoutJson?.checkout_url) {
-        window.location.href = checkoutJson.checkout_url;
-        return;
-      }
+      window.location.href = `/checkout/pay?kind=pack&pack=${packParam}`;
+      return;
     }
     // Full page redirect so the server picks up the new session cookie
     window.location.href = '/dashboard';

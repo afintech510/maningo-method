@@ -105,6 +105,69 @@ export async function POST(request: NextRequest) {
         break;
       }
 
+      case 'payment_intent.succeeded': {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const intent = event.data.object as any;
+        const md = intent.metadata || {};
+        const studentId: string | undefined = md.student_id;
+        const packType: string | undefined = md.pack_type;
+        const credits: string | undefined = md.credits;
+        const isGift: boolean = md.gift === 'true';
+
+        if (!studentId) {
+          log.info({ intentId: intent.id }, 'PaymentIntent without student_id; skipping');
+          break;
+        }
+
+        // Check if a checkout.session.completed already booked this intent (avoid double credit)
+        const { data: existingPurchase } = await supabase
+          .from('credit_purchases')
+          .select('id')
+          .eq('stripe_payment_intent_id', intent.id)
+          .maybeSingle();
+        if (existingPurchase) {
+          log.info({ intentId: intent.id }, 'Already recorded by prior event');
+          break;
+        }
+
+        if (isGift) {
+          // Gift purchase — record but do not credit purchaser
+          await supabase.from('credit_purchases').insert({
+            student_id: studentId,
+            pack_type: md.gift_pack || 'gift_custom',
+            credits_added: 0,
+            amount_paid_cents: intent.amount_received || intent.amount,
+            stripe_payment_intent_id: intent.id,
+          });
+          log.info({ studentId, intentId: intent.id }, 'Gift purchase recorded');
+          break;
+        }
+
+        if (packType && credits) {
+          const creditsNum = parseInt(credits, 10);
+          const { error: purchaseError } = await supabase.from('credit_purchases').insert({
+            student_id: studentId,
+            pack_type: packType,
+            credits_added: creditsNum,
+            amount_paid_cents: intent.amount_received || intent.amount,
+            stripe_payment_intent_id: intent.id,
+          });
+          if (purchaseError) {
+            log.error({ err: purchaseError }, 'Failed to record credit purchase (PI)');
+            return NextResponse.json({ error: 'DB error' }, { status: 500 });
+          }
+
+          const { data: profile } = await supabase.from('profiles').select('credits').eq('id', studentId).single();
+          await supabase
+            .from('profiles')
+            .update({ credits: (profile?.credits || 0) + creditsNum })
+            .eq('id', studentId);
+
+          log.info({ studentId, packType, credits: creditsNum, intentId: intent.id }, 'Credits added (PI)');
+        }
+        break;
+      }
+
       default:
         log.info('Unhandled event type');
     }

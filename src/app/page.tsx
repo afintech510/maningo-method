@@ -486,25 +486,9 @@ function PricingCard({ label, price, per, note, highlight, popular, packType }: 
 }) {
   const [loading, setLoading] = useState(false);
 
-  async function handleClick() {
+  function handleClick() {
     setLoading(true);
-    try {
-      const res = await fetch('/api/packs/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pack_type: packType }),
-      });
-      const data = await res.json();
-      if (data.checkout_url) {
-        window.location.href = data.checkout_url;
-      } else if (res.status === 401) {
-        window.location.href = `/register?pack=${packType}`;
-      } else {
-        setLoading(false);
-      }
-    } catch {
-      setLoading(false);
-    }
+    window.location.href = `/checkout/pay?kind=pack&pack=${packType}`;
   }
 
   return (
@@ -553,28 +537,13 @@ function GiftCardOption() {
     : Number(customAmount) || 0;
   const canPurchase = isPreset ? true : total >= 10;
 
-  async function handlePurchase() {
+  function handlePurchase() {
     if (!canPurchase) return;
     setLoading(true);
-    try {
-      const body = isPreset
-        ? { type: 'preset', pack: option }
-        : { type: 'custom', amount_cents: Math.round(total * 100) };
-      const res = await fetch('/api/gift-packs/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      const data = await res.json();
-      if (data.checkout_url) {
-        window.location.href = data.checkout_url;
-      } else if (res.status === 401) {
-        window.location.href = '/register';
-      } else {
-        setLoading(false);
-      }
-    } catch {
-      setLoading(false);
+    if (isPreset) {
+      window.location.href = `/checkout/pay?kind=gift_pack&pack=${option}`;
+    } else {
+      window.location.href = `/checkout/pay?kind=gift_custom&amount_cents=${Math.round(total * 100)}`;
     }
   }
 
