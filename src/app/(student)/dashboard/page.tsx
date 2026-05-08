@@ -6,6 +6,7 @@ import { ClassHistory } from '@/components/dashboard/ClassHistory';
 import { CreditBalance } from '@/components/dashboard/CreditBalance';
 import { BuyPacks } from '@/components/dashboard/BuyPacks';
 import { ReferralCard } from '@/components/dashboard/ReferralCard';
+import { HostHamptonPromo } from '@/components/dashboard/HostHamptonPromo';
 import { WeeklySchedule } from '@/components/dashboard/WeeklySchedule';
 import { ToastProvider } from '@/components/feedback/Toast';
 import { Card } from '@/components/ui/Card';
@@ -97,6 +98,11 @@ export default async function DashboardPage() {
         {/* Referral */}
         <div className="mt-6">
           <ReferralCard referralCode={referralCode} />
+        </div>
+
+        {/* Host Hampton promo: party booking earns free classes */}
+        <div className="mt-4">
+          <HostHamptonPromo />
         </div>
 
         {/* Upcoming Classes (full schedule, future-only) */}
