@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
+import { BackButton } from '@/components/layout/BackButton';
 
 export default function Home() {
   return (
@@ -10,6 +11,9 @@ export default function Home() {
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#faf9f6]/95 backdrop-blur-sm border-b border-[#e5e2dc]">
         <div className="relative flex items-center justify-center px-5 py-3 min-h-[64px] max-w-6xl mx-auto">
+          <div className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2">
+            <BackButton />
+          </div>
           <Link href="/" aria-label="Maningo Method home" className="block">
             <Image
               src="/maningo-method_logo_600.png"

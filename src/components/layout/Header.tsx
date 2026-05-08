@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { getAuth } from '@/lib/auth';
+import { BackButton } from '@/components/layout/BackButton';
 
 export async function Header() {
   const auth = await getAuth();
@@ -11,6 +12,9 @@ export async function Header() {
   return (
     <header className="border-b border-border bg-white">
       <div className="relative flex items-center justify-center px-5 py-3 min-h-[64px]">
+        <div className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2">
+          <BackButton />
+        </div>
         <Link href={homeHref} aria-label="Maningo Method home" className="block">
           <Image
             src="/maningo-method_logo_600.png"
