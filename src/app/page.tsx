@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
 import { BackButton } from '@/components/layout/BackButton';
+import { UpcomingClassesPanel } from '@/components/schedule/UpcomingClassesPanel';
 
 export default function Home() {
   return (
@@ -98,11 +99,13 @@ export default function Home() {
             image="https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?w=600&q=80"
             title="Mat Pilates/Sculpt"
             description="Full body mat Pilates class in a high-energy group setting. Expect strength-focused, low-impact movement, upbeat music, and a strong mind-body connection. All levels welcome."
+            href="/schedule"
           />
           <ClassTypeCard
             image="https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?w=600&q=80"
             title="Private Sessions"
             description="One-on-one instruction tailored to your goals."
+            href="/#contact"
           />
         </div>
       </section>
@@ -189,6 +192,13 @@ export default function Home() {
             Card payments include a 3% service fee. Pay with Cash, Zelle, or Venmo to skip it &mdash;
             credits apply once Chelsea confirms.
           </p>
+
+          <div className="mt-12 max-w-3xl mx-auto">
+            <UpcomingClassesPanel
+              title="What's coming up"
+              subtitle="Tap a class to see the full schedule"
+            />
+          </div>
         </div>
       </section>
 
@@ -406,9 +416,19 @@ export default function Home() {
   );
 }
 
-function ClassTypeCard({ image, title, description }: { image: string; title: string; description: string }) {
-  return (
-    <div className="group rounded-2xl overflow-hidden border border-[#e5e2dc] bg-white">
+function ClassTypeCard({
+  image,
+  title,
+  description,
+  href,
+}: {
+  image: string;
+  title: string;
+  description: string;
+  href?: string;
+}) {
+  const inner = (
+    <>
       <div className="relative h-56 overflow-hidden">
         <Image
           src={image}
@@ -420,9 +440,25 @@ function ClassTypeCard({ image, title, description }: { image: string; title: st
       <div className="p-5">
         <h3 className="font-semibold text-lg mb-1.5">{title}</h3>
         <p className="text-sm text-[#6b6b6b] leading-relaxed">{description}</p>
+        {href && (
+          <p className="text-xs text-[#c9a96e] font-medium mt-3 group-hover:underline">
+            {href === '/schedule' ? 'See the schedule →' : 'Inquire →'}
+          </p>
+        )}
       </div>
-    </div>
+    </>
   );
+
+  const cls =
+    'group block rounded-2xl overflow-hidden border border-[#e5e2dc] bg-white hover:border-[#c9a96e] transition-colors';
+  if (href) {
+    return (
+      <Link href={href} className={cls} aria-label={title}>
+        {inner}
+      </Link>
+    );
+  }
+  return <div className={cls.replace(' hover:border-[#c9a96e]', '')}>{inner}</div>;
 }
 
 function FAQItem({ question, answer }: { question: string; answer: string }) {
