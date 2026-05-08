@@ -8,7 +8,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/feedback/Skeleton';
 import { useToast } from '@/components/feedback/Toast';
 import { formatStudioTime, formatStudioDate, formatStudioDateTime } from '@/lib/timezone';
-import { addDays, format, startOfWeek } from 'date-fns';
+import { addDays, format } from 'date-fns';
 
 interface ClassItem {
   id: string;
@@ -34,14 +34,15 @@ export function WeeklySchedule({ bookedClassIds, hasCredits }: WeeklySchedulePro
 
   useEffect(() => {
     const now = new Date();
-    const weekStart = startOfWeek(now, { weekStartsOn: 1 });
-    const weekEnd = addDays(weekStart, 13); // Show 2 weeks
-    weekEnd.setHours(23, 59, 59, 999);
+    const horizonEnd = addDays(now, 28); // 4-week look-ahead
+    horizonEnd.setHours(23, 59, 59, 999);
 
-    fetch(`/api/classes?from=${weekStart.toISOString()}&to=${weekEnd.toISOString()}`)
+    fetch(`/api/classes?from=${now.toISOString()}&to=${horizonEnd.toISOString()}`)
       .then((res) => res.json())
       .then((data) => {
-        setClasses(data.classes || []);
+        // Belt + suspenders: filter past classes client-side too
+        const upcoming = (data.classes || []).filter((c: ClassItem) => new Date(c.starts_at) >= now);
+        setClasses(upcoming);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -91,7 +92,7 @@ export function WeeklySchedule({ bookedClassIds, hasCredits }: WeeklySchedulePro
   const days = Object.keys(grouped).sort();
 
   if (days.length === 0) {
-    return <p className="text-sm text-muted-foreground text-center py-4">No classes scheduled this week.</p>;
+    return <p className="text-sm text-muted-foreground text-center py-4">No upcoming classes scheduled.</p>;
   }
 
   return (
@@ -106,7 +107,6 @@ export function WeeklySchedule({ bookedClassIds, hasCredits }: WeeklySchedulePro
               {grouped[day].map((cls) => {
                 const isBooked = bookedClassIds.includes(cls.id);
                 const isFull = cls.spots_remaining <= 0;
-                const isPast = new Date(cls.starts_at) < new Date();
 
                 return (
                   <Card key={cls.id} className="py-3 px-4">
@@ -124,8 +124,6 @@ export function WeeklySchedule({ bookedClassIds, hasCredits }: WeeklySchedulePro
                         <span className="text-xs font-medium text-green-600 bg-green-50 px-2.5 py-1 rounded-full flex-shrink-0">
                           Booked
                         </span>
-                      ) : isPast ? (
-                        <span className="text-xs text-muted-foreground flex-shrink-0">Past</span>
                       ) : isFull ? (
                         <span className="text-xs text-muted-foreground flex-shrink-0">Full</span>
                       ) : (

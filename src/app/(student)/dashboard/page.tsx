@@ -99,9 +99,9 @@ export default async function DashboardPage() {
           <ReferralCard referralCode={referralCode} />
         </div>
 
-        {/* This Week's Schedule */}
+        {/* Upcoming Classes (full schedule, future-only) */}
         <div className="mt-8">
-          <h2 className="text-lg font-semibold mb-3">This Week&apos;s Schedule</h2>
+          <h2 className="text-lg font-semibold mb-3">Upcoming Classes</h2>
           <WeeklySchedule
             bookedClassIds={upcoming.map((b) => b.class_id)}
             hasCredits={credits > 0}

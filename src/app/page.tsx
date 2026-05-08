@@ -81,9 +81,11 @@ export default function Home() {
 
       {/* Class Types */}
       <section className="px-5 py-16 sm:py-20 max-w-6xl mx-auto">
-        <p className="text-[#c9a96e] text-sm font-medium tracking-[0.2em] uppercase text-center mb-3">
-          What We Offer
-        </p>
+        <div className="text-center mb-3">
+          <span className="inline-block bg-[#1a1a1a]/90 text-[#c9a96e] text-xs sm:text-sm font-medium tracking-[0.2em] uppercase px-3 py-1.5 rounded-full">
+            What We Offer
+          </span>
+        </div>
         <h2 className="text-3xl sm:text-4xl font-bold text-center mb-12">
           Classes for Every Body
         </h2>
@@ -131,9 +133,11 @@ export default function Home() {
 
       {/* How It Works */}
       <section className="px-5 py-16 sm:py-20 max-w-6xl mx-auto">
-        <p className="text-[#c9a96e] text-sm font-medium tracking-[0.2em] uppercase text-center mb-3">
-          Getting Started
-        </p>
+        <div className="text-center mb-3">
+          <span className="inline-block bg-[#1a1a1a]/90 text-[#c9a96e] text-xs sm:text-sm font-medium tracking-[0.2em] uppercase px-3 py-1.5 rounded-full">
+            Getting Started
+          </span>
+        </div>
         <h2 className="text-3xl sm:text-4xl font-bold text-center mb-12">
           Book in Seconds
         </h2>
@@ -155,9 +159,11 @@ export default function Home() {
       {/* Pricing */}
       <section id="pricing" className="px-5 py-16 sm:py-20 bg-white">
         <div className="max-w-6xl mx-auto">
-          <p className="text-[#c9a96e] text-sm font-medium tracking-[0.2em] uppercase text-center mb-3">
-            Class Packs
-          </p>
+          <div className="text-center mb-3">
+            <span className="inline-block bg-[#1a1a1a]/90 text-[#c9a96e] text-xs sm:text-sm font-medium tracking-[0.2em] uppercase px-3 py-1.5 rounded-full">
+              Class Packs
+            </span>
+          </div>
           <h2 className="text-3xl sm:text-4xl font-bold text-center mb-4">
             No Contracts, No Hidden Fees
           </h2>
@@ -205,9 +211,11 @@ export default function Home() {
 
       {/* FAQ */}
       <section id="faq" className="px-5 py-16 sm:py-20 max-w-3xl mx-auto">
-        <p className="text-[#c9a96e] text-sm font-medium tracking-[0.2em] uppercase text-center mb-3">
-          Common Questions
-        </p>
+        <div className="text-center mb-3">
+          <span className="inline-block bg-[#1a1a1a]/90 text-[#c9a96e] text-xs sm:text-sm font-medium tracking-[0.2em] uppercase px-3 py-1.5 rounded-full">
+            Common Questions
+          </span>
+        </div>
         <h2 className="text-3xl sm:text-4xl font-bold text-center mb-10">FAQ</h2>
         <div className="space-y-3">
           <FAQItem
@@ -244,9 +252,11 @@ export default function Home() {
       {/* Inquiry */}
       <section id="contact" className="px-5 py-16 sm:py-20 bg-white">
         <div className="max-w-2xl mx-auto">
-          <p className="text-[#c9a96e] text-sm font-medium tracking-[0.2em] uppercase text-center mb-3">
-            Get in Touch
-          </p>
+          <div className="text-center mb-3">
+            <span className="inline-block bg-[#1a1a1a]/90 text-[#c9a96e] text-xs sm:text-sm font-medium tracking-[0.2em] uppercase px-3 py-1.5 rounded-full">
+              Get in Touch
+            </span>
+          </div>
           <h2 className="text-3xl sm:text-4xl font-bold text-center mb-4">
             Send Chelsea a Note
           </h2>
@@ -261,32 +271,67 @@ export default function Home() {
       </section>
 
       {/* Find Classes */}
-      <section className="px-5 py-16 sm:py-20">
-        <div className="max-w-6xl mx-auto text-center">
-          <p className="text-[#c9a96e] text-sm font-medium tracking-[0.2em] uppercase mb-3">
-            Find Classes By
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-bold mb-10">Maningo Method</h2>
-          <div className="max-w-md mx-auto">
-            {/* Host Hampton */}
-            <a
-              href="https://maps.google.com/?q=295+Montauk+Highway+Suite+7+Speonk+NY+11972"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block rounded-2xl border border-[#e5e2dc] bg-white p-6 hover:border-[#c9a96e] transition-colors text-left group"
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-[#2d2d2d] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                  HH
-                </div>
-                <p className="font-semibold">Host Hampton</p>
-              </div>
-              <p className="text-sm text-[#6b6b6b]">295 Montauk Highway, Suite 7</p>
-              <p className="text-sm text-[#6b6b6b]">Speonk, NY 11972</p>
-              <p className="text-xs text-[#c9a96e] font-medium mt-3 group-hover:underline">
-                Get Directions &rarr;
+      <section className="px-5 py-16 sm:py-20 bg-white">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-10">
+            <span className="inline-block bg-[#1a1a1a]/90 text-[#c9a96e] text-xs sm:text-sm font-medium tracking-[0.2em] uppercase px-3 py-1.5 rounded-full mb-3">
+              Find Classes By
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-bold">Maningo Method</h2>
+            <p className="text-sm text-[#6b6b6b] mt-3 max-w-xl mx-auto">
+              Classes are held inside Host Hampton, a beautiful multi-use studio in Speonk, NY.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-[#e5e2dc] bg-[#faf9f6] overflow-hidden grid md:grid-cols-[260px_1fr]">
+            <div className="relative bg-white aspect-square md:aspect-auto md:min-h-[260px] flex items-center justify-center p-6">
+              <Image
+                src="/hh-logo-1200-sq.png"
+                alt="Host Hampton"
+                width={400}
+                height={400}
+                className="w-full h-auto max-w-[220px] object-contain"
+              />
+            </div>
+            <div className="p-6 sm:p-8">
+              <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#c9a96e] mb-2">Studio Partner</p>
+              <h3 className="text-xl sm:text-2xl font-bold mb-2">Host Hampton</h3>
+              <p className="text-sm text-[#6b6b6b] leading-relaxed mb-4">
+                Beyond Pilates, Host Hampton offers a full slate of community-focused services.
               </p>
-            </a>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-5">
+                {[
+                  'Kids theme parties',
+                  'Mobile party services',
+                  'Private studio rental',
+                  'DIY parties',
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2 text-sm text-[#2d2d2d]">
+                    <span className="text-[#c9a96e] mt-0.5">&#10003;</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <a
+                  href="https://hosthampton.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center h-10 px-5 rounded-full bg-[#2d2d2d] text-white text-sm font-medium hover:bg-[#1a1a1a] transition-colors"
+                >
+                  Visit hosthampton.com &rarr;
+                </a>
+                <a
+                  href="https://maps.google.com/?q=295+Montauk+Highway+Suite+7+Speonk+NY+11972"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center h-10 px-5 rounded-full border border-[#e5e2dc] bg-white text-[#2d2d2d] text-sm font-medium hover:border-[#c9a96e] transition-colors"
+                >
+                  Get directions
+                </a>
+              </div>
+              <p className="text-xs text-[#6b6b6b] mt-4">295 Montauk Highway, Suite 7 &middot; Speonk, NY 11972</p>
+            </div>
           </div>
         </div>
       </section>
