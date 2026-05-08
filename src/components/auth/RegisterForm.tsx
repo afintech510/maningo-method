@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/Input';
 export function RegisterForm() {
   const searchParams = useSearchParams();
   const packParam = searchParams?.get('pack') || null;
+  const refParam = searchParams?.get('ref') || null;
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof RegisterInput | 'root', string>>>({});
@@ -48,7 +49,7 @@ export function RegisterForm() {
     const res = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(result.data),
+      body: JSON.stringify({ ...result.data, referral_code: refParam || undefined }),
     });
     const json = await res.json();
     if (!res.ok) {

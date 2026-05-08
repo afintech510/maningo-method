@@ -6,10 +6,16 @@ export default function AdminPage() {
     <div className="px-4 py-6">
       <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
       <div className="space-y-3">
+        <Link href="/admin/schedule">
+          <Card className="hover:border-primary transition-colors">
+            <p className="font-semibold">Schedule</p>
+            <p className="text-sm text-muted-foreground">Create a recurring weekly schedule in one go</p>
+          </Card>
+        </Link>
         <Link href="/admin/classes">
           <Card className="hover:border-primary transition-colors">
             <p className="font-semibold">Classes</p>
-            <p className="text-sm text-muted-foreground">Create, edit, and manage classes</p>
+            <p className="text-sm text-muted-foreground">Edit individual classes, view enrollments, cancel</p>
           </Card>
         </Link>
         <Link href="/admin/students">

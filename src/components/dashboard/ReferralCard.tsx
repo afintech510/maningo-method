@@ -17,7 +17,7 @@ export function ReferralCard({ referralCode }: { referralCode: string }) {
     <Card className="border-[#c9a96e]/30 bg-[#c9a96e]/5">
       <p className="font-semibold text-sm mb-1">Refer a Friend, Get a Free Class</p>
       <p className="text-xs text-muted-foreground mb-3">
-        When your friend buys their intro class using your link, you both win — they get $20 off, you get a free class credit.
+        Every time a friend signs up with your link and buys a class pack, you get a free class credit. Every time. No cap.
       </p>
       <div className="flex gap-2">
         <input

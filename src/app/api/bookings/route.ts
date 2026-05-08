@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, isAuthError } from '@/lib/auth';
 import { logger, generateCorrelationId } from '@/lib/logger';
+import { applyCreditDelta } from '@/lib/credits';
 
 export async function POST(request: Request) {
   const correlationId = generateCorrelationId();
@@ -81,16 +82,19 @@ export async function POST(request: Request) {
       );
     }
 
-    // Deduct 1 credit
-    await adminClient
-      .from('profiles')
-      .update({ credits: profile.credits - 1 })
-      .eq('id', auth.user.id);
+    // Deduct 1 credit (atomic + audit logged)
+    const { newBalance } = await applyCreditDelta({
+      studentId: auth.user.id,
+      delta: -1,
+      reason: `Booking ${bookingId}`,
+      source: 'booking_create',
+      relatedId: String(bookingId),
+    });
 
-    log.info({ bookingId, credits_remaining: profile.credits - 1 }, 'Booking created, credit deducted');
+    log.info({ bookingId, credits_remaining: newBalance }, 'Booking created, credit deducted');
     return NextResponse.json({
       booking: { id: bookingId, class_id, status: 'confirmed', payment_type: 'drop_in' },
-      credits_remaining: profile.credits - 1,
+      credits_remaining: newBalance,
     });
   } catch (err) {
     log.error({ err }, 'POST /api/bookings failed');

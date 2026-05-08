@@ -1,7 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { IntegratedCheckout, type CheckoutSummary } from '@/components/checkout/IntegratedCheckout';
+import { ManualPayInline } from '@/components/checkout/ManualPayInline';
+import { formatCents } from '@/lib/pricing';
 
 const PACK_INFO: Record<string, CheckoutSummary> = {
   single: { label: 'Drop-In Class', price_display: '$25.00', amount_cents: 2500, credits: 1, description: 'One mat Pilates / sculpt class' },
@@ -41,7 +44,109 @@ export function CheckoutPayClient() {
     return <IntegratedCheckout kind="gift_pack" pack={pack} summary={summary} />;
   }
 
-  return <IntegratedCheckout kind="pack" pack={pack} summary={base} />;
+  // kind === 'pack' — show payment-method toggle (Card vs Cash/Zelle/Venmo)
+  return <PackCheckoutWithToggle pack={pack as 'single' | '5pack' | '10pack'} summary={base} />;
+}
+
+function PackCheckoutWithToggle({
+  pack,
+  summary,
+}: {
+  pack: 'single' | '5pack' | '10pack';
+  summary: CheckoutSummary;
+}) {
+  const [method, setMethod] = useState<'card' | 'manual'>('card');
+
+  if (method === 'card') {
+    return (
+      <div>
+        <PaymentMethodToggle method={method} setMethod={setMethod} />
+        <IntegratedCheckout kind="pack" pack={pack} summary={summary} />
+      </div>
+    );
+  }
+
+  // Manual mode: show our own summary (no fee) + ManualPayInline
+  return (
+    <div>
+      <PaymentMethodToggle method={method} setMethod={setMethod} />
+      <div className="grid lg:grid-cols-[1fr_440px] gap-8 max-w-5xl mx-auto">
+        <div className="lg:order-2 order-1 lg:sticky lg:top-6 h-fit">
+          <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#c9a96e] mb-3">Order Summary</p>
+          <div className="bg-[#faf9f6] rounded-2xl border border-[#e5e2dc] p-6">
+            <div className="flex items-start justify-between pb-4 border-b border-[#e5e2dc]">
+              <div>
+                <p className="font-semibold text-lg">{summary.label}</p>
+                {summary.description && <p className="text-sm text-[#6b6b6b] mt-1">{summary.description}</p>}
+                {summary.credits > 0 && (
+                  <p className="text-xs text-[#c9a96e] font-medium mt-2">
+                    {summary.credits} class credit{summary.credits === 1 ? '' : 's'}
+                  </p>
+                )}
+              </div>
+              <p className="text-xl font-bold whitespace-nowrap">{formatCents(summary.amount_cents)}</p>
+            </div>
+            <div className="flex items-center justify-between pt-4 text-sm">
+              <span className="text-[#6b6b6b]">Subtotal</span>
+              <span>{formatCents(summary.amount_cents)}</span>
+            </div>
+            <div className="flex items-center justify-between pt-2 text-sm">
+              <span className="text-[#6b6b6b]">Service fee</span>
+              <span className="text-emerald-600 font-medium">$0.00</span>
+            </div>
+            <div className="flex items-center justify-between pt-3 mt-3 border-t border-[#e5e2dc] font-semibold text-base">
+              <span>Total</span>
+              <span>{formatCents(summary.amount_cents)}</span>
+            </div>
+          </div>
+          <p className="mt-3 text-xs text-emerald-700">You&rsquo;re saving the 3% service fee by paying outside of card.</p>
+        </div>
+
+        <div className="lg:order-1 order-2 bg-white rounded-2xl border border-[#e5e2dc] p-6 sm:p-8 shadow-sm h-fit">
+          <ManualPayInline packType={pack} amountCents={summary.amount_cents} packLabel={summary.label} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PaymentMethodToggle({
+  method,
+  setMethod,
+}: {
+  method: 'card' | 'manual';
+  setMethod: (m: 'card' | 'manual') => void;
+}) {
+  return (
+    <div className="max-w-5xl mx-auto mb-6">
+      <p className="text-xs text-[#6b6b6b] uppercase tracking-[0.2em] mb-2">Payment Method</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={() => setMethod('card')}
+          className={`min-h-[64px] rounded-xl border-2 p-3 text-left transition-colors ${
+            method === 'card' ? 'border-[#c9a96e] bg-white' : 'border-[#e5e2dc] bg-white hover:border-[#c9a96e]/50'
+          }`}
+        >
+          <p className="font-semibold">Pay with card</p>
+          <p className="text-xs text-[#6b6b6b]">Card, Apple Pay, Google Pay, Venmo via Stripe &middot; instant credits &middot; +3% service fee</p>
+        </button>
+        <button
+          type="button"
+          onClick={() => setMethod('manual')}
+          className={`min-h-[64px] rounded-xl border-2 p-3 text-left transition-colors relative ${
+            method === 'manual' ? 'border-[#c9a96e] bg-white' : 'border-[#e5e2dc] bg-white hover:border-[#c9a96e]/50'
+          }`}
+        >
+          <span className="absolute -top-2 right-3 bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wider uppercase">
+            Save 3%
+          </span>
+          <p className="font-semibold">Cash, Zelle, or Venmo</p>
+          <p className="text-xs text-[#6b6b6b]">No service fee &middot; credits apply after Chelsea confirms</p>
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function ErrorPanel({ message }: { message: string }) {

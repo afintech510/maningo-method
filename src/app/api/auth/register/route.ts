@@ -24,6 +24,7 @@ export async function POST(request: NextRequest) {
       );
     }
     const { full_name, email, phone, password, sms_consent, sms_marketing_consent, email_marketing_consent } = result.data;
+    const referralCode: string | undefined = typeof body.referral_code === 'string' ? body.referral_code.trim() : undefined;
 
     const ip =
       request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
@@ -46,6 +47,19 @@ export async function POST(request: NextRequest) {
 
     const userId = created.user.id;
     const now = new Date().toISOString();
+
+    // Resolve referral code → referrer profile id
+    let referredBy: string | null = null;
+    if (referralCode) {
+      const { data: referrer } = await admin
+        .from('profiles')
+        .select('id')
+        .eq('referral_code', referralCode.toUpperCase())
+        .maybeSingle();
+      if (referrer && referrer.id !== userId) {
+        referredBy = referrer.id;
+      }
+    }
 
     const consentText = [
       sms_consent ? SMS_TRANSACTIONAL_CONSENT_TEXT : null,
@@ -71,6 +85,7 @@ export async function POST(request: NextRequest) {
         tos_accepted_ip: ip,
         tos_version: TOS_VERSION,
         waiver_acknowledged: true,
+        referred_by: referredBy,
       })
       .eq('id', userId);
 

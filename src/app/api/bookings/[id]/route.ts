@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, isAuthError } from '@/lib/auth';
 import { logger, generateCorrelationId } from '@/lib/logger';
+import { applyCreditDelta } from '@/lib/credits';
 
 export async function PATCH(
   request: NextRequest,
@@ -85,22 +85,18 @@ export async function PATCH(
       );
     }
 
-    // Refund 1 credit back to the student
-    const adminClient = createAdminClient();
-    const { data: profile } = await adminClient
-      .from('profiles')
-      .select('credits')
-      .eq('id', auth.user.id)
-      .single();
-
-    if (profile) {
-      await adminClient
-        .from('profiles')
-        .update({ credits: profile.credits + 1 })
-        .eq('id', auth.user.id);
-      log.info({ bookingId: params.id, credits_refunded: 1, new_balance: profile.credits + 1 }, 'Booking cancelled, credit refunded');
-    } else {
-      log.info({ bookingId: params.id }, 'Booking cancelled');
+    // Refund 1 credit back to the student (atomic + audit)
+    try {
+      const { newBalance } = await applyCreditDelta({
+        studentId: auth.user.id,
+        delta: 1,
+        reason: `Cancellation refund for booking ${params.id}`,
+        source: 'booking_cancel',
+        relatedId: params.id,
+      });
+      log.info({ bookingId: params.id, new_balance: newBalance }, 'Booking cancelled, credit refunded');
+    } catch (err) {
+      log.error({ err, bookingId: params.id }, 'Credit refund failed; cancellation persists');
     }
 
     return NextResponse.json({ booking: { id: params.id, status: 'cancelled' }, credit_refunded: true });

@@ -37,6 +37,8 @@ export function BuyPacks() {
       <p className="text-xs text-muted-foreground mt-2">
         Prefer Venmo, Zelle, or cash?{' '}
         <Link href="/checkout/manual?pack=5pack" className="text-[#c9a96e] hover:underline">Pay another way</Link>
+        {' '}&middot;{' '}
+        <Link href="/redeem" className="text-[#c9a96e] hover:underline">Have a gift code?</Link>
       </p>
     </div>
   );

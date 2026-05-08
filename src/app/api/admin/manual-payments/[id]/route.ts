@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, isAuthError } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logger, generateCorrelationId } from '@/lib/logger';
+import { applyCreditDelta } from '@/lib/credits';
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   const correlationId = generateCorrelationId();
@@ -49,19 +50,20 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         return NextResponse.json({ error: { code: 'INTERNAL_ERROR', message: 'DB error.' } }, { status: 500 });
       }
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('credits')
-        .eq('id', payment.student_id)
-        .single();
+      const { newBalance } = await applyCreditDelta({
+        studentId: payment.student_id,
+        delta: payment.credits,
+        reason: `Manual payment ${params.id} marked paid`,
+        source: 'manual_payment',
+        adminId: auth.user.id,
+        relatedId: params.id,
+      });
 
-      await supabase
-        .from('profiles')
-        .update({ credits: (profile?.credits || 0) + payment.credits })
-        .eq('id', payment.student_id);
-
-      log.info({ paymentId: params.id, studentId: payment.student_id, credits: payment.credits }, 'Manual payment marked paid');
-      return NextResponse.json({ status: 'paid', credits_added: payment.credits });
+      log.info(
+        { paymentId: params.id, studentId: payment.student_id, credits: payment.credits, newBalance },
+        'Manual payment marked paid'
+      );
+      return NextResponse.json({ status: 'paid', credits_added: payment.credits, new_balance: newBalance });
     }
 
     const { error: cancelErr } = await supabase

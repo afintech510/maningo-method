@@ -3,6 +3,7 @@ import { requireAuth, isAuthError } from '@/lib/auth';
 import { getStripe, getOrCreateStripeCustomer } from '@/lib/stripe';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logger, generateCorrelationId } from '@/lib/logger';
+import { withServiceFee } from '@/lib/pricing';
 
 const PACKS: Record<string, { credits: number; amount_cents: number; label: string }> = {
   single: { credits: 1, amount_cents: 2500, label: 'Drop-In Class' },
@@ -78,21 +79,29 @@ export async function POST(request: NextRequest) {
     const stripe = getStripe();
     const customerId = await getOrCreateStripeCustomer(auth.user.id, auth.user.email);
 
+    const fee = withServiceFee(amountCents);
+    const totalCents = fee.total_cents;
+
+    metadata.base_cents = String(fee.base_cents);
+    metadata.service_fee_cents = String(fee.fee_cents);
+
     const intent = await stripe.paymentIntents.create({
-      amount: amountCents,
+      amount: totalCents,
       currency: 'usd',
       customer: customerId,
       metadata,
-      description: label,
+      description: `${label} (incl. 3% service fee)`,
       automatic_payment_methods: { enabled: true },
       receipt_email: auth.user.email,
     });
 
-    log.info({ studentId: auth.user.id, kind, amountCents, intentId: intent.id }, 'PaymentIntent created');
+    log.info({ studentId: auth.user.id, kind, baseCents: amountCents, totalCents, feeCents: fee.fee_cents, intentId: intent.id }, 'PaymentIntent created');
 
     return NextResponse.json({
       client_secret: intent.client_secret,
-      amount_cents: amountCents,
+      base_cents: amountCents,
+      service_fee_cents: fee.fee_cents,
+      total_cents: totalCents,
       label,
       credits,
     });

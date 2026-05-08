@@ -3,6 +3,10 @@ import { logger } from '@/lib/logger';
 import { BookingConfirmation } from '@/emails/BookingConfirmation';
 import { BookingCancellation } from '@/emails/BookingCancellation';
 import { ClassCancellation } from '@/emails/ClassCancellation';
+import { GiftPurchaseConfirmation } from '@/emails/GiftPurchaseConfirmation';
+import { GiftReceived } from '@/emails/GiftReceived';
+import { GiftRedeemed } from '@/emails/GiftRedeemed';
+import { ReferralRewardEarned } from '@/emails/ReferralRewardEarned';
 import { createElement } from 'react';
 
 let resendInstance: Resend | null = null;
@@ -110,5 +114,88 @@ export async function sendRefundReport(
     });
   } catch (err) {
     logger.error({ err }, 'Failed to send refund report');
+  }
+}
+
+export async function sendGiftPurchaseConfirmation(
+  to: string,
+  data: {
+    purchaserName: string;
+    recipientName: string | null;
+    packLabel: string;
+    amountDisplay: string;
+    code: string;
+    redemptionUrl: string;
+    deliveryMode: 'email' | 'share';
+  }
+) {
+  try {
+    const resend = getResend();
+    await resend.emails.send({
+      from: `Maningo Method <${FROM_EMAIL}>`,
+      to,
+      subject: 'Your Maningo Method gift is ready',
+      react: createElement(GiftPurchaseConfirmation, data),
+    });
+  } catch (err) {
+    logger.error({ err, to }, 'Failed to send gift purchase confirmation');
+  }
+}
+
+export async function sendGiftReceived(
+  to: string,
+  data: {
+    recipientName: string;
+    senderName: string;
+    senderMessage: string | null;
+    packLabel: string;
+    code: string;
+    redemptionUrl: string;
+  }
+) {
+  try {
+    const resend = getResend();
+    await resend.emails.send({
+      from: `Maningo Method <${FROM_EMAIL}>`,
+      to,
+      subject: `${data.senderName} sent you a Maningo Method gift`,
+      react: createElement(GiftReceived, data),
+    });
+  } catch (err) {
+    logger.error({ err, to }, 'Failed to send gift received email');
+  }
+}
+
+export async function sendGiftRedeemed(
+  to: string,
+  data: { purchaserName: string; recipientName: string | null; packLabel: string; redeemerName: string | null }
+) {
+  try {
+    const resend = getResend();
+    await resend.emails.send({
+      from: `Maningo Method <${FROM_EMAIL}>`,
+      to,
+      subject: 'Your Maningo Method gift was redeemed',
+      react: createElement(GiftRedeemed, data),
+    });
+  } catch (err) {
+    logger.error({ err, to }, 'Failed to send gift redeemed email');
+  }
+}
+
+export async function sendReferralRewardEarned(
+  to: string,
+  data: { referrerName: string; friendName: string | null; newBalance: number }
+) {
+  try {
+    const resend = getResend();
+    await resend.emails.send({
+      from: `Maningo Method <${FROM_EMAIL}>`,
+      to,
+      subject: 'You just earned a free class credit',
+      react: createElement(ReferralRewardEarned, data),
+    });
+  } catch (err) {
+    logger.error({ err, to }, 'Failed to send referral reward email');
   }
 }

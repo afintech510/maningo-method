@@ -2,6 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getStripe } from '@/lib/stripe';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
+import { applyCreditDelta } from '@/lib/credits';
+import { generateGiftCode } from '@/lib/gift-codes';
+import {
+  sendGiftPurchaseConfirmation,
+  sendGiftReceived,
+  sendReferralRewardEarned,
+} from '@/lib/resend';
+import { getBaseUrl } from '@/lib/utils';
+
+const PACK_LABEL: Record<string, string> = {
+  single: 'Drop-In Class',
+  '5pack': '5-Class Pack',
+  '10pack': '10-Class Pack',
+  custom: 'Custom Gift Pack',
+};
+
 // Webhook event objects are validated via signature, so `any` is fine for shape access
 
 export async function POST(request: NextRequest) {
@@ -42,65 +58,56 @@ export async function POST(request: NextRequest) {
       case 'checkout.session.completed': {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const session = event.data.object as any;
+        if (session.mode !== 'payment') break;
 
-        if (session.mode === 'payment') {
-          const bookingId = session.metadata?.booking_id;
-          const packType = session.metadata?.pack_type;
-          const credits = session.metadata?.credits;
-          const studentId = session.metadata?.student_id;
-          const paymentIntent = session.payment_intent as string;
+        const md = session.metadata || {};
+        const studentId: string | undefined = md.student_id;
+        const bookingId: string | undefined = md.booking_id;
+        const packType: string | undefined = md.pack_type;
+        const credits: string | undefined = md.credits;
+        const paymentIntent = session.payment_intent as string;
 
-          if (packType && credits && studentId) {
-            // Class pack purchase — add credits
-            const creditsNum = parseInt(credits, 10);
+        if (packType && credits && studentId) {
+          const creditsNum = parseInt(credits, 10);
 
-            const { error: purchaseError } = await supabase
-              .from('credit_purchases')
-              .insert({
-                student_id: studentId,
-                pack_type: packType,
-                credits_added: creditsNum,
-                amount_paid_cents: session.amount_total || 0,
-                stripe_checkout_session_id: session.id,
-                stripe_payment_intent_id: paymentIntent,
-              });
-
-            if (purchaseError) {
-              log.error({ err: purchaseError }, 'Failed to record credit purchase');
-              return NextResponse.json({ error: 'DB error' }, { status: 500 });
-            }
-
-            // Add credits to profile
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('credits')
-              .eq('id', studentId)
-              .single();
-
-            await supabase
-              .from('profiles')
-              .update({ credits: (profile?.credits || 0) + creditsNum })
-              .eq('id', studentId);
-
-            log.info({ studentId, packType, credits: creditsNum }, 'Credits added');
-          } else if (bookingId) {
-            // Legacy drop-in booking confirmation
-            const { error } = await supabase
-              .from('bookings')
-              .update({
-                status: 'confirmed',
-                stripe_payment_intent_id: paymentIntent,
-                amount_paid_cents: session.amount_total,
-              })
-              .eq('id', bookingId)
-              .eq('status', 'pending');
-
-            if (error) {
-              log.error({ err: error, bookingId }, 'Failed to confirm drop-in booking');
-              return NextResponse.json({ error: 'DB error' }, { status: 500 });
-            }
-            log.info({ bookingId }, 'Drop-in booking confirmed');
+          const { error: purchaseError } = await supabase.from('credit_purchases').insert({
+            student_id: studentId,
+            pack_type: packType,
+            credits_added: creditsNum,
+            amount_paid_cents: session.amount_total || 0,
+            stripe_checkout_session_id: session.id,
+            stripe_payment_intent_id: paymentIntent,
+          });
+          if (purchaseError) {
+            log.error({ err: purchaseError }, 'Failed to record credit purchase');
+            return NextResponse.json({ error: 'DB error' }, { status: 500 });
           }
+
+          await applyCreditDelta({
+            studentId,
+            delta: creditsNum,
+            reason: `Stripe purchase ${packType}`,
+            source: 'stripe_purchase',
+            relatedId: paymentIntent || session.id,
+          });
+          log.info({ studentId, packType, credits: creditsNum }, 'Credits added (checkout.session)');
+
+          await rewardReferrerIfApplicable(studentId, paymentIntent || session.id, log);
+        } else if (bookingId) {
+          const { error } = await supabase
+            .from('bookings')
+            .update({
+              status: 'confirmed',
+              stripe_payment_intent_id: paymentIntent,
+              amount_paid_cents: session.amount_total,
+            })
+            .eq('id', bookingId)
+            .eq('status', 'pending');
+          if (error) {
+            log.error({ err: error, bookingId }, 'Failed to confirm drop-in booking');
+            return NextResponse.json({ error: 'DB error' }, { status: 500 });
+          }
+          log.info({ bookingId }, 'Drop-in booking confirmed');
         }
         break;
       }
@@ -110,8 +117,6 @@ export async function POST(request: NextRequest) {
         const intent = event.data.object as any;
         const md = intent.metadata || {};
         const studentId: string | undefined = md.student_id;
-        const packType: string | undefined = md.pack_type;
-        const credits: string | undefined = md.credits;
         const isGift: boolean = md.gift === 'true';
 
         if (!studentId) {
@@ -119,30 +124,112 @@ export async function POST(request: NextRequest) {
           break;
         }
 
-        // Check if a checkout.session.completed already booked this intent (avoid double credit)
+        // Avoid double credit: check if checkout.session.completed already processed this PI
         const { data: existingPurchase } = await supabase
           .from('credit_purchases')
           .select('id')
           .eq('stripe_payment_intent_id', intent.id)
           .maybeSingle();
+
+        if (isGift) {
+          // Gift purchase: generate code, insert gift_packs row, send emails.
+          // No credits go to the purchaser.
+          const { data: existingGift } = await supabase
+            .from('gift_packs')
+            .select('id')
+            .eq('stripe_payment_intent_id', intent.id)
+            .maybeSingle();
+          if (existingGift) {
+            log.info({ intentId: intent.id, giftId: existingGift.id }, 'Gift already recorded');
+            break;
+          }
+
+          const packType: string = md.gift_pack || 'custom';
+          const giftCredits: number = Number(md.gift_credits || 0);
+          const recipientName: string | null = md.recipient_name || null;
+          const recipientEmail: string | null = md.recipient_email || null;
+          const senderMessage: string | null = md.sender_message || null;
+          const deliveryMode: 'email' | 'share' = md.delivery_mode === 'email' ? 'email' : 'share';
+
+          // Try generate unique code (3 attempts)
+          let code = generateGiftCode();
+          for (let i = 0; i < 3; i++) {
+            const { data: existingCode } = await supabase
+              .from('gift_packs')
+              .select('id')
+              .eq('code', code)
+              .maybeSingle();
+            if (!existingCode) break;
+            code = generateGiftCode();
+          }
+
+          const { data: gift, error: insertErr } = await supabase
+            .from('gift_packs')
+            .insert({
+              code,
+              purchaser_id: studentId,
+              recipient_name: recipientName,
+              recipient_email: recipientEmail,
+              sender_message: senderMessage,
+              delivery_mode: deliveryMode,
+              pack_type: packType,
+              credits: giftCredits,
+              amount_cents: intent.amount_received || intent.amount,
+              stripe_payment_intent_id: intent.id,
+              status: 'active',
+            })
+            .select('id, code')
+            .single();
+          if (insertErr) {
+            log.error({ err: insertErr, intentId: intent.id }, 'Failed to insert gift_pack row');
+            return NextResponse.json({ error: 'DB error' }, { status: 500 });
+          }
+
+          // Lookup purchaser for email + name
+          const { data: purchaser } = await supabase
+            .from('profiles')
+            .select('full_name, email')
+            .eq('id', studentId)
+            .single();
+
+          const baseUrl = getBaseUrl();
+          const redemptionUrl = `${baseUrl}/redeem`;
+          const packLabel = PACK_LABEL[packType] || 'Maningo Method gift';
+          const amountDisplay = `$${((intent.amount_received || intent.amount) / 100).toFixed(2)}`;
+
+          if (purchaser?.email) {
+            await sendGiftPurchaseConfirmation(purchaser.email, {
+              purchaserName: purchaser.full_name || 'there',
+              recipientName,
+              packLabel,
+              amountDisplay,
+              code: gift.code,
+              redemptionUrl,
+              deliveryMode,
+            });
+          }
+          if (deliveryMode === 'email' && recipientEmail) {
+            await sendGiftReceived(recipientEmail, {
+              recipientName: recipientName || 'friend',
+              senderName: purchaser?.full_name || 'A Maningo Method member',
+              senderMessage,
+              packLabel,
+              code: gift.code,
+              redemptionUrl,
+            });
+          }
+          log.info({ giftId: gift.id, code: gift.code, deliveryMode }, 'Gift purchase complete');
+          break;
+        }
+
+        // Non-gift pack purchase via PaymentIntent (integrated checkout)
         if (existingPurchase) {
           log.info({ intentId: intent.id }, 'Already recorded by prior event');
           break;
         }
 
-        if (isGift) {
-          // Gift purchase — record but do not credit purchaser
-          await supabase.from('credit_purchases').insert({
-            student_id: studentId,
-            pack_type: md.gift_pack || 'gift_custom',
-            credits_added: 0,
-            amount_paid_cents: intent.amount_received || intent.amount,
-            stripe_payment_intent_id: intent.id,
-          });
-          log.info({ studentId, intentId: intent.id }, 'Gift purchase recorded');
-          break;
-        }
-
+        const packType: string | undefined = md.pack_type;
+        const credits: string | undefined = md.credits;
         if (packType && credits) {
           const creditsNum = parseInt(credits, 10);
           const { error: purchaseError } = await supabase.from('credit_purchases').insert({
@@ -157,13 +244,16 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'DB error' }, { status: 500 });
           }
 
-          const { data: profile } = await supabase.from('profiles').select('credits').eq('id', studentId).single();
-          await supabase
-            .from('profiles')
-            .update({ credits: (profile?.credits || 0) + creditsNum })
-            .eq('id', studentId);
-
+          await applyCreditDelta({
+            studentId,
+            delta: creditsNum,
+            reason: `Stripe purchase ${packType}`,
+            source: 'stripe_purchase',
+            relatedId: intent.id,
+          });
           log.info({ studentId, packType, credits: creditsNum, intentId: intent.id }, 'Credits added (PI)');
+
+          await rewardReferrerIfApplicable(studentId, intent.id, log);
         }
         break;
       }
@@ -172,15 +262,57 @@ export async function POST(request: NextRequest) {
         log.info('Unhandled event type');
     }
 
-    // Mark event as processed
-    await supabase
-      .from('processed_stripe_events')
-      .insert({ event_id: event.id, event_type: event.type });
-
+    await supabase.from('processed_stripe_events').insert({ event_id: event.id, event_type: event.type });
     return NextResponse.json({ received: true });
   } catch (err) {
     log.error({ err }, 'Webhook processing failed');
-    // DO NOT mark as processed — Stripe will retry
     return NextResponse.json({ error: 'Processing failed' }, { status: 500 });
+  }
+}
+
+// On every pack purchase by a referred user, reward the referrer with +1 credit.
+async function rewardReferrerIfApplicable(
+  buyerId: string,
+  triggerId: string,
+  log: { info: (...a: unknown[]) => void; error: (...a: unknown[]) => void }
+): Promise<void> {
+  const supabase = createAdminClient();
+  const { data: buyer } = await supabase
+    .from('profiles')
+    .select('referred_by, full_name')
+    .eq('id', buyerId)
+    .single();
+  if (!buyer?.referred_by) return;
+
+  try {
+    const { newBalance } = await applyCreditDelta({
+      studentId: buyer.referred_by,
+      delta: 1,
+      reason: 'Referral reward — friend purchased a pack',
+      source: 'referral_reward',
+      relatedId: triggerId,
+    });
+
+    await supabase.from('referral_rewards').insert({
+      referrer_id: buyer.referred_by,
+      referred_id: buyerId,
+      credits_rewarded: 1,
+    });
+
+    const { data: referrer } = await supabase
+      .from('profiles')
+      .select('email, full_name')
+      .eq('id', buyer.referred_by)
+      .single();
+    if (referrer?.email) {
+      await sendReferralRewardEarned(referrer.email, {
+        referrerName: referrer.full_name || 'there',
+        friendName: buyer.full_name,
+        newBalance,
+      });
+    }
+    log.info({ referrerId: buyer.referred_by, buyerId, triggerId }, 'Referral reward issued');
+  } catch (err) {
+    log.error({ err, referrerId: buyer.referred_by, buyerId }, 'Referral reward failed');
   }
 }

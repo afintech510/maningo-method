@@ -176,9 +176,8 @@ export default function Home() {
             All packs never expire. <Link href="/register" className="text-[#c9a96e] font-medium hover:underline">Create an account</Link> to purchase.
           </p>
           <p className="text-center text-xs text-[#6b6b6b] mt-2">
-            Prefer Venmo, Zelle, or cash?{' '}
-            <Link href="/checkout/manual?pack=5pack" className="text-[#c9a96e] hover:underline">Pay another way</Link>
-            {' '}— credits apply once Chelsea confirms.
+            Card payments include a 3% service fee. Pay with Cash, Zelle, or Venmo to skip it &mdash;
+            credits apply once Chelsea confirms.
           </p>
         </div>
       </section>
@@ -541,9 +540,9 @@ function GiftCardOption() {
     if (!canPurchase) return;
     setLoading(true);
     if (isPreset) {
-      window.location.href = `/checkout/pay?kind=gift_pack&pack=${option}`;
+      window.location.href = `/gift/new?pack=${option}`;
     } else {
-      window.location.href = `/checkout/pay?kind=gift_custom&amount_cents=${Math.round(total * 100)}`;
+      window.location.href = `/gift/new?pack=custom`;
     }
   }
 

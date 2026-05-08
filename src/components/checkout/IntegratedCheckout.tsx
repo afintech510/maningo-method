@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { getStripeJs } from '@/lib/stripe-client';
 import { Button } from '@/components/ui/Button';
+import { withServiceFee, formatCents } from '@/lib/pricing';
 
 type Kind = 'pack' | 'gift_pack' | 'gift_custom';
 
@@ -21,9 +22,19 @@ interface Props {
   pack?: string;
   amountCents?: number; // for gift_custom
   summary: CheckoutSummary;
+  // Allow callers (e.g. gift checkout) to override the intent endpoint
+  intentEndpoint?: string;
+  intentBody?: Record<string, unknown>;
 }
 
-export function IntegratedCheckout({ kind, pack, amountCents, summary }: Props) {
+export function IntegratedCheckout({
+  kind,
+  pack,
+  amountCents,
+  summary,
+  intentEndpoint,
+  intentBody,
+}: Props) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,10 +43,13 @@ export function IntegratedCheckout({ kind, pack, amountCents, summary }: Props) 
     setError(null);
     setClientSecret(null);
 
-    fetch('/api/checkout/intent', {
+    const endpoint = intentEndpoint || '/api/checkout/intent';
+    const body = intentBody ?? { kind, pack, amount_cents: amountCents };
+
+    fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ kind, pack, amount_cents: amountCents }),
+      body: JSON.stringify(body),
     })
       .then(async (res) => {
         const data = await res.json();
@@ -57,7 +71,7 @@ export function IntegratedCheckout({ kind, pack, amountCents, summary }: Props) 
     return () => {
       cancelled = true;
     };
-  }, [kind, pack, amountCents]);
+  }, [kind, pack, amountCents, intentEndpoint, intentBody]);
 
   return (
     <div className="grid lg:grid-cols-[1fr_440px] gap-8 max-w-5xl mx-auto">
@@ -81,6 +95,7 @@ export function IntegratedCheckout({ kind, pack, amountCents, summary }: Props) 
 }
 
 function CheckoutSummaryPane({ summary }: { summary: CheckoutSummary }) {
+  const fee = withServiceFee(summary.amount_cents);
   return (
     <div className="lg:order-2 order-1 lg:sticky lg:top-6 h-fit">
       <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#c9a96e] mb-3">Order Summary</p>
@@ -95,21 +110,24 @@ function CheckoutSummaryPane({ summary }: { summary: CheckoutSummary }) {
               </p>
             )}
           </div>
-          <p className="text-xl font-bold whitespace-nowrap">{summary.price_display}</p>
+          <p className="text-xl font-bold whitespace-nowrap">{formatCents(fee.base_cents)}</p>
         </div>
         <div className="flex items-center justify-between pt-4 text-sm">
           <span className="text-[#6b6b6b]">Subtotal</span>
-          <span>{summary.price_display}</span>
+          <span>{formatCents(fee.base_cents)}</span>
         </div>
         <div className="flex items-center justify-between pt-2 text-sm">
-          <span className="text-[#6b6b6b]">Tax</span>
-          <span className="text-[#6b6b6b]">$0.00</span>
+          <span className="text-[#6b6b6b]">Service fee (3%)</span>
+          <span className="text-[#6b6b6b]">{formatCents(fee.fee_cents)}</span>
         </div>
         <div className="flex items-center justify-between pt-3 mt-3 border-t border-[#e5e2dc] font-semibold text-base">
           <span>Total</span>
-          <span>{summary.price_display}</span>
+          <span>{formatCents(fee.total_cents)}</span>
         </div>
       </div>
+      <p className="mt-3 text-xs text-[#6b6b6b]">
+        Skip the 3% fee &mdash; pay with Cash, Zelle, or Venmo using the toggle above.
+      </p>
       <ul className="mt-5 space-y-2 text-xs text-[#6b6b6b]">
         <li className="flex items-start gap-2"><span className="text-[#c9a96e]">&#10003;</span> Credits never expire</li>
         <li className="flex items-start gap-2"><span className="text-[#c9a96e]">&#10003;</span> Cancel up to 12 hours before class for full credit refund</li>
