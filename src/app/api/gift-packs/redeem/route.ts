@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     const supabase = createAdminClient();
     const { data: gift, error: fetchErr } = await supabase
       .from('gift_packs')
-      .select('id, code, status, credits, pack_type, purchaser_id, recipient_name')
+      .select('id, code, status, credits, pack_type, purchaser_id, purchaser_email, purchaser_name, recipient_name')
       .eq('code', formatted)
       .maybeSingle();
 
@@ -106,20 +106,27 @@ export async function POST(request: NextRequest) {
         relatedId: gift.id,
       });
 
-      // Notify the original purchaser
-      const { data: purchaser } = await supabase
-        .from('profiles')
-        .select('email, full_name')
-        .eq('id', gift.purchaser_id)
-        .single();
+      // Notify the original purchaser. For account purchases, use the live
+      // profile. For guest purchases, fall back to fields stored on the gift row.
+      let purchaserEmail: string | null = gift.purchaser_email || null;
+      let purchaserName: string | null = gift.purchaser_name || null;
+      if (gift.purchaser_id) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('email, full_name')
+          .eq('id', gift.purchaser_id)
+          .single();
+        if (profile?.email) purchaserEmail = profile.email;
+        if (profile?.full_name) purchaserName = profile.full_name;
+      }
       const { data: redeemer } = await supabase
         .from('profiles')
         .select('full_name')
         .eq('id', auth.user.id)
         .single();
-      if (purchaser?.email) {
-        await sendGiftRedeemed(purchaser.email, {
-          purchaserName: purchaser.full_name || 'there',
+      if (purchaserEmail) {
+        await sendGiftRedeemed(purchaserEmail, {
+          purchaserName: purchaserName || 'there',
           recipientName: gift.recipient_name,
           packLabel: PACK_LABEL[gift.pack_type] || 'gift',
           redeemerName: redeemer?.full_name || null,

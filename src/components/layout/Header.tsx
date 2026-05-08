@@ -5,11 +5,13 @@ import { getAuth } from '@/lib/auth';
 export async function Header() {
   const auth = await getAuth();
   const isLoggedIn = !!auth;
+  const isAdmin = auth?.user?.role === 'admin';
+  const homeHref = isAdmin ? '/admin' : isLoggedIn ? '/dashboard' : '/';
 
   return (
     <header className="border-b border-border bg-white">
       <div className="relative flex items-center justify-center px-5 py-3 min-h-[64px]">
-        <Link href="/" aria-label="Maningo Method home" className="block">
+        <Link href={homeHref} aria-label="Maningo Method home" className="block">
           <Image
             src="/maningo-method_logo_600.png"
             alt="Maningo Method"
@@ -20,6 +22,14 @@ export async function Header() {
           />
         </Link>
         <nav className="absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 flex items-center gap-2 sm:gap-3 text-sm">
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className="inline-flex items-center justify-center h-9 px-3 sm:px-4 rounded-full bg-[#2d2d2d] text-white text-xs sm:text-sm font-medium hover:bg-[#1a1a1a] transition-colors"
+            >
+              Admin
+            </Link>
+          )}
           {isLoggedIn ? (
             <Link
               href="/dashboard"

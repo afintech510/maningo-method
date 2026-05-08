@@ -1,12 +1,11 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { LoginForm } from '@/components/auth/LoginForm';
+import { GiftNewClient } from './client';
 
-export default function LoginPage() {
+export default function GiftNewPage() {
   return (
     <div className="min-h-screen flex flex-col bg-[#faf9f6]">
-      {/* Top nav */}
       <header className="border-b border-[#e5e2dc] bg-white">
         <div className="relative flex items-center justify-center px-5 py-3 min-h-[64px]">
           <Link href="/" aria-label="Maningo Method home" className="block">
@@ -28,38 +27,13 @@ export default function LoginPage() {
         </div>
       </header>
 
-      {/* Main */}
-      <main className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+      <main className="flex-1 px-5 py-8 sm:py-12">
         <Suspense fallback={null}>
-          <LoginForm />
+          <GiftNewClient />
         </Suspense>
-
-        {/* Sales pitch / signup */}
-        <div className="w-full max-w-md mx-auto mt-12 rounded-2xl border border-[#e5e2dc] bg-white p-6 sm:p-8 text-center">
-          <p className="text-[10px] sm:text-xs font-medium uppercase tracking-[0.25em] text-[#c9a96e] mb-2">
-            New to Maningo Method?
-          </p>
-          <h2 className="text-xl sm:text-2xl font-bold mb-2">
-            Come take a class
-          </h2>
-          <p className="text-sm text-[#6b6b6b] mb-5 leading-relaxed">
-            High-energy mat Pilates &amp; sculpt &mdash; Pilates on the edge of the Hamptons.
-            Free to sign up. Drop-ins from $25.
-          </p>
-          <Link
-            href="/register"
-            className="inline-flex items-center justify-center h-11 px-8 rounded-full bg-[#c9a96e] text-white text-sm font-semibold hover:bg-[#b8955d] transition-colors"
-          >
-            Create your free account
-          </Link>
-          <p className="text-xs text-[#6b6b6b] mt-4">
-            Already a member? <span className="text-[#2d2d2d] font-medium">Log in above &uarr;</span>
-          </p>
-        </div>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-[#2d2d2d] text-white px-5 py-8">
+      <footer className="bg-[#2d2d2d] text-white px-5 py-6">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
           <p className="font-serif font-bold">Maningo Method</p>
           <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-white/70">

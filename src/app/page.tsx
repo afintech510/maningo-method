@@ -49,15 +49,15 @@ export default function Home() {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a]/70 via-[#1a1a1a]/30 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-12 lg:p-16 max-w-6xl mx-auto">
-            <p className="text-[#c9a96e] text-sm font-medium tracking-[0.2em] uppercase mb-3">
+            <span className="inline-block bg-[#1a1a1a]/70 backdrop-blur-sm text-[#c9a96e] text-xs sm:text-sm font-medium tracking-[0.2em] uppercase mb-3 px-3 py-1.5 rounded-full">
               Pilates on the Edge of the Hamptons
-            </p>
+            </span>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-[1.1] mb-5 max-w-2xl">
               Full Body Mat Pilates <span className="text-[#c9a96e]">&#9670;</span> Sculpt Classes
             </h1>
-            <p className="text-[#c9a96e]/90 text-xs sm:text-sm font-medium tracking-[0.25em] uppercase mb-4">
+            <span className="inline-block bg-[#1a1a1a]/70 backdrop-blur-sm text-[#c9a96e] text-[11px] sm:text-sm font-medium tracking-[0.2em] sm:tracking-[0.25em] uppercase mb-4 px-3 py-1.5 rounded-full">
               Strength &times; Control &times; Mindful Movement &times; Music
-            </p>
+            </span>
             <p className="text-white/80 text-lg mb-8 max-w-xl leading-relaxed">
               A high-energy mat pilates experience designed for all levels. Challenge your body, clear your mind, and leave feeling stronger and empowered.
             </p>
@@ -241,17 +241,20 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Private Session Inquiry */}
+      {/* Inquiry */}
       <section id="contact" className="px-5 py-16 sm:py-20 bg-white">
         <div className="max-w-2xl mx-auto">
           <p className="text-[#c9a96e] text-sm font-medium tracking-[0.2em] uppercase text-center mb-3">
-            Private Training
+            Get in Touch
           </p>
           <h2 className="text-3xl sm:text-4xl font-bold text-center mb-4">
-            Private Session Inquiry
+            Send Chelsea a Note
           </h2>
-          <p className="text-center text-[#6b6b6b] mb-10 max-w-md mx-auto">
-            Available as 1-on-1 or private group sessions. Fill out the form and Chelsea will reach out within 24 hours.
+          <p className="text-center text-[#6b6b6b] mb-3 max-w-lg mx-auto">
+            Whatever you&rsquo;re thinking &mdash; private 1-on-1, a private group with friends or co-workers, a session at the studio, or Chelsea coming to your home or somewhere local of your choosing &mdash; this is the right place.
+          </p>
+          <p className="text-center text-[#6b6b6b] mb-10 max-w-lg mx-auto">
+            Fill out the form below or call/text <a href="tel:+16312525227" className="text-[#c9a96e] hover:underline whitespace-nowrap">(631) 252-5227</a>. Chelsea will get back to you within 24 hours.
           </p>
           <InquiryForm />
         </div>
@@ -337,7 +340,10 @@ export default function Home() {
               <p className="font-semibold text-sm mb-3">Studio</p>
               <p className="text-sm text-white/60">295 Montauk Highway, Suite 7</p>
               <p className="text-sm text-white/60">Speonk, NY 11972</p>
-              <a href="mailto:chelsea@maningomethod.com" className="text-sm text-[#c9a96e] hover:underline mt-2 block">
+              <a href="tel:+16312525227" className="text-sm text-white/80 hover:text-white mt-2 block">
+                (631) 252-5227
+              </a>
+              <a href="mailto:chelsea@maningomethod.com" className="text-sm text-[#c9a96e] hover:underline mt-1 block">
                 chelsea@maningomethod.com
               </a>
             </div>

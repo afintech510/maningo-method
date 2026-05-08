@@ -13,6 +13,7 @@ import { Card } from '@/components/ui/Card';
 export default async function DashboardPage() {
   const auth = await getAuth();
   if (!auth) redirect('/login');
+  if (auth.user.role === 'admin') redirect('/admin');
 
   const supabase = createAdminClient();
 

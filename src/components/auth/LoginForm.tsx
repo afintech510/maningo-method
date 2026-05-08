@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/Input';
 export function LoginForm() {
   const searchParams = useSearchParams();
   const packParam = searchParams?.get('pack') || null;
+  const nextParam = searchParams?.get('next') || null;
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof LoginInput | 'root', string>>>({});
 
@@ -59,7 +60,12 @@ export function LoginForm() {
       window.location.href = `/checkout/pay?kind=pack&pack=${packParam}`;
       return;
     }
-    // Full page redirect so the server picks up the new session cookie
+    if (nextParam && nextParam.startsWith('/')) {
+      window.location.href = nextParam;
+      return;
+    }
+    // Full page redirect so the server picks up the new session cookie. Admin
+    // routing handled by /dashboard which redirects admins to /admin.
     window.location.href = '/dashboard';
   }
 
@@ -101,16 +107,10 @@ export function LoginForm() {
         Sign In
       </Button>
 
-      <div className="text-center space-y-2 text-sm">
+      <div className="text-center text-sm">
         <Link href="/forgot-password" className="text-muted-foreground hover:text-foreground">
           Forgot password?
         </Link>
-        <p className="text-muted-foreground">
-          New here?{' '}
-          <Link href={`/register${packParam ? `?pack=${packParam}` : ''}`} className="text-foreground font-medium hover:underline">
-            Sign up
-          </Link>
-        </p>
       </div>
     </form>
   );

@@ -119,7 +119,8 @@ export async function POST(request: NextRequest) {
         const studentId: string | undefined = md.student_id;
         const isGift: boolean = md.gift === 'true';
 
-        if (!studentId) {
+        // Gifts may be guest purchases (no student_id). Non-gift packs always require one.
+        if (!studentId && !isGift) {
           log.info({ intentId: intent.id }, 'PaymentIntent without student_id; skipping');
           break;
         }
@@ -163,11 +164,27 @@ export async function POST(request: NextRequest) {
             code = generateGiftCode();
           }
 
+          // Resolve purchaser identity: prefer authed studentId, fall back to
+          // metadata fields captured during guest checkout.
+          let purchaserName: string | null = md.purchaser_name || null;
+          let purchaserEmail: string | null = md.purchaser_email || null;
+          if (studentId) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('full_name, email')
+              .eq('id', studentId)
+              .single();
+            if (profile?.email) purchaserEmail = profile.email;
+            if (profile?.full_name) purchaserName = profile.full_name;
+          }
+
           const { data: gift, error: insertErr } = await supabase
             .from('gift_packs')
             .insert({
               code,
-              purchaser_id: studentId,
+              purchaser_id: studentId || null,
+              purchaser_email: purchaserEmail,
+              purchaser_name: purchaserName,
               recipient_name: recipientName,
               recipient_email: recipientEmail,
               sender_message: senderMessage,
@@ -185,21 +202,14 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'DB error' }, { status: 500 });
           }
 
-          // Lookup purchaser for email + name
-          const { data: purchaser } = await supabase
-            .from('profiles')
-            .select('full_name, email')
-            .eq('id', studentId)
-            .single();
-
           const baseUrl = getBaseUrl();
           const redemptionUrl = `${baseUrl}/redeem`;
           const packLabel = PACK_LABEL[packType] || 'Maningo Method gift';
           const amountDisplay = `$${((intent.amount_received || intent.amount) / 100).toFixed(2)}`;
 
-          if (purchaser?.email) {
-            await sendGiftPurchaseConfirmation(purchaser.email, {
-              purchaserName: purchaser.full_name || 'there',
+          if (purchaserEmail) {
+            await sendGiftPurchaseConfirmation(purchaserEmail, {
+              purchaserName: purchaserName || 'there',
               recipientName,
               packLabel,
               amountDisplay,
@@ -211,7 +221,7 @@ export async function POST(request: NextRequest) {
           if (deliveryMode === 'email' && recipientEmail) {
             await sendGiftReceived(recipientEmail, {
               recipientName: recipientName || 'friend',
-              senderName: purchaser?.full_name || 'A Maningo Method member',
+              senderName: purchaserName || 'A Maningo Method gift',
               senderMessage,
               packLabel,
               code: gift.code,
@@ -223,6 +233,10 @@ export async function POST(request: NextRequest) {
         }
 
         // Non-gift pack purchase via PaymentIntent (integrated checkout)
+        if (!studentId) {
+          log.info({ intentId: intent.id }, 'Non-gift PI without student_id; skipping');
+          break;
+        }
         if (existingPurchase) {
           log.info({ intentId: intent.id }, 'Already recorded by prior event');
           break;

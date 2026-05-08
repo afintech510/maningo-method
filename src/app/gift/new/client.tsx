@@ -1,12 +1,13 @@
 'use client';
 
-import { Suspense, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { IntegratedCheckout, type CheckoutSummary } from '@/components/checkout/IntegratedCheckout';
 import { formatCents } from '@/lib/pricing';
+import { createClient } from '@/lib/supabase/client';
 
 const PACK_INFO: Record<string, { label: string; amount_cents: number; credits: number }> = {
   single: { label: 'Drop-In Class', amount_cents: 2500, credits: 1 },
@@ -14,21 +15,37 @@ const PACK_INFO: Record<string, { label: string; amount_cents: number; credits: 
   '10pack': { label: '10-Class Pack', amount_cents: 20000, credits: 10 },
 };
 
-function GiftNewContent() {
+export function GiftNewClient() {
   const params = useSearchParams();
   const initialPack = (params?.get('pack') || '5pack') as 'single' | '5pack' | '10pack' | 'custom';
 
   const [pack, setPack] = useState<'single' | '5pack' | '10pack' | 'custom'>(initialPack);
   const [customAmt, setCustomAmt] = useState('50');
+  const [purchaserName, setPurchaserName] = useState('');
+  const [purchaserEmail, setPurchaserEmail] = useState('');
   const [recipientName, setRecipientName] = useState('');
   const [recipientEmail, setRecipientEmail] = useState('');
   const [senderMessage, setSenderMessage] = useState('');
   const [deliveryMode, setDeliveryMode] = useState<'email' | 'share'>('share');
   const [showCheckout, setShowCheckout] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [authState, setAuthState] = useState<'unknown' | 'guest' | 'authed'>('unknown');
 
   const customCents = Math.round(Number(customAmt) * 100);
   const isCustom = pack === 'custom';
+
+  // Detect auth client-side so guest fields show only when needed
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        setAuthState('authed');
+        setPurchaserEmail(data.user.email || '');
+      } else {
+        setAuthState('guest');
+      }
+    });
+  }, []);
 
   const summary: CheckoutSummary = useMemo(() => {
     if (isCustom) {
@@ -59,13 +76,30 @@ function GiftNewContent() {
       recipient_email: recipientEmail || null,
       sender_message: senderMessage || null,
       delivery_mode: deliveryMode,
+      // Guest fields (ignored server-side when user is authed)
+      purchaser_name: purchaserName || null,
+      purchaser_email: purchaserEmail || null,
     }),
-    [isCustom, pack, customCents, recipientName, recipientEmail, senderMessage, deliveryMode]
+    [
+      isCustom, pack, customCents,
+      recipientName, recipientEmail, senderMessage, deliveryMode,
+      purchaserName, purchaserEmail,
+    ]
   );
 
   function handleContinue(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+    if (authState === 'guest') {
+      if (!purchaserName.trim()) {
+        setError('Your name is required so we can email you the gift code.');
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(purchaserEmail)) {
+        setError('Your email looks invalid.');
+        return;
+      }
+    }
     if (deliveryMode === 'email') {
       if (!recipientName.trim()) {
         setError('Recipient name is required when emailing the gift.');
@@ -85,7 +119,7 @@ function GiftNewContent() {
 
   if (showCheckout) {
     return (
-      <div>
+      <div className="max-w-5xl mx-auto">
         <button
           type="button"
           onClick={() => setShowCheckout(false)}
@@ -111,7 +145,7 @@ function GiftNewContent() {
         <p className="text-xs font-medium uppercase tracking-[0.25em] text-[#c9a96e] mb-2">Gift a Pack</p>
         <h1 className="text-3xl font-bold">Send a Maningo Method gift</h1>
         <p className="text-sm text-[#6b6b6b] mt-2">
-          Pick a pack, decide how to deliver it, and we&rsquo;ll generate a unique gift code on payment.
+          Pick a pack, decide how to deliver it, and we&rsquo;ll generate a unique gift code on payment. No account required.
         </p>
       </div>
 
@@ -150,6 +184,34 @@ function GiftNewContent() {
             placeholder="50"
             required
           />
+        )}
+
+        {authState === 'guest' && (
+          <div className="rounded-2xl border border-[#e5e2dc] bg-white p-4 space-y-3">
+            <p className="text-sm font-medium">Your details</p>
+            <Input
+              label="Your name"
+              value={purchaserName}
+              onChange={(e) => setPurchaserName(e.target.value)}
+              required
+              placeholder="Full name"
+              autoComplete="name"
+            />
+            <Input
+              label="Your email"
+              type="email"
+              inputMode="email"
+              value={purchaserEmail}
+              onChange={(e) => setPurchaserEmail(e.target.value)}
+              required
+              placeholder="you@example.com"
+              autoComplete="email"
+            />
+            <p className="text-xs text-[#6b6b6b]">
+              We&rsquo;ll email you the gift code &amp; a receipt.{' '}
+              <Link href="/login?next=/gift/new" className="text-[#c9a96e] hover:underline">Have an account? Log in</Link>
+            </p>
+          </div>
         )}
 
         <div>
@@ -224,27 +286,10 @@ function GiftNewContent() {
 
         {error && <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-800">{error}</div>}
 
-        <Button type="submit" className="w-full">
+        <Button type="submit" className="w-full" disabled={authState === 'unknown'}>
           Continue to payment
         </Button>
-        <p className="text-center">
-          <Link href="/dashboard" className="text-xs text-[#6b6b6b] hover:underline">
-            Cancel
-          </Link>
-        </p>
       </form>
-    </div>
-  );
-}
-
-export default function GiftNewPage() {
-  return (
-    <div className="bg-[#faf9f6] min-h-[calc(100vh-64px)]">
-      <main className="px-5 py-8 sm:py-12">
-        <Suspense fallback={null}>
-          <GiftNewContent />
-        </Suspense>
-      </main>
     </div>
   );
 }

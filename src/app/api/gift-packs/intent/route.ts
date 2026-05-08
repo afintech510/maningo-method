@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { requireAuth, isAuthError } from '@/lib/auth';
+import { getAuth } from '@/lib/auth';
 import { getStripe, getOrCreateStripeCustomer } from '@/lib/stripe';
 import { withServiceFee } from '@/lib/pricing';
 import { logger, generateCorrelationId } from '@/lib/logger';
@@ -19,14 +19,16 @@ const intentSchema = z.object({
   recipient_email: z.string().email().optional().nullable(),
   sender_message: z.string().max(280).optional().nullable(),
   delivery_mode: z.enum(['email', 'share']),
+  // Guest checkout fields (used only when no auth session present)
+  purchaser_name: z.string().max(120).optional().nullable(),
+  purchaser_email: z.string().email().optional().nullable(),
 });
 
 export async function POST(request: NextRequest) {
   const correlationId = generateCorrelationId();
   const log = logger.child({ correlationId });
 
-  const auth = await requireAuth();
-  if (isAuthError(auth)) return auth;
+  const auth = await getAuth();
 
   try {
     const body = await request.json();
@@ -38,6 +40,18 @@ export async function POST(request: NextRequest) {
       );
     }
     const input = result.data;
+
+    // Resolve purchaser identity (logged-in OR guest)
+    const purchaserId = auth?.user.id ?? null;
+    const purchaserEmail = auth?.user.email ?? input.purchaser_email ?? null;
+    const purchaserName = auth?.user.full_name ?? input.purchaser_name ?? null;
+
+    if (!purchaserEmail || !purchaserName) {
+      return NextResponse.json(
+        { error: { code: 'VALIDATION_ERROR', message: 'Your name and email are required.' } },
+        { status: 400 }
+      );
+    }
 
     if (input.delivery_mode === 'email' && (!input.recipient_email || !input.recipient_name)) {
       return NextResponse.json(
@@ -72,20 +86,39 @@ export async function POST(request: NextRequest) {
     const fee = withServiceFee(baseCents);
 
     const metadata: Record<string, string> = {
-      student_id: auth.user.id,
       gift: 'true',
       gift_pack: packType,
       gift_credits: String(credits),
       delivery_mode: input.delivery_mode,
       base_cents: String(fee.base_cents),
       service_fee_cents: String(fee.fee_cents),
+      purchaser_email: purchaserEmail,
+      purchaser_name: purchaserName,
     };
+    if (purchaserId) metadata.student_id = purchaserId;
     if (input.recipient_name) metadata.recipient_name = input.recipient_name;
     if (input.recipient_email) metadata.recipient_email = input.recipient_email;
     if (input.sender_message) metadata.sender_message = input.sender_message;
 
     const stripe = getStripe();
-    const customerId = await getOrCreateStripeCustomer(auth.user.id, auth.user.email);
+    let customerId: string | undefined;
+    if (purchaserId && auth) {
+      customerId = await getOrCreateStripeCustomer(purchaserId, auth.user.email);
+    } else {
+      // Guest: find/create Stripe customer by email so receipts and future
+      // refund-by-email work without polluting our profiles table.
+      const existing = await stripe.customers.list({ email: purchaserEmail, limit: 1 });
+      if (existing.data[0]) {
+        customerId = existing.data[0].id;
+      } else {
+        const c = await stripe.customers.create({
+          email: purchaserEmail,
+          name: purchaserName,
+          metadata: { source: 'guest_gift_purchase' },
+        });
+        customerId = c.id;
+      }
+    }
 
     const intent = await stripe.paymentIntents.create({
       amount: fee.total_cents,
@@ -94,10 +127,13 @@ export async function POST(request: NextRequest) {
       metadata,
       description: `Gift: ${label} (incl. 3% service fee)`,
       automatic_payment_methods: { enabled: true },
-      receipt_email: auth.user.email,
+      receipt_email: purchaserEmail,
     });
 
-    log.info({ studentId: auth.user.id, packType, baseCents, totalCents: fee.total_cents, intentId: intent.id }, 'Gift PaymentIntent created');
+    log.info(
+      { purchaserId, isGuest: !purchaserId, packType, baseCents, totalCents: fee.total_cents, intentId: intent.id },
+      'Gift PaymentIntent created'
+    );
 
     return NextResponse.json({
       client_secret: intent.client_secret,
