@@ -1,36 +1,36 @@
 import { Html, Head, Body, Container, Heading, Text, Hr, Section, Button } from '@react-email/components';
 
-interface BookingConfirmationProps {
+interface Props {
   studentName: string;
   classTitle: string;
   classDate: string;
   classTime: string;
-  duration: number;
-  /** Number of credits remaining after this booking. Optional — only shown if provided. */
-  creditsRemaining?: number;
-  /** Public Google Calendar add URL. */
+  hoursUntil: number;
   googleCalUrl?: string;
-  /** Public ICS download URL (Apple / Outlook). */
   icsUrl?: string;
 }
 
-export function BookingConfirmation({
+export function ClassReminder({
   studentName,
   classTitle,
   classDate,
   classTime,
-  duration,
-  creditsRemaining,
+  hoursUntil,
   googleCalUrl,
   icsUrl,
-}: BookingConfirmationProps) {
+}: Props) {
+  const headline =
+    hoursUntil <= 3
+      ? `See you in a couple hours, ${studentName}`
+      : `Class tomorrow, ${studentName}`;
+
   return (
     <Html>
       <Head />
       <Body style={{ fontFamily: 'system-ui, sans-serif', backgroundColor: '#faf9f6' }}>
         <Container style={{ maxWidth: '600px', margin: '0 auto', padding: '40px 20px' }}>
-          <Heading style={{ fontSize: '24px', color: '#1a1a1a' }}>You&rsquo;re Booked!</Heading>
-          <Text style={{ color: '#1a1a1a' }}>Hi {studentName}, your spot is confirmed.</Text>
+          <Heading style={{ fontSize: '22px', color: '#1a1a1a' }}>{headline}</Heading>
+          <Text style={{ color: '#1a1a1a' }}>Just a heads-up about your booking.</Text>
 
           <Hr style={{ borderColor: '#e5e2dc' }} />
 
@@ -45,7 +45,7 @@ export function BookingConfirmation({
           >
             <Text style={{ fontWeight: 'bold', fontSize: '18px', margin: 0 }}>{classTitle}</Text>
             <Text style={{ color: '#6b6b6b', margin: '6px 0 0' }}>
-              {classDate} at {classTime} &middot; {duration} min
+              {classDate} at {classTime}
             </Text>
             <Text style={{ color: '#6b6b6b', margin: '6px 0 0', fontSize: '13px' }}>
               Maningo Method &middot; 295 Montauk Hwy, Suite 7, Speonk, NY
@@ -54,9 +54,6 @@ export function BookingConfirmation({
 
           {(googleCalUrl || icsUrl) && (
             <Section style={{ textAlign: 'center' as const, margin: '20px 0' }}>
-              <Text style={{ fontSize: '13px', color: '#6b6b6b', margin: '0 0 10px' }}>
-                Add to your calendar:
-              </Text>
               <table role="presentation" cellSpacing={0} cellPadding={0} style={{ margin: '0 auto' }}>
                 <tbody>
                   <tr>
@@ -102,18 +99,10 @@ export function BookingConfirmation({
             </Section>
           )}
 
-          <Hr style={{ borderColor: '#e5e2dc' }} />
-
           <Text style={{ color: '#6b6b6b', fontSize: '14px' }}>
-            Bring a mat and a small towel. Wear grippy socks or be barefoot. Cancel up to 12 hours before
-            class start for a full credit refund.
+            Bring a mat and a small towel. Wear grippy socks or be barefoot. Cancel up to 12 hours
+            before class start for a full credit refund.
           </Text>
-
-          {typeof creditsRemaining === 'number' && (
-            <Text style={{ color: '#6b6b6b', fontSize: '13px', marginTop: '16px' }}>
-              Credits remaining: <strong style={{ color: '#1a1a1a' }}>{creditsRemaining}</strong>
-            </Text>
-          )}
 
           <Text style={{ fontSize: '14px', color: '#6b6b6b', marginTop: '24px' }}>&mdash; Maningo Method</Text>
         </Container>

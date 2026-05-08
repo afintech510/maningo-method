@@ -8,6 +8,7 @@ import {
   sendGiftPurchaseConfirmation,
   sendGiftReceived,
   sendReferralRewardEarned,
+  sendCreditPurchaseReceipt,
 } from '@/lib/resend';
 import { getBaseUrl } from '@/lib/utils';
 
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'DB error' }, { status: 500 });
           }
 
-          await applyCreditDelta({
+          const { newBalance: creditsAfter } = await applyCreditDelta({
             studentId,
             delta: creditsNum,
             reason: `Stripe purchase ${packType}`,
@@ -92,7 +93,14 @@ export async function POST(request: NextRequest) {
           });
           log.info({ studentId, packType, credits: creditsNum }, 'Credits added (checkout.session)');
 
-          await rewardReferrerIfApplicable(studentId, paymentIntent || session.id, log);
+          await sendPurchaseReceipt({
+            studentId,
+            packType,
+            creditsAdded: creditsNum,
+            amountCents: session.amount_total || 0,
+            log,
+          });
+          await rewardReferrerIfApplicable(studentId, paymentIntent || session.id, log, creditsAfter);
         } else if (bookingId) {
           const { error } = await supabase
             .from('bookings')
@@ -258,7 +266,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'DB error' }, { status: 500 });
           }
 
-          await applyCreditDelta({
+          const { newBalance: creditsAfter } = await applyCreditDelta({
             studentId,
             delta: creditsNum,
             reason: `Stripe purchase ${packType}`,
@@ -267,7 +275,15 @@ export async function POST(request: NextRequest) {
           });
           log.info({ studentId, packType, credits: creditsNum, intentId: intent.id }, 'Credits added (PI)');
 
-          await rewardReferrerIfApplicable(studentId, intent.id, log);
+          await sendPurchaseReceipt({
+            studentId,
+            packType,
+            creditsAdded: creditsNum,
+            amountCents: intent.amount_received || intent.amount,
+            serviceFeeCents: Number(md.service_fee_cents || 0),
+            log,
+          });
+          await rewardReferrerIfApplicable(studentId, intent.id, log, creditsAfter);
         }
         break;
       }
@@ -284,11 +300,47 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// Send the post-purchase receipt email after credits land.
+async function sendPurchaseReceipt(args: {
+  studentId: string;
+  packType: string;
+  creditsAdded: number;
+  amountCents: number;
+  serviceFeeCents?: number;
+  log: { info: (...a: unknown[]) => void; error: (...a: unknown[]) => void };
+}): Promise<void> {
+  const { studentId, packType, creditsAdded, amountCents, serviceFeeCents, log } = args;
+  try {
+    const supabase = createAdminClient();
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email, full_name, credits')
+      .eq('id', studentId)
+      .single();
+    if (!profile?.email) return;
+
+    const fmt = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+    await sendCreditPurchaseReceipt(profile.email, {
+      studentName: (profile.full_name || '').split(' ')[0] || 'there',
+      packLabel: PACK_LABEL[packType] || packType,
+      creditsAdded,
+      amountPaid: fmt(amountCents),
+      serviceFee: serviceFeeCents ? fmt(serviceFeeCents) : undefined,
+      newBalance: profile.credits || 0,
+    });
+    log.info({ studentId, packType, creditsAdded }, 'Purchase receipt sent');
+  } catch (err) {
+    log.error({ err, studentId }, 'Purchase receipt email failed');
+  }
+}
+
 // On every pack purchase by a referred user, reward the referrer with +1 credit.
 async function rewardReferrerIfApplicable(
   buyerId: string,
   triggerId: string,
-  log: { info: (...a: unknown[]) => void; error: (...a: unknown[]) => void }
+  log: { info: (...a: unknown[]) => void; error: (...a: unknown[]) => void },
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _buyerCreditsAfter?: number
 ): Promise<void> {
   const supabase = createAdminClient();
   const { data: buyer } = await supabase

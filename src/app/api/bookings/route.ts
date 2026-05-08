@@ -4,6 +4,10 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, isAuthError } from '@/lib/auth';
 import { logger, generateCorrelationId } from '@/lib/logger';
 import { applyCreditDelta } from '@/lib/credits';
+import { sendBookingConfirmation } from '@/lib/resend';
+import { googleCalendarUrl, icsUrl } from '@/lib/calendar';
+import { formatStudioDate, formatStudioTime } from '@/lib/timezone';
+import { getBaseUrl } from '@/lib/utils';
 
 export async function POST(request: Request) {
   const correlationId = generateCorrelationId();
@@ -92,6 +96,38 @@ export async function POST(request: Request) {
     });
 
     log.info({ bookingId, credits_remaining: newBalance }, 'Booking created, credit deducted');
+
+    // Send booking confirmation email (don't block the response on this)
+    void (async () => {
+      try {
+        const { data: cls } = await adminClient
+          .from('classes')
+          .select('title, starts_at, duration_minutes')
+          .eq('id', class_id)
+          .single();
+        if (!cls) return;
+        const baseUrl = getBaseUrl();
+        const calEvent = {
+          id: String(bookingId),
+          title: `Maningo Method · ${cls.title}`,
+          startsAt: cls.starts_at,
+          durationMinutes: cls.duration_minutes,
+        };
+        await sendBookingConfirmation(auth.user.email, {
+          studentName: (auth.user.full_name || '').split(' ')[0] || 'there',
+          classTitle: cls.title,
+          classDate: formatStudioDate(cls.starts_at, 'EEEE, MMM d'),
+          classTime: formatStudioTime(cls.starts_at),
+          duration: cls.duration_minutes,
+          creditsRemaining: newBalance,
+          googleCalUrl: googleCalendarUrl(calEvent),
+          icsUrl: `${baseUrl}${icsUrl(String(bookingId))}`,
+        });
+      } catch (err) {
+        log.error({ err, bookingId }, 'Booking confirmation email failed');
+      }
+    })();
+
     return NextResponse.json({
       booking: { id: bookingId, class_id, status: 'confirmed', payment_type: 'drop_in' },
       credits_remaining: newBalance,

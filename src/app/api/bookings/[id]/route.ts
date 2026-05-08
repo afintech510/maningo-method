@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, isAuthError } from '@/lib/auth';
 import { logger, generateCorrelationId } from '@/lib/logger';
 import { applyCreditDelta } from '@/lib/credits';
+import { sendBookingCancellation } from '@/lib/resend';
+import { formatStudioDate, formatStudioTime } from '@/lib/timezone';
 
 export async function PATCH(
   request: NextRequest,
@@ -99,6 +102,44 @@ export async function PATCH(
     } catch (err) {
       log.error({ err, bookingId: params.id }, 'Credit refund failed; cancellation persists');
     }
+
+    // Fire-and-forget cancellation confirmation email
+    void (async () => {
+      try {
+        const admin = createAdminClient();
+        const { data: cls } = await admin
+          .from('classes')
+          .select('title, starts_at')
+          .eq('id', (booking as { class_id?: string }).class_id || '')
+          .single();
+        // booking from the SELECT above doesn't include class_id by default; load via bookings table
+        let title = '';
+        let startsAt = classStart;
+        if (!cls) {
+          const { data: b2 } = await admin
+            .from('bookings')
+            .select('classes(title, starts_at)')
+            .eq('id', params.id)
+            .single();
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const c = (b2 as any)?.classes;
+          title = c?.title || 'your class';
+          startsAt = c?.starts_at || startsAt;
+        } else {
+          title = cls.title;
+          startsAt = cls.starts_at;
+        }
+        if (!startsAt) return;
+        await sendBookingCancellation(auth.user.email, {
+          studentName: (auth.user.full_name || '').split(' ')[0] || 'there',
+          classTitle: title,
+          classDate: formatStudioDate(startsAt, 'EEEE, MMM d'),
+          classTime: formatStudioTime(startsAt),
+        });
+      } catch (err) {
+        log.error({ err, bookingId: params.id }, 'Cancellation email failed');
+      }
+    })();
 
     return NextResponse.json({ booking: { id: params.id, status: 'cancelled' }, credit_refunded: true });
   } catch (err) {

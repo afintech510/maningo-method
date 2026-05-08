@@ -7,6 +7,9 @@ import { GiftPurchaseConfirmation } from '@/emails/GiftPurchaseConfirmation';
 import { GiftReceived } from '@/emails/GiftReceived';
 import { GiftRedeemed } from '@/emails/GiftRedeemed';
 import { ReferralRewardEarned } from '@/emails/ReferralRewardEarned';
+import { CreditPurchaseReceipt } from '@/emails/CreditPurchaseReceipt';
+import { ManualPaymentSubmitted } from '@/emails/ManualPaymentSubmitted';
+import { ClassReminder } from '@/emails/ClassReminder';
 import { createElement } from 'react';
 
 let resendInstance: Resend | null = null;
@@ -22,7 +25,16 @@ export const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'hello@maningo.hostha
 
 export async function sendBookingConfirmation(
   to: string,
-  data: { studentName: string; classTitle: string; classDate: string; classTime: string; duration: number }
+  data: {
+    studentName: string;
+    classTitle: string;
+    classDate: string;
+    classTime: string;
+    duration: number;
+    creditsRemaining?: number;
+    googleCalUrl?: string;
+    icsUrl?: string;
+  }
 ) {
   try {
     const resend = getResend();
@@ -197,5 +209,93 @@ export async function sendReferralRewardEarned(
     });
   } catch (err) {
     logger.error({ err, to }, 'Failed to send referral reward email');
+  }
+}
+
+export async function sendCreditPurchaseReceipt(
+  to: string,
+  data: {
+    studentName: string;
+    packLabel: string;
+    creditsAdded: number;
+    amountPaid: string;
+    serviceFee?: string;
+    newBalance: number;
+  }
+) {
+  try {
+    const resend = getResend();
+    await resend.emails.send({
+      from: `Maningo Method <${FROM_EMAIL}>`,
+      to,
+      subject: `Receipt: ${data.packLabel}`,
+      react: createElement(CreditPurchaseReceipt, data),
+    });
+  } catch (err) {
+    logger.error({ err, to }, 'Failed to send credit purchase receipt');
+  }
+}
+
+export async function sendClassReminderBatch(
+  recipients: Array<{
+    email: string;
+    studentName: string;
+    classTitle: string;
+    classDate: string;
+    classTime: string;
+    hoursUntil: number;
+    googleCalUrl?: string;
+    icsUrl?: string;
+  }>
+) {
+  if (recipients.length === 0) return;
+  try {
+    const resend = getResend();
+    await resend.batch.send(
+      recipients.map((r) => ({
+        from: `Maningo Method <${FROM_EMAIL}>`,
+        to: r.email,
+        subject:
+          r.hoursUntil <= 3
+            ? `See you soon: ${r.classTitle}`
+            : `Reminder: ${r.classTitle} tomorrow`,
+        react: createElement(ClassReminder, {
+          studentName: r.studentName,
+          classTitle: r.classTitle,
+          classDate: r.classDate,
+          classTime: r.classTime,
+          hoursUntil: r.hoursUntil,
+          googleCalUrl: r.googleCalUrl,
+          icsUrl: r.icsUrl,
+        }),
+      }))
+    );
+  } catch (err) {
+    logger.error({ err, count: recipients.length }, 'Failed to send class reminder batch');
+  }
+}
+
+export async function sendManualPaymentSubmitted(
+  to: string,
+  data: {
+    studentName: string;
+    studentEmail: string;
+    studentPhone: string | null;
+    packLabel: string;
+    amount: string;
+    method: 'cash' | 'zelle' | 'venmo';
+    paymentId: string;
+  }
+) {
+  try {
+    const resend = getResend();
+    await resend.emails.send({
+      from: `Maningo Method <${FROM_EMAIL}>`,
+      to,
+      subject: `New ${data.method} payment request — ${data.studentName}`,
+      react: createElement(ManualPaymentSubmitted, data),
+    });
+  } catch (err) {
+    logger.error({ err, to }, 'Failed to send manual payment notification');
   }
 }

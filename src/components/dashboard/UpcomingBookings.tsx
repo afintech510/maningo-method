@@ -7,6 +7,7 @@ import { Modal } from '@/components/ui/Modal';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { useToast } from '@/components/feedback/Toast';
 import { formatStudioDateTime } from '@/lib/timezone';
+import { googleCalendarUrl, icsUrl } from '@/lib/calendar';
 import { useRouter } from 'next/navigation';
 
 interface Booking {
@@ -96,22 +97,48 @@ export function UpcomingBookings({ bookings }: UpcomingBookingsProps) {
       )}
 
       <div className="space-y-3">
-        {bookings.map((booking) => (
-          <Card key={booking.id}>
-            <p className="font-semibold text-base">
-              {formatStudioDateTime(booking.class_starts_at)}
-            </p>
-            <p className="text-sm text-muted-foreground">{booking.class_title}</p>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="mt-2 text-destructive"
-              onClick={() => setCancelId(booking.id)}
-            >
-              Cancel
-            </Button>
-          </Card>
-        ))}
+        {bookings.map((booking) => {
+          const calEvent = {
+            id: booking.id,
+            title: `Maningo Method · ${booking.class_title}`,
+            startsAt: booking.class_starts_at,
+            durationMinutes: booking.class_duration_minutes,
+          };
+          const gcal = googleCalendarUrl(calEvent);
+          const ics = icsUrl(booking.id);
+          return (
+            <Card key={booking.id}>
+              <p className="font-semibold text-base">
+                {formatStudioDateTime(booking.class_starts_at)}
+              </p>
+              <p className="text-sm text-muted-foreground">{booking.class_title}</p>
+              <div className="flex flex-wrap items-center gap-2 mt-3">
+                <a
+                  href={gcal}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center min-h-[36px] px-3 rounded-full border border-[#e5e2dc] text-xs font-medium text-[#2d2d2d] hover:border-[#c9a96e] transition-colors"
+                >
+                  Add to Google
+                </a>
+                <a
+                  href={ics}
+                  className="inline-flex items-center justify-center min-h-[36px] px-3 rounded-full border border-[#e5e2dc] text-xs font-medium text-[#2d2d2d] hover:border-[#c9a96e] transition-colors"
+                >
+                  Apple / Outlook (.ics)
+                </a>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive ml-auto"
+                  onClick={() => setCancelId(booking.id)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </Card>
+          );
+        })}
       </div>
 
       <Modal
