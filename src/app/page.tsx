@@ -86,7 +86,7 @@ export default function Home() {
       {/* Class Types */}
       <section className="px-5 py-16 sm:py-20 max-w-6xl mx-auto">
         <div className="text-center mb-3">
-          <span className="inline-block bg-[#1a1a1a]/90 text-[#c9a96e] text-xs sm:text-sm font-medium tracking-[0.2em] uppercase px-3 py-1.5 rounded-full">
+          <span className="inline-block bg-[#1a1a1a]/20 text-[#1a1a1a] text-xs sm:text-sm font-semibold tracking-[0.2em] uppercase px-3 py-1.5 rounded-full">
             What We Offer
           </span>
         </div>
@@ -138,7 +138,7 @@ export default function Home() {
       {/* How It Works */}
       <section className="px-5 py-16 sm:py-20 max-w-6xl mx-auto">
         <div className="text-center mb-3">
-          <span className="inline-block bg-[#1a1a1a]/90 text-[#c9a96e] text-xs sm:text-sm font-medium tracking-[0.2em] uppercase px-3 py-1.5 rounded-full">
+          <span className="inline-block bg-[#1a1a1a]/20 text-[#1a1a1a] text-xs sm:text-sm font-semibold tracking-[0.2em] uppercase px-3 py-1.5 rounded-full">
             Getting Started
           </span>
         </div>
@@ -164,7 +164,7 @@ export default function Home() {
       <section id="pricing" className="px-5 py-16 sm:py-20 bg-white">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-3">
-            <span className="inline-block bg-[#1a1a1a]/90 text-[#c9a96e] text-xs sm:text-sm font-medium tracking-[0.2em] uppercase px-3 py-1.5 rounded-full">
+            <span className="inline-block bg-[#1a1a1a]/20 text-[#1a1a1a] text-xs sm:text-sm font-semibold tracking-[0.2em] uppercase px-3 py-1.5 rounded-full">
               Class Packs
             </span>
           </div>
@@ -216,7 +216,7 @@ export default function Home() {
       {/* FAQ */}
       <section id="faq" className="px-5 py-16 sm:py-20 max-w-3xl mx-auto">
         <div className="text-center mb-3">
-          <span className="inline-block bg-[#1a1a1a]/90 text-[#c9a96e] text-xs sm:text-sm font-medium tracking-[0.2em] uppercase px-3 py-1.5 rounded-full">
+          <span className="inline-block bg-[#1a1a1a]/20 text-[#1a1a1a] text-xs sm:text-sm font-semibold tracking-[0.2em] uppercase px-3 py-1.5 rounded-full">
             Common Questions
           </span>
         </div>
@@ -257,7 +257,7 @@ export default function Home() {
       <section id="contact" className="px-5 py-16 sm:py-20 bg-white">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-3">
-            <span className="inline-block bg-[#1a1a1a]/90 text-[#c9a96e] text-xs sm:text-sm font-medium tracking-[0.2em] uppercase px-3 py-1.5 rounded-full">
+            <span className="inline-block bg-[#1a1a1a]/20 text-[#1a1a1a] text-xs sm:text-sm font-semibold tracking-[0.2em] uppercase px-3 py-1.5 rounded-full">
               Get in Touch
             </span>
           </div>
@@ -278,7 +278,7 @@ export default function Home() {
       <section className="px-5 py-16 sm:py-20 bg-white">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-10">
-            <span className="inline-block bg-[#1a1a1a]/90 text-[#c9a96e] text-xs sm:text-sm font-medium tracking-[0.2em] uppercase px-3 py-1.5 rounded-full mb-3">
+            <span className="inline-block bg-[#1a1a1a]/20 text-[#1a1a1a] text-xs sm:text-sm font-semibold tracking-[0.2em] uppercase px-3 py-1.5 rounded-full mb-3">
               Find Classes By
             </span>
             <h2 className="text-3xl sm:text-4xl font-bold">Maningo Method</h2>
