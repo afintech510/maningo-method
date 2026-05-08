@@ -58,6 +58,10 @@ export function ClassCard({
         isBooked={isBooked}
         isAuthenticated={isAuthenticated}
         hasCredits={hasCredits}
+        classTitle={classData.title}
+        classStartsAt={classData.starts_at}
+        classDurationMinutes={classData.duration_minutes}
+        classSpotsRemaining={classData.spots_remaining}
       />
     </Card>
   );
