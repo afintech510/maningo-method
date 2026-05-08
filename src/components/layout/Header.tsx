@@ -11,10 +11,10 @@ export async function Header() {
       <div className="relative flex items-center justify-center px-5 py-3 min-h-[64px]">
         <Link href="/" aria-label="Maningo Method home" className="block">
           <Image
-            src="/maningo-method_logo.jpg"
+            src="/maningo-method_logo_600.png"
             alt="Maningo Method"
-            width={160}
-            height={48}
+            width={600}
+            height={180}
             priority
             className="h-10 sm:h-12 w-auto"
           />
