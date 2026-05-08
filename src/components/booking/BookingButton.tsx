@@ -45,6 +45,7 @@ export function BookingButton({
   const [confirming, setConfirming] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
   function handleClick() {
     if (!isAuthenticated) {
@@ -93,6 +94,7 @@ export function BookingButton({
   async function handleCancelConfirm() {
     if (!bookingId) return;
     setCancelling(true);
+    setCancelError(null);
     try {
       const res = await fetch(`/api/bookings/${bookingId}`, {
         method: 'PATCH',
@@ -101,8 +103,11 @@ export function BookingButton({
       });
       const data = await res.json();
       if (!res.ok) {
-        showToast(data.error?.message || 'Could not cancel.', 'error');
+        // Close the dialog so the error sits in plain view at the top of
+        // the card, not behind the modal.
+        setCancelOpen(false);
         setCancelling(false);
+        setCancelError(data.error?.message || 'Could not cancel.');
         return;
       }
       showToast('Booking cancelled. Credit refunded.');
@@ -110,8 +115,9 @@ export function BookingButton({
       setCancelling(false);
       router.refresh();
     } catch {
-      showToast('Something went wrong. Try again.', 'error');
+      setCancelOpen(false);
       setCancelling(false);
+      setCancelError('Something went wrong. Try again.');
     }
   }
 
@@ -124,6 +130,19 @@ export function BookingButton({
     }
     return (
       <>
+        {cancelError && (
+          <div role="alert" className="mb-2 rounded-lg border border-red-200 bg-red-50 p-3 flex items-start justify-between gap-3">
+            <p className="text-sm text-red-800">{cancelError}</p>
+            <button
+              type="button"
+              onClick={() => setCancelError(null)}
+              aria-label="Dismiss"
+              className="text-red-700 hover:text-red-900 text-lg leading-none"
+            >
+              &times;
+            </button>
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-2">
           <Button variant="secondary" size="lg" disabled>Booked</Button>
           <Button variant="ghost" size="lg" className="text-destructive" onClick={() => setCancelOpen(true)}>

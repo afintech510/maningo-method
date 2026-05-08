@@ -65,7 +65,9 @@ export default async function DashboardPage() {
     };
   });
 
-  const upcoming = allBookings.filter((b) => b.is_upcoming);
+  const upcoming = allBookings
+    .filter((b) => b.is_upcoming)
+    .sort((a, b) => new Date(a.class_starts_at).getTime() - new Date(b.class_starts_at).getTime());
   const history = allBookings.filter((b) => b.is_past || b.status === 'cancelled');
 
   // Fetch credit purchases

@@ -27,11 +27,13 @@ export function UpcomingBookings({ bookings }: UpcomingBookingsProps) {
   const { showToast } = useToast();
   const [cancelId, setCancelId] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
+  const [topError, setTopError] = useState<string | null>(null);
   const cancelBooking = bookings.find((b) => b.id === cancelId);
 
   async function handleCancel() {
     if (!cancelId) return;
     setCancelling(true);
+    setTopError(null);
 
     try {
       const res = await fetch(`/api/bookings/${cancelId}`, {
@@ -46,10 +48,18 @@ export function UpcomingBookings({ bookings }: UpcomingBookingsProps) {
         router.refresh();
       } else {
         const data = await res.json();
-        showToast(data.error?.message || 'Failed to cancel', 'error');
+        // Close the modal so the error banner at the top is visible.
+        setCancelId(null);
+        const message = data.error?.message || 'Failed to cancel.';
+        setTopError(message);
+        // Scroll to the top of the section so the banner is in view.
+        if (typeof window !== 'undefined') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
       }
     } catch {
-      showToast('Something went wrong', 'error');
+      setCancelId(null);
+      setTopError('Something went wrong. Please try again.');
     } finally {
       setCancelling(false);
     }
@@ -68,6 +78,23 @@ export function UpcomingBookings({ bookings }: UpcomingBookingsProps) {
 
   return (
     <>
+      {topError && (
+        <div
+          role="alert"
+          className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 flex items-start justify-between gap-3"
+        >
+          <p className="text-sm text-red-800">{topError}</p>
+          <button
+            type="button"
+            onClick={() => setTopError(null)}
+            aria-label="Dismiss"
+            className="text-red-700 hover:text-red-900 text-lg leading-none"
+          >
+            &times;
+          </button>
+        </div>
+      )}
+
       <div className="space-y-3">
         {bookings.map((booking) => (
           <Card key={booking.id}>
