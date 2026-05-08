@@ -34,14 +34,7 @@ export async function Header() {
               Admin
             </Link>
           )}
-          {isLoggedIn ? (
-            <Link
-              href="/dashboard"
-              className="hidden sm:inline-flex items-center justify-center h-9 px-4 rounded-full bg-[#c9a96e] text-white text-sm font-medium hover:bg-[#b8955d] transition-colors"
-            >
-              Dashboard
-            </Link>
-          ) : (
+          {!isLoggedIn && (
             <>
               <Link
                 href="/dashboard"

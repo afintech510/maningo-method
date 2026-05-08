@@ -3,13 +3,13 @@ import { getAuth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { UpcomingBookings } from '@/components/dashboard/UpcomingBookings';
 import { ClassHistory } from '@/components/dashboard/ClassHistory';
-import { CreditBalance } from '@/components/dashboard/CreditBalance';
 import { BuyPacks } from '@/components/dashboard/BuyPacks';
 import { ReferralCard } from '@/components/dashboard/ReferralCard';
 import { HostHamptonPromo } from '@/components/dashboard/HostHamptonPromo';
 import { WeeklySchedule } from '@/components/dashboard/WeeklySchedule';
 import { ToastProvider } from '@/components/feedback/Toast';
 import { Card } from '@/components/ui/Card';
+import { format } from 'date-fns';
 
 export default async function DashboardPage() {
   const auth = await getAuth();
@@ -18,10 +18,10 @@ export default async function DashboardPage() {
 
   const supabase = createAdminClient();
 
-  // Fetch profile with credits and referral code
+  // Fetch profile with credits, referral code, and signup timestamp
   const { data: profile } = await supabase
     .from('profiles')
-    .select('credits, referral_code')
+    .select('credits, referral_code, created_at')
     .eq('id', auth.user.id)
     .single();
 
@@ -69,6 +69,9 @@ export default async function DashboardPage() {
     .filter((b) => b.is_upcoming)
     .sort((a, b) => new Date(a.class_starts_at).getTime() - new Date(b.class_starts_at).getTime());
   const history = allBookings.filter((b) => b.is_past || b.status === 'cancelled');
+  const totalAttended = allBookings.filter((b) => b.is_past).length;
+  const memberSince = profile?.created_at ? format(new Date(profile.created_at), 'MMM yyyy') : null;
+  const firstName = (auth.user.full_name || '').split(' ')[0] || 'there';
 
   // Fetch credit purchases
   const { data: purchases } = await supabase
@@ -79,14 +82,33 @@ export default async function DashboardPage() {
 
   return (
     <div className="px-4 py-6">
-      <h1 className="text-2xl font-bold mb-2">Hi, {(auth.user.full_name || '').split(' ')[0] || 'there'}!</h1>
-      <p className="text-muted-foreground text-sm mb-6">{auth.user.email}</p>
+      {/* Member overview: 2x2 grid */}
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        {/* Top-left: greeting */}
+        <div className="rounded-2xl border border-border bg-white p-4 sm:p-5 flex flex-col justify-center">
+          <h1 className="text-xl sm:text-2xl font-bold leading-tight">Hi, {firstName}!</h1>
+        </div>
+        {/* Top-right: credits remaining */}
+        <div className="rounded-2xl border border-[#c9a96e]/40 bg-[#c9a96e]/5 p-4 sm:p-5 flex flex-col items-center justify-center text-center">
+          <p className="text-3xl sm:text-4xl font-bold leading-none">{credits}</p>
+          <p className="text-xs text-muted-foreground mt-1">{credits === 1 ? 'class credit remaining' : 'class credits remaining'}</p>
+        </div>
+        {/* Bottom-left: identity */}
+        <div className="rounded-2xl border border-border bg-white p-4 sm:p-5 flex flex-col justify-center min-w-0">
+          <p className="text-xs sm:text-sm text-muted-foreground break-all leading-snug">{auth.user.email}</p>
+          {memberSince && (
+            <p className="text-[11px] text-muted-foreground mt-1">Member since {memberSince}</p>
+          )}
+        </div>
+        {/* Bottom-right: total attended */}
+        <div className="rounded-2xl border border-border bg-white p-4 sm:p-5 flex flex-col items-center justify-center text-center">
+          <p className="text-3xl sm:text-4xl font-bold leading-none">{totalAttended}</p>
+          <p className="text-xs text-muted-foreground mt-1">{totalAttended === 1 ? 'class attended' : 'classes attended'}</p>
+        </div>
+      </div>
 
       <ToastProvider>
-        {/* Credits Balance */}
-        <CreditBalance credits={credits} />
-
-        {/* Upcoming Classes — first so user sees their bookings immediately */}
+        {/* My Booked Classes — first so user sees their bookings immediately */}
         <div className="mt-6">
           <h2 className="text-lg font-semibold mb-3">My Booked Classes</h2>
           <UpcomingBookings bookings={upcoming} />
