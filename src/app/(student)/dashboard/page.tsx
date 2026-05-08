@@ -88,7 +88,7 @@ export default async function DashboardPage() {
 
         {/* Upcoming Classes — first so user sees their bookings immediately */}
         <div className="mt-6">
-          <h2 className="text-lg font-semibold mb-3">My Upcoming Classes</h2>
+          <h2 className="text-lg font-semibold mb-3">My Booked Classes</h2>
           <UpcomingBookings bookings={upcoming} />
         </div>
 
