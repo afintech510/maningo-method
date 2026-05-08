@@ -638,11 +638,11 @@ function GiftCardOption() {
   }
 
   return (
-    <div className="rounded-2xl border border-[#e5e2dc] bg-[#faf9f6] p-5 sm:p-6 flex flex-col col-span-2 lg:col-span-1">
-      <p className="text-xs font-medium uppercase tracking-wider text-[#6b6b6b] mb-1">Gift Pack</p>
-      <p className="text-sm text-[#6b6b6b] mb-4">Give the gift of Pilates</p>
+    <div className="rounded-2xl border border-[#e5e2dc] bg-[#faf9f6] p-4 sm:p-5 flex flex-col">
+      <p className="text-[11px] font-medium uppercase tracking-wider text-[#6b6b6b] mb-0.5">Gift Pack</p>
+      <p className="text-xs text-[#6b6b6b] mb-3 leading-snug">Give the gift of Pilates</p>
 
-      <div className="grid grid-cols-2 gap-2 mb-3">
+      <div className="grid grid-cols-2 gap-1.5 mb-3">
         {(['single', '5pack', '10pack', 'custom'] as GiftOption[]).map((opt) => {
           const active = option === opt;
           const label = opt === 'custom' ? 'Custom' : GIFT_PRESETS[opt as Exclude<GiftOption, 'custom'>].label;
@@ -651,7 +651,7 @@ function GiftCardOption() {
               key={opt}
               type="button"
               onClick={() => setOption(opt)}
-              className={`h-9 px-3 rounded-full text-xs font-medium transition-colors ${
+              className={`h-8 px-1.5 rounded-full text-[11px] font-medium transition-colors ${
                 active
                   ? 'bg-[#2d2d2d] text-white border-2 border-[#2d2d2d]'
                   : 'bg-white border border-[#e5e2dc] text-[#6b6b6b] hover:border-[#c9a96e]'
@@ -664,8 +664,8 @@ function GiftCardOption() {
       </div>
 
       {option === 'custom' ? (
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-xl font-bold">$</span>
+        <div className="flex items-center gap-1 mb-2">
+          <span className="text-lg font-bold">$</span>
           <input
             type="number"
             min="10"
@@ -673,13 +673,13 @@ function GiftCardOption() {
             value={customAmount}
             onChange={(e) => setCustomAmount(e.target.value)}
             placeholder="Amount"
-            className="w-full h-10 px-3 text-base rounded-lg border border-[#e5e2dc] bg-white focus:outline-none focus:ring-2 focus:ring-[#c9a96e]"
+            className="w-full h-9 px-2 text-sm rounded-lg border border-[#e5e2dc] bg-white focus:outline-none focus:ring-2 focus:ring-[#c9a96e]"
           />
         </div>
       ) : (
         <div className="mb-2">
-          <p className="text-2xl font-bold">${GIFT_PRESETS[option].amount}</p>
-          <p className="text-xs text-[#6b6b6b]">{GIFT_PRESETS[option].sublabel}</p>
+          <p className="text-2xl font-bold leading-none">${GIFT_PRESETS[option].amount}</p>
+          <p className="text-[11px] text-[#6b6b6b] mt-0.5">{GIFT_PRESETS[option].sublabel}</p>
         </div>
       )}
 
@@ -687,7 +687,7 @@ function GiftCardOption() {
         type="button"
         onClick={handlePurchase}
         disabled={!canPurchase || loading}
-        className="w-full mt-auto h-9 rounded-full bg-[#c9a96e] text-white text-sm font-medium hover:bg-[#b8955d] disabled:opacity-40 disabled:cursor-not-allowed"
+        className="w-full mt-auto h-9 rounded-full bg-[#c9a96e] text-white text-xs font-medium hover:bg-[#b8955d] disabled:opacity-40 disabled:cursor-not-allowed"
       >
         {loading ? 'Loading...' : 'Purchase Gift'}
       </button>
