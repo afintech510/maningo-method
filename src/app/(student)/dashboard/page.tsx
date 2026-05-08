@@ -75,7 +75,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="px-4 py-6">
-      <h1 className="text-2xl font-bold mb-2">Hi, {auth.user.full_name}!</h1>
+      <h1 className="text-2xl font-bold mb-2">Hi, {(auth.user.full_name || '').split(' ')[0] || 'there'}!</h1>
       <p className="text-muted-foreground text-sm mb-6">{auth.user.email}</p>
 
       <ToastProvider>

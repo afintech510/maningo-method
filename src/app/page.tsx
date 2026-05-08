@@ -9,27 +9,27 @@ export default function Home() {
     <div className="min-h-screen bg-[#faf9f6]">
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#faf9f6]/95 backdrop-blur-sm border-b border-[#e5e2dc]">
-        <div className="flex items-center justify-between px-5 py-3 max-w-6xl mx-auto">
-          <Link href="/" className="text-xl font-serif font-bold tracking-tight">
-            Maningo Method
+        <div className="relative flex items-center justify-center px-5 py-3 min-h-[64px] max-w-6xl mx-auto">
+          <Link href="/" aria-label="Maningo Method home" className="block">
+            <Image
+              src="/maningo-method_logo.jpg"
+              alt="Maningo Method"
+              width={160}
+              height={48}
+              priority
+              className="h-10 sm:h-12 w-auto"
+            />
           </Link>
-          <div className="hidden sm:flex items-center gap-6 text-sm">
-            <Link href="/schedule" className="text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">Schedule</Link>
-            <Link href="#about" className="text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">About</Link>
-            <Link href="#pricing" className="text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">Pricing</Link>
-            <Link href="#faq" className="text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">FAQ</Link>
-            <Link href="#contact" className="text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">Contact</Link>
-          </div>
-          <div className="flex items-center gap-3">
+          <div className="absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 flex items-center gap-2 sm:gap-3">
             <Link
               href="/dashboard"
-              className="inline-flex items-center justify-center h-9 px-5 rounded-full bg-[#c9a96e] text-white text-sm font-medium hover:bg-[#b8955d] transition-colors"
+              className="inline-flex items-center justify-center h-9 px-3 sm:px-5 rounded-full bg-[#c9a96e] text-white text-xs sm:text-sm font-medium hover:bg-[#b8955d] transition-colors"
             >
               Members
             </Link>
             <Link
               href="/schedule"
-              className="inline-flex items-center justify-center h-9 px-5 rounded-full bg-[#2d2d2d] text-white text-sm font-medium hover:bg-[#1a1a1a] transition-colors"
+              className="hidden sm:inline-flex items-center justify-center h-9 px-5 rounded-full bg-[#2d2d2d] text-white text-sm font-medium hover:bg-[#1a1a1a] transition-colors"
             >
               Book Class
             </Link>

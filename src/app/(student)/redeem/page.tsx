@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
@@ -35,7 +34,7 @@ export default function RedeemPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-[#faf9f6] flex items-center justify-center px-5 py-10">
+      <div className="bg-[#faf9f6] min-h-[calc(100vh-64px)] flex items-center justify-center px-5 py-10">
         <div className="max-w-md w-full text-center">
           <div className="text-5xl mb-4">&#10003;</div>
           <h1 className="text-2xl font-bold mb-2">Gift redeemed</h1>
@@ -54,17 +53,7 @@ export default function RedeemPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#faf9f6]">
-      <header className="bg-white border-b border-[#e5e2dc]">
-        <div className="max-w-5xl mx-auto px-5 py-4 flex items-center justify-between">
-          <Link href="/" className="text-xl font-serif font-bold tracking-tight">
-            Maningo Method
-          </Link>
-          <Link href="/dashboard" className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a]">
-            Dashboard
-          </Link>
-        </div>
-      </header>
+    <div className="bg-[#faf9f6] min-h-[calc(100vh-64px)]">
       <main className="px-5 py-10 sm:py-16">
         <div className="max-w-md mx-auto">
           <p className="text-xs font-medium uppercase tracking-[0.25em] text-[#c9a96e] mb-2">Redeem</p>

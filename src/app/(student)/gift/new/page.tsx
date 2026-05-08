@@ -239,17 +239,7 @@ function GiftNewContent() {
 
 export default function GiftNewPage() {
   return (
-    <div className="min-h-screen bg-[#faf9f6]">
-      <header className="bg-white border-b border-[#e5e2dc]">
-        <div className="max-w-5xl mx-auto px-5 py-4 flex items-center justify-between">
-          <Link href="/" className="text-xl font-serif font-bold tracking-tight">
-            Maningo Method
-          </Link>
-          <Link href="/dashboard" className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a]">
-            Dashboard
-          </Link>
-        </div>
-      </header>
+    <div className="bg-[#faf9f6] min-h-[calc(100vh-64px)]">
       <main className="px-5 py-8 sm:py-12">
         <Suspense fallback={null}>
           <GiftNewContent />

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { getAuth } from '@/lib/auth';
 
 export async function Header() {
@@ -6,41 +7,44 @@ export async function Header() {
   const isLoggedIn = !!auth;
 
   return (
-    <header className="flex items-center justify-between px-5 py-3 border-b border-border bg-white">
-      <Link href="/" className="text-xl font-serif font-bold tracking-tight">
-        Maningo Method
-      </Link>
-      <nav className="hidden lg:flex items-center gap-6 text-sm">
-        <Link href="/schedule" className="text-muted-foreground hover:text-foreground transition-colors">
-          Schedule
+    <header className="border-b border-border bg-white">
+      <div className="relative flex items-center justify-center px-5 py-3 min-h-[64px]">
+        <Link href="/" aria-label="Maningo Method home" className="block">
+          <Image
+            src="/maningo-method_logo.jpg"
+            alt="Maningo Method"
+            width={160}
+            height={48}
+            priority
+            className="h-10 sm:h-12 w-auto"
+          />
         </Link>
-        <Link href="/#contact" className="text-muted-foreground hover:text-foreground transition-colors">
-          Private Class
-        </Link>
-        {isLoggedIn ? (
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center justify-center h-9 px-5 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:opacity-90"
-          >
-            Dashboard
-          </Link>
-        ) : (
-          <>
+        <nav className="absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 flex items-center gap-2 sm:gap-3 text-sm">
+          {isLoggedIn ? (
             <Link
               href="/dashboard"
-              className="inline-flex items-center justify-center h-9 px-5 rounded-full bg-[#c9a96e] text-white text-sm font-medium hover:bg-[#b8955d] transition-colors"
+              className="hidden sm:inline-flex items-center justify-center h-9 px-4 rounded-full bg-[#c9a96e] text-white text-sm font-medium hover:bg-[#b8955d] transition-colors"
             >
-              Members
+              Dashboard
             </Link>
-            <Link
-              href="/schedule"
-              className="inline-flex items-center justify-center h-9 px-5 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:opacity-90"
-            >
-              Book Class
-            </Link>
-          </>
-        )}
-      </nav>
+          ) : (
+            <>
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center justify-center h-9 px-3 sm:px-4 rounded-full bg-[#c9a96e] text-white text-xs sm:text-sm font-medium hover:bg-[#b8955d] transition-colors"
+              >
+                Members
+              </Link>
+              <Link
+                href="/schedule"
+                className="hidden sm:inline-flex items-center justify-center h-9 px-4 rounded-full bg-[#2d2d2d] text-white text-sm font-medium hover:bg-[#1a1a1a] transition-colors"
+              >
+                Book
+              </Link>
+            </>
+          )}
+        </nav>
+      </div>
     </header>
   );
 }

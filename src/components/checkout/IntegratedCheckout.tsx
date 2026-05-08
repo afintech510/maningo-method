@@ -179,10 +179,29 @@ function StripeWrapper({ clientSecret }: { clientSecret: string }) {
             '.Tab': {
               border: '1px solid #e5e2dc',
               boxShadow: 'none',
+              color: '#2d2d2d',
+              backgroundColor: '#ffffff',
+            },
+            '.Tab:hover': {
+              color: '#2d2d2d',
+              border: '1px solid #c9a96e',
             },
             '.Tab--selected': {
               border: '1px solid #c9a96e',
-              backgroundColor: '#faf9f6',
+              backgroundColor: '#ffffff',
+              color: '#2d2d2d',
+              boxShadow: '0 0 0 1px #c9a96e inset',
+            },
+            '.Tab--selected:focus': {
+              color: '#2d2d2d',
+              border: '1px solid #c9a96e',
+              boxShadow: '0 0 0 1px #c9a96e inset',
+            },
+            '.TabIcon--selected': {
+              fill: '#c9a96e',
+            },
+            '.TabLabel--selected': {
+              color: '#2d2d2d',
             },
             '.Label': {
               color: '#6b6b6b',
