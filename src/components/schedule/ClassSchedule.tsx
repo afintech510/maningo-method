@@ -20,13 +20,16 @@ interface ClassData {
 interface ClassScheduleProps {
   isAuthenticated: boolean;
   hasCredits: boolean;
-  bookedClassIds: string[];
+  credits?: number;
+  /** class_id → booking_id for the current user's confirmed bookings. */
+  bookingsByClassId?: Record<string, string>;
 }
 
 export function ClassSchedule({
   isAuthenticated,
   hasCredits,
-  bookedClassIds,
+  credits,
+  bookingsByClassId = {},
 }: ClassScheduleProps) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [classes, setClasses] = useState<ClassData[]>([]);
@@ -70,7 +73,8 @@ export function ClassSchedule({
               classData={cls}
               isAuthenticated={isAuthenticated}
               hasCredits={hasCredits}
-              bookedClassIds={bookedClassIds}
+              credits={credits}
+              bookingId={bookingsByClassId[cls.id]}
             />
           ))
         )}

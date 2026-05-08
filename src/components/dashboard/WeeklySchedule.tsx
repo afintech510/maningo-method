@@ -22,9 +22,10 @@ interface ClassItem {
 interface WeeklyScheduleProps {
   bookedClassIds: string[];
   hasCredits: boolean;
+  credits?: number;
 }
 
-export function WeeklySchedule({ bookedClassIds, hasCredits }: WeeklyScheduleProps) {
+export function WeeklySchedule({ bookedClassIds, hasCredits, credits }: WeeklyScheduleProps) {
   const router = useRouter();
   const { showToast } = useToast();
   const [classes, setClasses] = useState<ClassItem[]>([]);
@@ -170,14 +171,23 @@ export function WeeklySchedule({ bookedClassIds, hasCredits }: WeeklySchedulePro
               </div>
             </div>
 
+            {typeof credits === 'number' && (
+              <div className="flex items-center justify-between rounded-lg bg-[#faf9f6] border border-border px-3 py-2 mb-3 text-sm">
+                <span className="text-muted-foreground">Available credits</span>
+                <span className="font-semibold">{credits}</span>
+              </div>
+            )}
             {!hasCredits && (
               <p className="text-sm text-amber-700 bg-amber-50 rounded-lg p-3 mb-4">
-                You don&apos;t have any class credits. This booking will use 1 credit.
+                You don&apos;t have any class credits. Buy a pack to book.
               </p>
             )}
 
             <p className="text-sm text-muted-foreground mb-4">
-              This will use 1 class credit from your balance.
+              This will use <strong className="text-foreground">1 class credit</strong>.
+              {typeof credits === 'number' && credits > 0 && (
+                <> Balance after: <strong className="text-foreground">{credits - 1}</strong>.</>
+              )}
             </p>
 
             <div className="flex gap-3">

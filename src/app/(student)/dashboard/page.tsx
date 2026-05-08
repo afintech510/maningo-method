@@ -111,6 +111,7 @@ export default async function DashboardPage() {
           <WeeklySchedule
             bookedClassIds={upcoming.map((b) => b.class_id)}
             hasCredits={credits > 0}
+            credits={credits}
           />
         </div>
 

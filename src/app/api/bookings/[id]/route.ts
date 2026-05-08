@@ -29,7 +29,7 @@ export async function PATCH(
     // Verify ownership and load class start time
     const { data: booking, error: fetchError } = await supabase
       .from('bookings')
-      .select('id, student_id, status, classes(start_time)')
+      .select('id, student_id, status, classes(starts_at)')
       .eq('id', params.id)
       .single();
 
@@ -55,7 +55,8 @@ export async function PATCH(
     }
 
     // Enforce 12-hour cancellation cutoff
-    const classStart = (booking as { classes?: { start_time?: string } }).classes?.start_time;
+    const classesField = (booking as { classes?: { starts_at?: string } | { starts_at?: string }[] }).classes;
+    const classStart = Array.isArray(classesField) ? classesField[0]?.starts_at : classesField?.starts_at;
     if (classStart) {
       const hoursUntilClass = (new Date(classStart).getTime() - Date.now()) / (1000 * 60 * 60);
       if (hoursUntilClass < 12) {

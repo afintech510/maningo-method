@@ -71,10 +71,10 @@ export function UpcomingBookings({ bookings }: UpcomingBookingsProps) {
       <div className="space-y-3">
         {bookings.map((booking) => (
           <Card key={booking.id}>
-            <p className="text-sm text-muted-foreground">
+            <p className="font-semibold text-base">
               {formatStudioDateTime(booking.class_starts_at)}
             </p>
-            <p className="font-semibold">{booking.class_title}</p>
+            <p className="text-sm text-muted-foreground">{booking.class_title}</p>
             <Button
               variant="ghost"
               size="sm"

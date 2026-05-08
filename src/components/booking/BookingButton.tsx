@@ -13,6 +13,10 @@ interface BookingButtonProps {
   isBooked: boolean;
   isAuthenticated: boolean;
   hasCredits: boolean;
+  /** Available credit balance (when known) — surfaced in the confirm modal. */
+  credits?: number;
+  /** Booking id when isBooked=true — required to cancel. */
+  bookingId?: string;
   /** When provided, surfaces class details inside the confirmation modal. */
   classTitle?: string;
   classStartsAt?: string;
@@ -26,6 +30,8 @@ export function BookingButton({
   isBooked,
   isAuthenticated,
   hasCredits,
+  credits,
+  bookingId,
   classTitle,
   classStartsAt,
   classDurationMinutes,
@@ -37,6 +43,8 @@ export function BookingButton({
     isBooked ? 'booked' : 'default'
   );
   const [confirming, setConfirming] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   function handleClick() {
     if (!isAuthenticated) {
@@ -82,11 +90,68 @@ export function BookingButton({
     }
   }
 
-  if (isFull) {
+  async function handleCancelConfirm() {
+    if (!bookingId) return;
+    setCancelling(true);
+    try {
+      const res = await fetch(`/api/bookings/${bookingId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'cancelled' }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showToast(data.error?.message || 'Could not cancel.', 'error');
+        setCancelling(false);
+        return;
+      }
+      showToast('Booking cancelled. Credit refunded.');
+      setCancelOpen(false);
+      setCancelling(false);
+      router.refresh();
+    } catch {
+      showToast('Something went wrong. Try again.', 'error');
+      setCancelling(false);
+    }
+  }
+
+  if (isFull && !isBooked) {
     return <Button variant="ghost" size="lg" className="w-full" disabled>Class Full</Button>;
   }
   if (state === 'booked' || isBooked) {
-    return <Button variant="secondary" size="lg" className="w-full" disabled>Booked</Button>;
+    if (!bookingId) {
+      return <Button variant="secondary" size="lg" className="w-full" disabled>Booked</Button>;
+    }
+    return (
+      <>
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="secondary" size="lg" disabled>Booked</Button>
+          <Button variant="ghost" size="lg" className="text-destructive" onClick={() => setCancelOpen(true)}>
+            Cancel
+          </Button>
+        </div>
+        <Modal open={cancelOpen} onClose={() => setCancelOpen(false)} title="Cancel booking?">
+          <div className="rounded-xl bg-[#faf9f6] border border-border p-4 mb-4">
+            {classTitle && <p className="font-semibold">{classTitle}</p>}
+            {classStartsAt && (
+              <p className="text-sm text-muted-foreground mt-1">{formatStudioDateTime(classStartsAt)}</p>
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground mb-4">
+            We&rsquo;ll refund <strong className="text-foreground">1 class credit</strong> back to your account.
+            Cancellations within 12 hours of class start aren&rsquo;t self-service &mdash; contact Chelsea directly.
+          </p>
+          <div className="flex gap-3">
+            <Button variant="destructive" className="flex-1" onClick={handleCancelConfirm} loading={cancelling}>
+              Yes, cancel booking
+            </Button>
+            <Button variant="secondary" className="flex-1" onClick={() => setCancelOpen(false)}>
+              Keep booking
+            </Button>
+          </div>
+        </Modal>
+      </>
+    );
   }
   if (!isAuthenticated) {
     return (
@@ -142,9 +207,19 @@ export function BookingButton({
           </div>
         </div>
 
+        {typeof credits === 'number' && (
+          <div className="flex items-center justify-between rounded-lg bg-[#faf9f6] border border-border px-3 py-2 mb-3 text-sm">
+            <span className="text-muted-foreground">Available credits</span>
+            <span className="font-semibold">{credits}</span>
+          </div>
+        )}
+
         <p className="text-sm text-muted-foreground mb-4">
           This will use <strong className="text-foreground">1 class credit</strong> from your balance.
-          You can cancel up to 12 hours before class start for a full credit refund.
+          {typeof credits === 'number' && credits > 0 && (
+            <> Balance after: <strong className="text-foreground">{credits - 1}</strong>.</>
+          )}
+          {' '}You can cancel up to 12 hours before class start for a full credit refund.
         </p>
 
         <div className="flex gap-3">

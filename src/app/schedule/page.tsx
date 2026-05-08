@@ -8,8 +8,9 @@ import { MobileNav } from '@/components/layout/MobileNav';
 export default async function SchedulePage() {
   const auth = await getAuth();
 
+  let credits = 0;
   let hasCredits = false;
-  let bookedClassIds: string[] = [];
+  let bookingsByClassId: Record<string, string> = {};
 
   if (auth) {
     const supabase = createAdminClient();
@@ -20,15 +21,19 @@ export default async function SchedulePage() {
       .eq('id', auth.user.id)
       .single();
 
-    hasCredits = (profile?.credits || 0) > 0;
+    credits = profile?.credits || 0;
+    hasCredits = credits > 0;
 
     const { data: bookings } = await supabase
       .from('bookings')
-      .select('class_id')
+      .select('id, class_id')
       .eq('student_id', auth.user.id)
       .eq('status', 'confirmed');
 
-    bookedClassIds = (bookings || []).map((b) => b.class_id);
+    bookingsByClassId = (bookings || []).reduce<Record<string, string>>((acc, b) => {
+      acc[b.class_id] = b.id;
+      return acc;
+    }, {});
   }
 
   return (
@@ -40,7 +45,8 @@ export default async function SchedulePage() {
           <ClassSchedule
             isAuthenticated={!!auth}
             hasCredits={hasCredits}
-            bookedClassIds={bookedClassIds}
+            credits={credits}
+            bookingsByClassId={bookingsByClassId}
           />
         </ToastProvider>
       </div>
