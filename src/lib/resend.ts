@@ -3,6 +3,7 @@ import { logger } from '@/lib/logger';
 import { BookingConfirmation } from '@/emails/BookingConfirmation';
 import { BookingCancellation } from '@/emails/BookingCancellation';
 import { ClassCancellation } from '@/emails/ClassCancellation';
+import { ClassAnnouncement } from '@/emails/ClassAnnouncement';
 import { GiftPurchaseConfirmation } from '@/emails/GiftPurchaseConfirmation';
 import { GiftReceived } from '@/emails/GiftReceived';
 import { GiftRedeemed } from '@/emails/GiftRedeemed';
@@ -95,6 +96,41 @@ export async function sendClassCancellationBatch(
     );
   } catch (err) {
     logger.error({ err, count: recipients.length }, 'Failed to send class cancellation batch');
+  }
+}
+
+export async function sendClassAnnouncementBatch(
+  recipients: Array<{
+    email: string;
+    studentName: string;
+    classTitle: string;
+    classDate: string;
+    classTime: string;
+  }>,
+  subject: string,
+  message: string,
+) {
+  if (recipients.length === 0) return;
+
+  try {
+    const resend = getResend();
+    await resend.batch.send(
+      recipients.map((r) => ({
+        from: `Maningo Method <${FROM_EMAIL}>`,
+        to: r.email,
+        subject,
+        react: createElement(ClassAnnouncement, {
+          studentName: r.studentName,
+          classTitle: r.classTitle,
+          classDate: r.classDate,
+          classTime: r.classTime,
+          subject,
+          message,
+        }),
+      }))
+    );
+  } catch (err) {
+    logger.error({ err, count: recipients.length }, 'Failed to send class announcement batch');
   }
 }
 

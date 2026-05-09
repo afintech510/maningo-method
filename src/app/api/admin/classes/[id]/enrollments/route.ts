@@ -13,7 +13,7 @@ export async function GET(
 
   const { data: classData } = await supabase
     .from('classes')
-    .select('id, title, starts_at, max_capacity')
+    .select('id, title, starts_at, duration_minutes, max_capacity')
     .eq('id', params.id)
     .single();
 
@@ -49,6 +49,7 @@ export async function GET(
     class_id: classData.id,
     class_title: classData.title,
     starts_at: classData.starts_at,
+    duration_minutes: classData.duration_minutes,
     max_capacity: classData.max_capacity,
     enrollments: result,
   });

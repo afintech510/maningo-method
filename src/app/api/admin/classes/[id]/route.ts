@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { requireAuth, isAuthError } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
 import { sendClassCancellationBatch, sendRefundReport } from '@/lib/resend';
 import { formatStudioDate, formatStudioTime } from '@/lib/timezone';
 import { logger, generateCorrelationId } from '@/lib/logger';
+
+const editSchema = z.object({
+  title: z.string().min(1).max(120).optional(),
+  starts_at: z.string().datetime().optional(),
+  duration_minutes: z.number().int().min(10).max(240).optional(),
+  max_capacity: z.number().int().min(1).max(200).optional(),
+  description: z.string().max(500).nullable().optional(),
+});
 
 export async function PATCH(
   request: NextRequest,
@@ -105,10 +114,45 @@ export async function PATCH(
       });
     }
 
-    // Regular update
+    // Regular update — whitelist + validate
+    const parsed = editSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: { code: 'VALIDATION_ERROR', message: parsed.error.issues[0]?.message ?? 'Invalid input' } },
+        { status: 400 }
+      );
+    }
+    const patch = parsed.data;
+    if (Object.keys(patch).length === 0) {
+      return NextResponse.json(
+        { error: { code: 'VALIDATION_ERROR', message: 'No fields to update.' } },
+        { status: 400 }
+      );
+    }
+
+    // If lowering max_capacity, ensure it doesn't drop below current confirmed enrollment
+    if (typeof patch.max_capacity === 'number') {
+      const { count: enrolledCount } = await supabase
+        .from('bookings')
+        .select('id', { count: 'exact', head: true })
+        .eq('class_id', params.id)
+        .in('status', ['pending', 'confirmed']);
+      if ((enrolledCount ?? 0) > patch.max_capacity) {
+        return NextResponse.json(
+          {
+            error: {
+              code: 'CAPACITY_BELOW_ENROLLMENT',
+              message: `Capacity cannot be below current enrollment (${enrolledCount}).`,
+            },
+          },
+          { status: 409 }
+        );
+      }
+    }
+
     const { data: updated, error } = await supabase
       .from('classes')
-      .update(body)
+      .update(patch)
       .eq('id', params.id)
       .select()
       .single();
