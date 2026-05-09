@@ -5,27 +5,29 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
-  { label: 'Schedule', href: '/schedule', icon: CalendarIcon },
-  { label: 'My Classes', href: '/dashboard', icon: BookmarkIcon },
-  { label: 'Private', href: '/#contact', icon: StarIcon },
-  { label: 'Account', href: '/dashboard', icon: UserIcon },
+  { label: 'Schedule', href: '/schedule', icon: CalendarIcon, match: ['/schedule'] },
+  { label: 'My Classes', href: '/dashboard', icon: UserIcon, match: ['/dashboard'] },
+  { label: 'Private', href: '/#contact', icon: StarIcon, match: ['/#contact'] },
+  { label: 'Buy Credits', href: '/#pricing', icon: DollarIcon, match: ['/#pricing'] },
 ];
 
 export function MobileNav() {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? '';
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-border lg:hidden safe-bottom">
       <div className="flex items-center justify-around h-14">
         {NAV_ITEMS.map((item) => {
-          const isActive = pathname === item.href || (item.href !== '/#contact' && pathname.startsWith(item.href + '/'));
+          const isActive = item.match.some(
+            (m) => pathname === m || (m !== '/#contact' && m !== '/#pricing' && pathname.startsWith(`${m}/`))
+          );
           return (
             <Link
               key={item.label}
               href={item.href}
               className={cn(
                 'flex flex-col items-center justify-center w-full h-full gap-0.5 text-xs transition-colors min-w-[44px] min-h-[44px]',
-                isActive ? 'text-primary font-medium' : 'text-muted-foreground'
+                isActive ? 'text-[#c9a96e] font-medium' : 'text-muted-foreground'
               )}
               aria-label={item.label}
             >
@@ -50,10 +52,11 @@ function CalendarIcon({ filled }: { filled: boolean }) {
   );
 }
 
-function BookmarkIcon({ filled }: { filled: boolean }) {
+function UserIcon({ filled }: { filled: boolean }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
     </svg>
   );
 }
@@ -66,11 +69,11 @@ function StarIcon({ filled }: { filled: boolean }) {
   );
 }
 
-function UserIcon({ filled }: { filled: boolean }) {
+function DollarIcon({ filled }: { filled: boolean }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-      <circle cx="12" cy="7" r="4" />
+      <line x1="12" y1="1" x2="12" y2="23" />
+      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
     </svg>
   );
 }

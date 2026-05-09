@@ -80,35 +80,42 @@ export default async function DashboardPage() {
     .eq('student_id', auth.user.id)
     .order('created_at', { ascending: false });
 
+  const nextClass = upcoming[0] || null;
+
   return (
-    <div className="px-4 py-6">
-      {/* Member overview: 2x2 grid */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        {/* Top-left: greeting */}
-        <div className="rounded-2xl border border-border bg-white p-4 sm:p-5 flex flex-col justify-center">
-          <h1 className="text-xl sm:text-2xl font-bold leading-tight">Hi, {firstName}!</h1>
+    <div className="px-4 py-6 max-w-3xl mx-auto">
+      {/* Hero card */}
+      <section className="rounded-2xl bg-gradient-to-br from-[#c9a96e]/15 via-[#faf9f6] to-white border border-[#c9a96e]/30 p-5 sm:p-6 mb-4 relative overflow-hidden">
+        <div className="absolute -top-12 -right-12 w-44 h-44 rounded-full bg-[#c9a96e]/10 blur-2xl pointer-events-none" />
+        <div className="relative">
+          <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#c9a96e] mb-1">
+            {memberSince ? `Member since ${memberSince}` : 'Welcome'}
+          </p>
+          <h1 className="text-3xl sm:text-4xl font-bold mb-1 leading-tight">Hi, {firstName}!</h1>
+          <p className="text-sm text-[#6b6b6b] break-all">{auth.user.email}</p>
+
+          <div className="flex items-stretch gap-2 mt-4">
+            <div className="flex-1 rounded-xl bg-white/70 backdrop-blur-sm border border-[#e5e2dc] px-3 py-2.5">
+              <p className="text-[10px] uppercase tracking-wider text-[#6b6b6b] font-medium">Credits</p>
+              <p className="text-xl sm:text-2xl font-bold leading-none mt-0.5">{credits}</p>
+            </div>
+            <div className="flex-1 rounded-xl bg-white/70 backdrop-blur-sm border border-[#e5e2dc] px-3 py-2.5">
+              <p className="text-[10px] uppercase tracking-wider text-[#6b6b6b] font-medium">Attended</p>
+              <p className="text-xl sm:text-2xl font-bold leading-none mt-0.5">{totalAttended}</p>
+            </div>
+            <div className="flex-1 rounded-xl bg-white/70 backdrop-blur-sm border border-[#e5e2dc] px-3 py-2.5">
+              <p className="text-[10px] uppercase tracking-wider text-[#6b6b6b] font-medium">Booked</p>
+              <p className="text-xl sm:text-2xl font-bold leading-none mt-0.5">{upcoming.length}</p>
+            </div>
+          </div>
         </div>
-        {/* Top-right: credits remaining */}
-        <div className="rounded-2xl border border-[#c9a96e]/40 bg-[#c9a96e]/5 p-4 sm:p-5 flex flex-col items-center justify-center text-center">
-          <p className="text-3xl sm:text-4xl font-bold leading-none">{credits}</p>
-          <p className="text-xs text-muted-foreground mt-1">{credits === 1 ? 'class credit remaining' : 'class credits remaining'}</p>
-        </div>
-        {/* Bottom-left: identity */}
-        <div className="rounded-2xl border border-border bg-white p-4 sm:p-5 flex flex-col justify-center min-w-0">
-          <p className="text-xs sm:text-sm text-muted-foreground break-all leading-snug">{auth.user.email}</p>
-          {memberSince && (
-            <p className="text-[11px] text-muted-foreground mt-1">Member since {memberSince}</p>
-          )}
-        </div>
-        {/* Bottom-right: total attended */}
-        <div className="rounded-2xl border border-border bg-white p-4 sm:p-5 flex flex-col items-center justify-center text-center">
-          <p className="text-3xl sm:text-4xl font-bold leading-none">{totalAttended}</p>
-          <p className="text-xs text-muted-foreground mt-1">{totalAttended === 1 ? 'class attended' : 'classes attended'}</p>
-        </div>
-      </div>
+      </section>
+
+      {/* Next Class card */}
+      <NextClassCard next={nextClass} />
 
       <ToastProvider>
-        {/* My Booked Classes — first so user sees their bookings immediately */}
+        {/* My Booked Classes — full list including the one shown above */}
         <div className="mt-6">
           <h2 className="text-lg font-semibold mb-3">My Booked Classes</h2>
           <UpcomingBookings bookings={upcoming} />
@@ -182,5 +189,64 @@ export default async function DashboardPage() {
         </div>
       </ToastProvider>
     </div>
+  );
+}
+
+function NextClassCard({
+  next,
+}: {
+  next:
+    | {
+        id: string;
+        class_id: string;
+        class_title: string;
+        class_starts_at: string;
+        class_duration_minutes: number;
+      }
+    | null;
+}) {
+  if (!next) {
+    return (
+      <section className="rounded-2xl border-2 border-dashed border-[#e5e2dc] bg-white p-5 text-center">
+        <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#c9a96e] mb-1">Next class</p>
+        <p className="font-semibold text-base mb-1">Nothing booked yet</p>
+        <p className="text-sm text-muted-foreground mb-4">Pick a slot from the schedule and lock in your spot.</p>
+        <a
+          href="/schedule"
+          className="inline-flex items-center justify-center h-10 px-5 rounded-full bg-[#c9a96e] text-white text-sm font-medium hover:bg-[#b8955d] transition-colors"
+        >
+          View schedule &rarr;
+        </a>
+      </section>
+    );
+  }
+
+  const startsAt = new Date(next.class_starts_at);
+  const day = startsAt.toLocaleDateString('en-US', { weekday: 'short' });
+  const monthDay = startsAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const time = startsAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+  return (
+    <section className="rounded-2xl bg-[#2d2d2d] text-white p-5 sm:p-6 relative overflow-hidden">
+      <div className="absolute -bottom-8 -right-6 w-32 h-32 rounded-full bg-[#c9a96e]/20 blur-2xl pointer-events-none" />
+      <div className="relative flex items-stretch gap-4">
+        {/* Date stamp */}
+        <div className="flex-shrink-0 w-16 sm:w-20 rounded-xl bg-[#c9a96e] text-[#1a1a1a] flex flex-col items-center justify-center text-center py-2">
+          <p className="text-[10px] uppercase tracking-wider font-bold leading-none">{day}</p>
+          <p className="text-2xl sm:text-3xl font-bold leading-none mt-1">{startsAt.getDate()}</p>
+          <p className="text-[10px] uppercase tracking-wider font-bold leading-none mt-0.5">
+            {monthDay.split(' ')[0]}
+          </p>
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#c9a96e] mb-1">Next class</p>
+          <p className="font-semibold text-lg sm:text-xl truncate">{next.class_title}</p>
+          <p className="text-sm text-white/80 mt-0.5">
+            {time} &middot; {next.class_duration_minutes} min
+          </p>
+          <p className="text-xs text-white/60 mt-1">295 Montauk Hwy, Speonk</p>
+        </div>
+      </div>
+    </section>
   );
 }

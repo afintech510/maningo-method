@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Playfair_Display, DM_Sans } from "next/font/google";
 import "./globals.css";
+import { getAuth } from "@/lib/auth";
+import { MobileNav } from "@/components/layout/MobileNav";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -29,17 +31,23 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const auth = await getAuth();
+  const isLoggedIn = !!auth;
+
   return (
     <html lang="en">
       <body
-        className={`${playfair.variable} ${dmSans.variable} font-sans antialiased bg-background text-foreground`}
+        className={`${playfair.variable} ${dmSans.variable} font-sans antialiased bg-background text-foreground ${
+          isLoggedIn ? 'pb-16 lg:pb-0' : ''
+        }`}
       >
         {children}
+        {isLoggedIn && <MobileNav />}
       </body>
     </html>
   );
