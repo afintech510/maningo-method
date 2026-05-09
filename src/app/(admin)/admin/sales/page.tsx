@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/Card';
 import { LogoutButton } from '@/components/layout/LogoutButton';
 import { formatCents } from '@/lib/pricing';
 import { ActivateGiftButton } from './activate-gift-button';
+import { SendTestEmailsButton } from './send-test-emails-button';
 
 export default async function AdminSalesPage() {
   const supabase = createAdminClient();
@@ -328,6 +329,12 @@ export default async function AdminSalesPage() {
             ))}
           </div>
         )}
+      </section>
+
+      {/* Tools */}
+      <section className="mt-8">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-[#6b6b6b] mb-3">Tools</h2>
+        <SendTestEmailsButton />
       </section>
 
       {/* Log Out */}

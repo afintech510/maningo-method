@@ -23,7 +23,8 @@ export function getResend(): Resend {
   return resendInstance;
 }
 
-export const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'hello@maningo.hosthampton.com';
+export const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'chelsea@maningomethod.com';
+export const REPLY_TO = process.env.RESEND_REPLY_TO || FROM_EMAIL;
 
 export async function sendBookingConfirmation(
   to: string,
@@ -42,6 +43,7 @@ export async function sendBookingConfirmation(
     const resend = getResend();
     await resend.emails.send({
       from: `Maningo Method <${FROM_EMAIL}>`,
+      replyTo: REPLY_TO,
       to,
       subject: `Booking Confirmed: ${data.classTitle}`,
       react: createElement(BookingConfirmation, data),
@@ -59,6 +61,7 @@ export async function sendBookingCancellation(
     const resend = getResend();
     await resend.emails.send({
       from: `Maningo Method <${FROM_EMAIL}>`,
+      replyTo: REPLY_TO,
       to,
       subject: `Booking Cancelled: ${data.classTitle}`,
       react: createElement(BookingCancellation, data),
@@ -85,6 +88,7 @@ export async function sendClassCancellationBatch(
     await resend.batch.send(
       recipients.map((r) => ({
         from: `Maningo Method <${FROM_EMAIL}>`,
+      replyTo: REPLY_TO,
         to: r.email,
         subject: `Class Cancelled: ${r.classTitle}`,
         react: createElement(ClassCancellation, {
@@ -118,6 +122,7 @@ export async function sendClassAnnouncementBatch(
     await resend.batch.send(
       recipients.map((r) => ({
         from: `Maningo Method <${FROM_EMAIL}>`,
+      replyTo: REPLY_TO,
         to: r.email,
         subject,
         react: createElement(ClassAnnouncement, {
@@ -157,6 +162,7 @@ export async function sendRefundReport(
 
     await resend.emails.send({
       from: `Maningo Method <${FROM_EMAIL}>`,
+      replyTo: REPLY_TO,
       to: adminEmail,
       subject: `Refund Report: ${data.classTitle}`,
       text: `The following drop-in students need refunds for cancelled class "${data.classTitle}":\n\n${refundLines}`,
@@ -182,6 +188,7 @@ export async function sendGiftPurchaseConfirmation(
     const resend = getResend();
     await resend.emails.send({
       from: `Maningo Method <${FROM_EMAIL}>`,
+      replyTo: REPLY_TO,
       to,
       subject: 'Your Maningo Method gift is ready',
       react: createElement(GiftPurchaseConfirmation, data),
@@ -209,6 +216,7 @@ export async function sendGiftPurchaseManualPending(
     const resend = getResend();
     await resend.emails.send({
       from: `Maningo Method <${FROM_EMAIL}>`,
+      replyTo: REPLY_TO,
       to,
       subject: 'Maningo Method gift code (payment pending)',
       react: createElement(GiftPurchaseManualPending, data),
@@ -234,6 +242,7 @@ export async function sendAdminGiftPending(
     const resend = getResend();
     await resend.emails.send({
       from: `Maningo Method <${FROM_EMAIL}>`,
+      replyTo: REPLY_TO,
       to,
       subject: `Pending gift: ${data.packLabel} via ${data.paymentMethod}`,
       text:
@@ -264,6 +273,7 @@ export async function sendGiftReceived(
     const resend = getResend();
     await resend.emails.send({
       from: `Maningo Method <${FROM_EMAIL}>`,
+      replyTo: REPLY_TO,
       to,
       subject: `${data.senderName} sent you a Maningo Method gift`,
       react: createElement(GiftReceived, data),
@@ -281,6 +291,7 @@ export async function sendGiftRedeemed(
     const resend = getResend();
     await resend.emails.send({
       from: `Maningo Method <${FROM_EMAIL}>`,
+      replyTo: REPLY_TO,
       to,
       subject: 'Your Maningo Method gift was redeemed',
       react: createElement(GiftRedeemed, data),
@@ -298,6 +309,7 @@ export async function sendReferralRewardEarned(
     const resend = getResend();
     await resend.emails.send({
       from: `Maningo Method <${FROM_EMAIL}>`,
+      replyTo: REPLY_TO,
       to,
       subject: 'You just earned a free class credit',
       react: createElement(ReferralRewardEarned, data),
@@ -322,6 +334,7 @@ export async function sendCreditPurchaseReceipt(
     const resend = getResend();
     await resend.emails.send({
       from: `Maningo Method <${FROM_EMAIL}>`,
+      replyTo: REPLY_TO,
       to,
       subject: `Receipt: ${data.packLabel}`,
       react: createElement(CreditPurchaseReceipt, data),
@@ -349,6 +362,7 @@ export async function sendClassReminderBatch(
     await resend.batch.send(
       recipients.map((r) => ({
         from: `Maningo Method <${FROM_EMAIL}>`,
+      replyTo: REPLY_TO,
         to: r.email,
         subject:
           r.hoursUntil <= 3
@@ -386,6 +400,7 @@ export async function sendManualPaymentSubmitted(
     const resend = getResend();
     await resend.emails.send({
       from: `Maningo Method <${FROM_EMAIL}>`,
+      replyTo: REPLY_TO,
       to,
       subject: `New ${data.method} payment request — ${data.studentName}`,
       react: createElement(ManualPaymentSubmitted, data),
