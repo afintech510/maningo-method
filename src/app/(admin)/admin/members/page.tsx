@@ -14,16 +14,26 @@ interface Student {
   created_at: string;
   credits: number;
   lifetime_spend_cents: number;
+  waiver_signed_at: string | null;
 }
 
-type SortKey = 'name' | 'credits' | 'spend' | 'created';
+type SortKey = 'name' | 'credits' | 'spend' | 'created' | 'waiver';
 type SortDir = 'asc' | 'desc';
+
+const SORT_OPTIONS: Array<{ value: SortKey; label: string }> = [
+  { value: 'created', label: 'Joined' },
+  { value: 'name', label: 'Name' },
+  { value: 'credits', label: 'Credits' },
+  { value: 'spend', label: 'Lifetime spend' },
+  { value: 'waiver', label: 'Waiver' },
+];
 
 export default function AdminMembersPage() {
   const [students, setStudents] = useState<Student[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [adjustTarget, setAdjustTarget] = useState<Student | null>(null);
+  const [editTarget, setEditTarget] = useState<Student | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>('created');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
 
@@ -58,6 +68,12 @@ export default function AdminMembersPage() {
           return ((a.credits || 0) - (b.credits || 0)) * dir;
         case 'spend':
           return ((a.lifetime_spend_cents || 0) - (b.lifetime_spend_cents || 0)) * dir;
+        case 'waiver': {
+          // Signed first when asc, unsigned first when desc — toggleable
+          const av = a.waiver_signed_at ? 1 : 0;
+          const bv = b.waiver_signed_at ? 1 : 0;
+          return (av - bv) * dir;
+        }
         case 'created':
         default:
           return (new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) * dir;
@@ -104,13 +120,39 @@ export default function AdminMembersPage() {
         </p>
       </div>
 
-      <div className="mb-4 max-w-sm">
+      <div className="mb-4 grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-2 sm:gap-3 sm:items-end">
         <Input
           label="Search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Name, email, phone"
         />
+        {/* Mobile-only sort controls (desktop uses sortable table headers) */}
+        <div className="lg:hidden">
+          <label className="block text-sm font-medium mb-1.5">Sort by</label>
+          <select
+            value={sortKey}
+            onChange={(e) => setSortKey(e.target.value as SortKey)}
+            className="w-full h-12 px-3 rounded-lg border border-[#e5e2dc] bg-white focus:outline-none focus:ring-2 focus:ring-[#c9a96e]"
+          >
+            {SORT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="lg:hidden">
+          <label className="block text-sm font-medium mb-1.5">&nbsp;</label>
+          <button
+            type="button"
+            onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
+            aria-label={`Sort direction ${sortDir}`}
+            className="w-full h-12 px-3 rounded-lg border border-[#e5e2dc] bg-white text-sm font-medium hover:border-[#c9a96e]"
+          >
+            {sortDir === 'asc' ? '↑ Ascending' : '↓ Descending'}
+          </button>
+        </div>
       </div>
 
       {/* Mobile cards */}
@@ -119,7 +161,10 @@ export default function AdminMembersPage() {
           <div key={s.id} className="rounded-2xl border border-[#e5e2dc] bg-white p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="font-medium">{s.full_name || '(no name)'}</p>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <p className="font-medium">{s.full_name || '(no name)'}</p>
+                  <WaiverPill signed={!!s.waiver_signed_at} />
+                </div>
                 <a href={`mailto:${s.email}`} className="text-sm text-[#c9a96e] hover:underline break-all">
                   {s.email}
                 </a>
@@ -143,9 +188,14 @@ export default function AdminMembersPage() {
               <span className="text-muted-foreground">
                 Lifetime: <strong className="text-[#2d2d2d]">{formatCents(s.lifetime_spend_cents)}</strong>
               </span>
-              <Button size="sm" variant="ghost" onClick={() => setAdjustTarget(s)}>
-                Adjust
-              </Button>
+              <div className="flex gap-1">
+                <Button size="sm" variant="ghost" onClick={() => setEditTarget(s)}>
+                  Edit
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setAdjustTarget(s)}>
+                  Adjust
+                </Button>
+              </div>
             </div>
           </div>
         ))}
@@ -159,6 +209,7 @@ export default function AdminMembersPage() {
               <Th label="Name" k="name" sortKey={sortKey} sortDir={sortDir} setSort={setSort} />
               <th className="px-4 py-3 text-left font-medium">Email</th>
               <th className="px-4 py-3 text-left font-medium">Phone</th>
+              <Th label="Waiver" k="waiver" sortKey={sortKey} sortDir={sortDir} setSort={setSort} />
               <Th label="Credits" k="credits" sortKey={sortKey} sortDir={sortDir} setSort={setSort} align="right" />
               <Th label="Lifetime spend" k="spend" sortKey={sortKey} sortDir={sortDir} setSort={setSort} align="right" />
               <Th label="Joined" k="created" sortKey={sortKey} sortDir={sortDir} setSort={setSort} />
@@ -192,21 +243,29 @@ export default function AdminMembersPage() {
                     <span className="text-muted-foreground">&mdash;</span>
                   )}
                 </td>
+                <td className="px-4 py-3">
+                  <WaiverPill signed={!!s.waiver_signed_at} />
+                </td>
                 <td className="px-4 py-3 text-right tabular-nums">{s.credits}</td>
                 <td className="px-4 py-3 text-right tabular-nums">{formatCents(s.lifetime_spend_cents)}</td>
                 <td className="px-4 py-3 text-muted-foreground">
                   {new Date(s.created_at).toLocaleDateString()}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <Button size="sm" variant="ghost" onClick={() => setAdjustTarget(s)}>
-                    Adjust
-                  </Button>
+                  <div className="flex justify-end gap-1">
+                    <Button size="sm" variant="ghost" onClick={() => setEditTarget(s)}>
+                      Edit
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setAdjustTarget(s)}>
+                      Adjust
+                    </Button>
+                  </div>
                 </td>
               </tr>
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
                   No members match.
                 </td>
               </tr>
@@ -225,7 +284,30 @@ export default function AdminMembersPage() {
           }}
         />
       )}
+
+      {editTarget && (
+        <EditMemberModal
+          student={editTarget}
+          onClose={() => setEditTarget(null)}
+          onSaved={async () => {
+            setEditTarget(null);
+            await load();
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+function WaiverPill({ signed }: { signed: boolean }) {
+  return signed ? (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+      <span aria-hidden>✓</span>Waiver
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+      No waiver
+    </span>
   );
 }
 
@@ -377,6 +459,120 @@ function AdjustModal({
               Save adjustment
             </Button>
           </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function EditMemberModal({
+  student,
+  onClose,
+  onSaved,
+}: {
+  student: Student;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [fullName, setFullName] = useState(student.full_name || '');
+  const [email, setEmail] = useState(student.email || '');
+  const [phone, setPhone] = useState(student.phone || '');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+
+    const payload: Record<string, unknown> = {};
+    if (fullName.trim() && fullName.trim() !== student.full_name) payload.full_name = fullName.trim();
+    if (email.trim() && email.trim() !== student.email) payload.email = email.trim();
+    const phoneTrim = phone.trim();
+    if (phoneTrim !== (student.phone || '')) payload.phone = phoneTrim || null;
+
+    if (Object.keys(payload).length === 0) {
+      onClose();
+      return;
+    }
+
+    setSubmitting(true);
+    const res = await fetch(`/api/admin/students/${student.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setError(data?.error?.message || 'Could not save changes.');
+      setSubmitting(false);
+      return;
+    }
+    onSaved();
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40" onClick={onClose}>
+      <div
+        className="w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl border-t sm:border border-[#e5e2dc] p-6 max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <p className="text-xs text-muted-foreground">Edit member</p>
+            <p className="font-semibold">{student.full_name}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="min-w-[44px] min-h-[44px] text-2xl text-[#6b6b6b]"
+          >
+            ×
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Input
+            label="Name"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            required
+            autoComplete="off"
+          />
+          <Input
+            label="Email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            inputMode="email"
+            autoComplete="off"
+          />
+          <Input
+            label="Phone"
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            inputMode="tel"
+            placeholder="(631) 555-1234"
+            autoComplete="off"
+          />
+
+          {error && (
+            <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-800">{error}</div>
+          )}
+
+          <div className="flex gap-2 pt-2">
+            <Button type="button" variant="ghost" onClick={onClose} className="flex-1">
+              Cancel
+            </Button>
+            <Button type="submit" loading={submitting} className="flex-1">
+              Save changes
+            </Button>
+          </div>
+          <p className="text-[11px] text-muted-foreground text-center pt-1">
+            Changing email updates their login. They can still use their existing password.
+          </p>
         </form>
       </div>
     </div>

@@ -10,7 +10,6 @@ export default function WaiverSignPage() {
   const searchParams = useSearchParams();
   const status = searchParams?.get('status');
 
-  const [embeddedUrl, setEmbeddedUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isMinor, setIsMinor] = useState(false);
@@ -48,7 +47,10 @@ export default function WaiverSignPage() {
         setLoading(false);
         return;
       }
-      setEmbeddedUrl(data.embedded_url);
+      // SignWell blocks iframe embedding for non-allowlisted domains; redirect
+      // to their hosted signing page directly. They'll send the user back to
+      // /waiver/sign?status=complete on completion via the redirect_url metadata.
+      window.location.href = data.embedded_url;
     } catch {
       setError('Network error. Please try again.');
       setLoading(false);
@@ -63,25 +65,6 @@ export default function WaiverSignPage() {
           <h1 className="text-2xl font-bold mb-2">Waiver received</h1>
           <p className="text-[#6b6b6b]">Taking you to your dashboard&hellip;</p>
         </div>
-      </div>
-    );
-  }
-
-  if (embeddedUrl) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <div className="bg-white border-b border-[#e5e2dc] px-5 py-3 flex items-center justify-between">
-          <div>
-            <p className="font-serif font-bold">Liability Waiver</p>
-            <p className="text-xs text-[#6b6b6b]">Sign below to complete your booking</p>
-          </div>
-        </div>
-        <iframe
-          src={embeddedUrl}
-          title="Sign waiver"
-          className="flex-1 w-full border-0"
-          allow="camera; microphone; clipboard-read; clipboard-write"
-        />
       </div>
     );
   }

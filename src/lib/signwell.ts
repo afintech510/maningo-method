@@ -39,6 +39,9 @@ export async function createWaiverDocument(args: {
     },
   ];
 
+  // SignWell blocks iframe embedding for non-allowlisted domains, so we use
+  // their hosted signing page (full-page redirect). On completion SignWell
+  // sends the signer back to redirect_url.
   const body = {
     test_mode: false,
     template_id: getTemplateId(),

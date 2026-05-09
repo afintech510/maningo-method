@@ -12,7 +12,7 @@ export async function GET() {
 
   const { data: students, error } = await supabase
     .from('profiles')
-    .select('id, full_name, email, phone, credits, created_at')
+    .select('id, full_name, email, phone, credits, created_at, waiver_signed_at')
     .eq('role', 'student')
     .order('created_at', { ascending: false });
 
