@@ -7,7 +7,6 @@ export async function Header() {
   const auth = await getAuth();
   const isLoggedIn = !!auth;
   const isAdmin = auth?.user?.role === 'admin';
-  const homeHref = isAdmin ? '/admin' : isLoggedIn ? '/dashboard' : '/';
 
   return (
     <header className="border-b border-border bg-white">
@@ -15,7 +14,8 @@ export async function Header() {
         <div className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2">
           <BackButton />
         </div>
-        <Link href={homeHref} aria-label="Maningo Method home" className="block">
+        {/* Logo always routes to the public homepage, regardless of auth/role */}
+        <Link href="/" aria-label="Maningo Method home" className="block">
           <Image
             src="/maningo-method_logo_600.png"
             alt="Maningo Method"

@@ -9,6 +9,7 @@ import { HostHamptonPromo } from '@/components/dashboard/HostHamptonPromo';
 import { WeeklySchedule } from '@/components/dashboard/WeeklySchedule';
 import { ToastProvider } from '@/components/feedback/Toast';
 import { Card } from '@/components/ui/Card';
+import { LogoutButton } from '@/components/layout/LogoutButton';
 import { format } from 'date-fns';
 
 export default async function DashboardPage() {
@@ -178,14 +179,7 @@ export default async function DashboardPage() {
 
         {/* Log Out */}
         <div className="mt-8 pb-4">
-          <form action="/api/auth/logout" method="POST">
-            <button
-              type="submit"
-              className="w-full h-11 rounded-lg border border-border text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
-            >
-              Log Out
-            </button>
-          </form>
+          <LogoutButton />
         </div>
       </ToastProvider>
     </div>

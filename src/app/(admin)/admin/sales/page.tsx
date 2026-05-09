@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { Card } from '@/components/ui/Card';
+import { LogoutButton } from '@/components/layout/LogoutButton';
 import { formatCents } from '@/lib/pricing';
 
 export default async function AdminSalesPage() {
@@ -135,6 +136,11 @@ export default async function AdminSalesPage() {
           </div>
         )}
       </section>
+
+      {/* Log Out */}
+      <div className="mt-10 max-w-sm">
+        <LogoutButton />
+      </div>
     </div>
   );
 }
