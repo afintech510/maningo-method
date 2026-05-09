@@ -274,7 +274,10 @@ export async function POST(request: NextRequest) {
   ];
 
   const results: Array<{ name: string; ok: boolean; id?: string; error?: string }> = [];
-  for (const t of tasks) {
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  for (let i = 0; i < tasks.length; i++) {
+    if (i > 0) await sleep(250); // Resend free tier: 5 req/sec
+    const t = tasks[i];
     try {
       // Resend SDK returns `{ data, error }` on the v6 path — surface either.
       const out = (await t.run()) as { data?: { id?: string }; error?: { message?: string } | null };
