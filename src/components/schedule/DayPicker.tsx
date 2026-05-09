@@ -7,9 +7,11 @@ import { useState } from 'react';
 interface DayPickerProps {
   selectedDate: Date;
   onSelectDate: (date: Date) => void;
+  /** yyyy-MM-dd strings of dates that have at least one scheduled class. */
+  datesWithClasses?: Set<string>;
 }
 
-export function DayPicker({ selectedDate, onSelectDate }: DayPickerProps) {
+export function DayPicker({ selectedDate, onSelectDate, datesWithClasses }: DayPickerProps) {
   const today = new Date();
   const [weekOffset, setWeekOffset] = useState(0);
   const startDay = addDays(today, weekOffset * 7);
@@ -47,13 +49,15 @@ export function DayPicker({ selectedDate, onSelectDate }: DayPickerProps) {
           const isToday = isSameDay(day, today);
           const isPast = day < today && !isToday;
 
+          const hasClasses = !!datesWithClasses?.has(format(day, 'yyyy-MM-dd'));
+
           return (
             <button
               key={day.toISOString()}
               onClick={() => !isPast && onSelectDate(day)}
               disabled={isPast}
               className={cn(
-                'flex flex-col items-center justify-center h-16 rounded-xl text-sm transition-colors',
+                'relative flex flex-col items-center justify-center h-16 rounded-xl text-sm transition-colors',
                 isSelected
                   ? 'bg-primary text-primary-foreground'
                   : isPast
@@ -66,6 +70,15 @@ export function DayPicker({ selectedDate, onSelectDate }: DayPickerProps) {
                 {format(day, 'EEE')}
               </span>
               <span className="text-lg font-bold leading-tight">{format(day, 'd')}</span>
+              {hasClasses && (
+                <span
+                  className={cn(
+                    'absolute bottom-1.5 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full',
+                    isSelected ? 'bg-white' : 'bg-emerald-500'
+                  )}
+                  aria-label="Classes scheduled"
+                />
+              )}
             </button>
           );
         })}
