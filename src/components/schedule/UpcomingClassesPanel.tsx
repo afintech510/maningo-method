@@ -19,7 +19,7 @@ interface UpcomingClassesPanelProps {
   title?: string;
   /** Section subhead. */
   subtitle?: string;
-  /** How many days ahead to fetch (default 28 = 4 weeks). */
+  /** How many days ahead to fetch (default 180 = ~6 months, covers full schedule). */
   horizonDays?: number;
   /** Initial collapsed state. Users can toggle visibility. */
   defaultOpen?: boolean;
@@ -34,7 +34,7 @@ interface UpcomingClassesPanelProps {
 export function UpcomingClassesPanel({
   title = 'Upcoming Classes',
   subtitle,
-  horizonDays = 28,
+  horizonDays = 180,
   defaultOpen = true,
   showFooterCta = true,
   bookedClassIds = [],
@@ -300,8 +300,9 @@ function DayColumn({
               </button>
             );
           }
+          const dayKey = format(new Date(cls.starts_at), 'yyyy-MM-dd');
           return (
-            <Link key={cls.id} href="/schedule" className={className}>
+            <Link key={cls.id} href={`/schedule?date=${dayKey}`} className={className}>
               {Body}
             </Link>
           );

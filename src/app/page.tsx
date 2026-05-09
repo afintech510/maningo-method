@@ -205,7 +205,7 @@ export default function Home() {
       {/* Testimonial / Image Strip */}
       <section className="relative h-[300px] sm:h-[400px]">
         <Image
-          src="https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=1920&q=80"
+          src="/banner_bg_image_mm.jpg"
           alt="Pilates class in session"
           fill
           className="object-cover"

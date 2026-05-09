@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { ClassSchedule } from '@/components/schedule/ClassSchedule';
 import { ToastProvider } from '@/components/feedback/Toast';
 import { getAuth } from '@/lib/auth';
@@ -42,12 +43,14 @@ export default async function SchedulePage() {
       <div className="px-4 py-6 pb-20 lg:pb-6">
         <h1 className="text-2xl font-bold mb-4">Class Schedule</h1>
         <ToastProvider>
-          <ClassSchedule
-            isAuthenticated={!!auth}
-            hasCredits={hasCredits}
-            credits={credits}
-            bookingsByClassId={bookingsByClassId}
-          />
+          <Suspense fallback={null}>
+            <ClassSchedule
+              isAuthenticated={!!auth}
+              hasCredits={hasCredits}
+              credits={credits}
+              bookingsByClassId={bookingsByClassId}
+            />
+          </Suspense>
         </ToastProvider>
       </div>
       <MobileNav />

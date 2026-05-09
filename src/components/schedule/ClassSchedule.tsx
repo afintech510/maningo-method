@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { DayPicker } from './DayPicker';
 import { ClassCard } from './ClassCard';
 import { Skeleton } from '@/components/feedback/Skeleton';
@@ -54,8 +55,17 @@ export function ClassSchedule({
   credits,
   bookingsByClassId = {},
 }: ClassScheduleProps) {
+  const searchParams = useSearchParams();
   const [view, setView] = useState<'calendar' | 'filter'>('calendar');
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(() => {
+    const dateParam = searchParams?.get('date');
+    if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+      const [y, m, d] = dateParam.split('-').map(Number);
+      const dt = new Date(y, m - 1, d);
+      if (!isNaN(dt.getTime())) return dt;
+    }
+    return new Date();
+  });
   const [allClasses, setAllClasses] = useState<ClassData[]>([]);
   const [loading, setLoading] = useState(true);
 
