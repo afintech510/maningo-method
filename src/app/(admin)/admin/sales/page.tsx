@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { Card } from '@/components/ui/Card';
 import { LogoutButton } from '@/components/layout/LogoutButton';
 import { formatCents } from '@/lib/pricing';
+import { ActivateGiftButton } from './activate-gift-button';
 
 export default async function AdminSalesPage() {
   const supabase = createAdminClient();
@@ -16,6 +17,7 @@ export default async function AdminSalesPage() {
     { data: manualAll },
     { data: manualMonth },
     { data: pendingMP },
+    { data: pendingGifts },
     { data: members },
     { data: bookingsMonth },
   ] = await Promise.all([
@@ -31,6 +33,13 @@ export default async function AdminSalesPage() {
       .from('manual_payments')
       .select(
         'id, student_id, pack_type, credits, amount_cents, payment_method, status, created_at, profiles:student_id (full_name, email, phone)'
+      )
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true }),
+    supabase
+      .from('gift_packs')
+      .select(
+        'id, code, pack_type, credits, amount_cents, delivery_mode, recipient_name, recipient_email, purchaser_name, purchaser_email, created_at'
       )
       .eq('status', 'pending')
       .order('created_at', { ascending: true }),
@@ -53,6 +62,7 @@ export default async function AdminSalesPage() {
   const memberCount = (members as { count?: number } | null)?.count ?? 0;
   const bookingsThisMonth = (bookingsMonth as { count?: number } | null)?.count ?? 0;
   const pending = pendingMP || [];
+  const giftsPending = pendingGifts || [];
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
@@ -70,10 +80,11 @@ export default async function AdminSalesPage() {
           <Stat label="Bookings (this month)" value={String(bookingsThisMonth)} />
           <Stat label="Active members" value={String(memberCount)} />
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mt-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-3">
           <Stat label="Card revenue (all time)" value={formatCents(stripeAllTotal)} muted />
-          <Stat label="Cash/Zelle/Venmo (all time)" value={formatCents(manualAllTotal)} muted />
+          <Stat label="Cash/Venmo (all time)" value={formatCents(manualAllTotal)} muted />
           <Stat label="Pending manual payments" value={String(pending.length)} muted />
+          <Stat label="Pending gift codes" value={String(giftsPending.length)} muted />
         </div>
       </section>
 
@@ -133,6 +144,55 @@ export default async function AdminSalesPage() {
                 </Link>
               </p>
             )}
+          </div>
+        )}
+      </section>
+
+      {/* Reconcile — Pending Gifts */}
+      <section className="mt-8">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-[#6b6b6b]">
+            Reconcile &mdash; Pending Gift Codes
+          </h2>
+        </div>
+
+        {giftsPending.length === 0 ? (
+          <Card>
+            <p className="text-sm text-muted-foreground">
+              No pending gift codes. They appear here when someone buys a gift via Cash or Venmo.
+            </p>
+          </Card>
+        ) : (
+          <div className="space-y-2">
+            {giftsPending.map((g) => (
+              <Card key={g.id}>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-medium">{g.purchaser_name || 'Unknown'}</p>
+                      <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#c9a96e]/15 text-[#8c7647] font-semibold">
+                        Pending
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground break-all">{g.purchaser_email}</p>
+                    <p className="text-sm mt-1">
+                      <strong>{formatCents(g.amount_cents)}</strong> &middot; {g.credits} credit
+                      {g.credits === 1 ? '' : 's'} ({g.pack_type})
+                    </p>
+                    <p className="text-xs text-[#6b6b6b] mt-1">
+                      Code <span className="font-mono">{g.code}</span>
+                      {g.delivery_mode === 'email' && g.recipient_email
+                        ? ` · email recipient ${g.recipient_name || ''} <${g.recipient_email}>`
+                        : ' · share-only'}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">
+                      Created {new Date(g.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                  <ActivateGiftButton giftId={g.id} />
+                </div>
+              </Card>
+            ))}
           </div>
         )}
       </section>

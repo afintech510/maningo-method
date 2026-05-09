@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { BackButton } from '@/components/layout/BackButton';
 import { UpcomingClassesPanel } from '@/components/schedule/UpcomingClassesPanel';
+import { STRIPE_ENABLED } from '@/lib/feature-flags';
 
 export default function Home() {
   return (
@@ -96,7 +97,7 @@ export default function Home() {
         </h2>
         <div className="grid sm:grid-cols-2 gap-5 max-w-3xl mx-auto">
           <ClassTypeCard
-            image="https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?w=600&q=80"
+            image="/group-class-maningo.jpg"
             title="Mat Pilates/Sculpt"
             description="Full body mat Pilates class in a high-energy group setting. Expect strength-focused, low-impact movement, upbeat music, and a strong mind-body connection. All levels welcome."
             href="/schedule"
@@ -104,7 +105,7 @@ export default function Home() {
           <ClassTypeCard
             image="https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?w=600&q=80"
             title="Private Sessions"
-            description="One-on-one instruction tailored to your goals."
+            description="Solo or small-group sessions designed to invoke thought and refine your practice. At your home, your retreat, or a venue of your choice — a focused space for movement, breath, and intention."
             href="/#contact"
           />
         </div>
@@ -190,8 +191,9 @@ export default function Home() {
             All packs never expire. <Link href="/register" className="text-[#c9a96e] font-medium hover:underline">Create an account</Link> to purchase.
           </p>
           <p className="text-center text-xs text-[#6b6b6b] mt-2">
-            Card payments include a 3% service fee. Pay with Cash, Zelle, or Venmo to skip it &mdash;
-            credits apply once Chelsea confirms.
+            {STRIPE_ENABLED
+              ? 'Card payments include a 3% service fee. Pay with Cash or Venmo to skip it — credits apply once Chelsea confirms.'
+              : 'Pay with Cash or Venmo. Credits apply once Chelsea confirms your payment — usually within a day.'}
           </p>
 
           <div className="mt-12 max-w-3xl mx-auto">
@@ -579,7 +581,9 @@ function PricingCard({ label, price, per, note, highlight, popular, packType }: 
 
   function handleClick() {
     setLoading(true);
-    window.location.href = `/checkout/pay?kind=pack&pack=${packType}`;
+    window.location.href = STRIPE_ENABLED
+      ? `/checkout/pay?kind=pack&pack=${packType}`
+      : `/checkout/manual?pack=${packType}`;
   }
 
   return (

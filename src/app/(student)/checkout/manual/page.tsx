@@ -13,7 +13,6 @@ const PACK_INFO: Record<string, { label: string; price: string; credits: number 
 };
 
 const VENMO_HANDLE = '@Chelsea-Maningo';
-const ZELLE_TARGET = 'chelsea@maningomethod.com';
 
 function ManualCheckoutContent() {
   const router = useRouter();
@@ -21,7 +20,7 @@ function ManualCheckoutContent() {
   const packType = searchParams?.get('pack') || '5pack';
   const pack = PACK_INFO[packType] || PACK_INFO['5pack'];
 
-  const [method, setMethod] = useState<'cash' | 'zelle' | 'venmo'>('venmo');
+  const [method, setMethod] = useState<'cash' | 'venmo'>('venmo');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,12 +62,6 @@ function ManualCheckoutContent() {
               <p className="text-[#6b6b6b]">In the note, please put your full name + &quot;{pack.label}&quot; so Chelsea can match it up quickly.</p>
             </div>
           )}
-          {method === 'zelle' && (
-            <div className="space-y-2 text-sm">
-              <p>Send <strong>{pack.price}</strong> via Zelle to <strong>{ZELLE_TARGET}</strong>.</p>
-              <p className="text-[#6b6b6b]">In the memo, please put your full name + &quot;{pack.label}&quot;.</p>
-            </div>
-          )}
           {method === 'cash' && (
             <div className="space-y-2 text-sm">
               <p>Bring <strong>{pack.price}</strong> in cash to your first class.</p>
@@ -106,7 +99,7 @@ function ManualCheckoutContent() {
       {error && <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-800 mb-4">{error}</div>}
 
       <div className="space-y-2 mb-6">
-        {(['venmo', 'zelle', 'cash'] as const).map((m) => (
+        {(['venmo', 'cash'] as const).map((m) => (
           <label
             key={m}
             className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${
@@ -118,7 +111,6 @@ function ManualCheckoutContent() {
               <p className="font-medium capitalize">{m === 'venmo' ? 'Venmo (direct)' : m}</p>
               <p className="text-xs text-[#6b6b6b]">
                 {m === 'venmo' && `Send to ${VENMO_HANDLE}`}
-                {m === 'zelle' && `Send to ${ZELLE_TARGET}`}
                 {m === 'cash' && 'Pay at your first class'}
               </p>
             </div>
@@ -129,10 +121,6 @@ function ManualCheckoutContent() {
       <Button onClick={handleSubmit} loading={loading} className="w-full">
         Submit Payment Request
       </Button>
-
-      <p className="text-xs text-[#6b6b6b] text-center mt-4">
-        Prefer card? <Link href="/dashboard" className="text-[#c9a96e] underline">Go back and use Stripe</Link> for instant credits.
-      </p>
     </div>
   );
 }

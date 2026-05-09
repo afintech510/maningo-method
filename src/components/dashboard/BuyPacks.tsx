@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { STRIPE_ENABLED } from '@/lib/feature-flags';
 
 const PACKS = [
   { type: 'single', label: 'Drop-In', price: '$25', credits: 1 },
@@ -14,7 +15,9 @@ export function BuyPacks() {
 
   function handlePurchase(packType: string) {
     setLoading(packType);
-    window.location.href = `/checkout/pay?kind=pack&pack=${packType}`;
+    window.location.href = STRIPE_ENABLED
+      ? `/checkout/pay?kind=pack&pack=${packType}`
+      : `/checkout/manual?pack=${packType}`;
   }
 
   return (
@@ -35,9 +38,13 @@ export function BuyPacks() {
         ))}
       </div>
       <p className="text-xs text-muted-foreground mt-2">
-        Prefer Venmo, Zelle, or cash?{' '}
-        <Link href="/checkout/manual?pack=5pack" className="text-[#c9a96e] hover:underline">Pay another way</Link>
-        {' '}&middot;{' '}
+        {STRIPE_ENABLED ? (
+          <>
+            Prefer Venmo or cash?{' '}
+            <Link href="/checkout/manual?pack=5pack" className="text-[#c9a96e] hover:underline">Pay another way</Link>
+            {' '}&middot;{' '}
+          </>
+        ) : null}
         <Link href="/redeem" className="text-[#c9a96e] hover:underline">Have a gift code?</Link>
       </p>
     </div>

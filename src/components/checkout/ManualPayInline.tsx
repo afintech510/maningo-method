@@ -7,7 +7,6 @@ import { Card } from '@/components/ui/Card';
 import { formatCents } from '@/lib/pricing';
 
 const VENMO_HANDLE = '@Chelsea-Maningo';
-const ZELLE_TARGET = 'chelsea@maningomethod.com';
 
 interface Props {
   packType: 'single' | '5pack' | '10pack';
@@ -16,7 +15,7 @@ interface Props {
 }
 
 export function ManualPayInline({ packType, amountCents, packLabel }: Props) {
-  const [method, setMethod] = useState<'venmo' | 'zelle' | 'cash'>('venmo');
+  const [method, setMethod] = useState<'venmo' | 'cash'>('venmo');
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,12 +57,6 @@ export function ManualPayInline({ packType, amountCents, packLabel }: Props) {
               <p className="text-[#6b6b6b]">In the note, please put your full name + &quot;{packLabel}&quot;.</p>
             </div>
           )}
-          {method === 'zelle' && (
-            <div className="space-y-2 text-sm">
-              <p>Send <strong>{formatCents(amountCents)}</strong> via Zelle to <strong>{ZELLE_TARGET}</strong>.</p>
-              <p className="text-[#6b6b6b]">In the memo, please put your full name + &quot;{packLabel}&quot;.</p>
-            </div>
-          )}
           {method === 'cash' && (
             <div className="space-y-2 text-sm">
               <p>Bring <strong>{formatCents(amountCents)}</strong> in cash to your first class.</p>
@@ -87,7 +80,7 @@ export function ManualPayInline({ packType, amountCents, packLabel }: Props) {
       </p>
 
       <div className="space-y-2 mb-5">
-        {(['venmo', 'zelle', 'cash'] as const).map((m) => (
+        {(['venmo', 'cash'] as const).map((m) => (
           <label
             key={m}
             className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-colors ${
@@ -99,7 +92,6 @@ export function ManualPayInline({ packType, amountCents, packLabel }: Props) {
               <p className="font-medium capitalize">{m === 'venmo' ? 'Venmo (direct)' : m}</p>
               <p className="text-xs text-[#6b6b6b]">
                 {m === 'venmo' && `Send to ${VENMO_HANDLE}`}
-                {m === 'zelle' && `Send to ${ZELLE_TARGET}`}
                 {m === 'cash' && 'Pay at your first class'}
               </p>
             </div>

@@ -5,6 +5,7 @@ import { BookingCancellation } from '@/emails/BookingCancellation';
 import { ClassCancellation } from '@/emails/ClassCancellation';
 import { ClassAnnouncement } from '@/emails/ClassAnnouncement';
 import { GiftPurchaseConfirmation } from '@/emails/GiftPurchaseConfirmation';
+import { GiftPurchaseManualPending } from '@/emails/GiftPurchaseManualPending';
 import { GiftReceived } from '@/emails/GiftReceived';
 import { GiftRedeemed } from '@/emails/GiftRedeemed';
 import { ReferralRewardEarned } from '@/emails/ReferralRewardEarned';
@@ -187,6 +188,64 @@ export async function sendGiftPurchaseConfirmation(
     });
   } catch (err) {
     logger.error({ err, to }, 'Failed to send gift purchase confirmation');
+  }
+}
+
+export async function sendGiftPurchaseManualPending(
+  to: string,
+  data: {
+    purchaserName: string;
+    recipientName: string | null;
+    packLabel: string;
+    amountDisplay: string;
+    code: string;
+    redemptionUrl: string;
+    paymentMethod: 'cash' | 'venmo';
+    venmoHandle: string;
+    deliveryMode: 'email' | 'share';
+  }
+) {
+  try {
+    const resend = getResend();
+    await resend.emails.send({
+      from: `Maningo Method <${FROM_EMAIL}>`,
+      to,
+      subject: 'Maningo Method gift code (payment pending)',
+      react: createElement(GiftPurchaseManualPending, data),
+    });
+  } catch (err) {
+    logger.error({ err, to }, 'Failed to send pending gift confirmation');
+  }
+}
+
+export async function sendAdminGiftPending(
+  to: string,
+  data: {
+    purchaserName: string;
+    purchaserEmail: string;
+    packLabel: string;
+    amount: string;
+    code: string;
+    paymentMethod: 'cash' | 'venmo';
+    giftId: string;
+  }
+) {
+  try {
+    const resend = getResend();
+    await resend.emails.send({
+      from: `Maningo Method <${FROM_EMAIL}>`,
+      to,
+      subject: `Pending gift: ${data.packLabel} via ${data.paymentMethod}`,
+      text:
+        `${data.purchaserName} (${data.purchaserEmail}) just created a gift via ${data.paymentMethod}.\n\n` +
+        `Code: ${data.code}\n` +
+        `Pack: ${data.packLabel}\n` +
+        `Amount: ${data.amount}\n\n` +
+        `Activate at https://www.maningomethod.com/admin/sales after payment lands.\n\n` +
+        `Ref: ${data.giftId}`,
+    });
+  } catch (err) {
+    logger.error({ err, to }, 'Failed to send admin pending gift email');
   }
 }
 

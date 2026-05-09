@@ -12,7 +12,7 @@ const PACK_PRICING: Record<string, { credits: number; amount_cents: number; labe
   '10pack': { credits: 10, amount_cents: 20000, label: '10-Class Pack' },
 };
 
-const VALID_METHODS = new Set(['cash', 'zelle', 'venmo']);
+const VALID_METHODS = new Set(['cash', 'venmo']);
 
 export async function POST(request: NextRequest) {
   const correlationId = generateCorrelationId();
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
           studentPhone: studentProfile.phone,
           packLabel: pack.label,
           amount: `$${(pack.amount_cents / 100).toFixed(2)}`,
-          method: payment_method as 'cash' | 'zelle' | 'venmo',
+          method: payment_method as 'cash' | 'venmo',
           paymentId: payment.id,
         });
       } catch (err) {

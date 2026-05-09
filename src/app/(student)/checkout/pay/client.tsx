@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { IntegratedCheckout, type CheckoutSummary } from '@/components/checkout/IntegratedCheckout';
 import { ManualPayInline } from '@/components/checkout/ManualPayInline';
 import { formatCents } from '@/lib/pricing';
+import { STRIPE_ENABLED } from '@/lib/feature-flags';
 
 const PACK_INFO: Record<string, CheckoutSummary> = {
   single: { label: 'Drop-In Class', price_display: '$25.00', amount_cents: 2500, credits: 1, description: 'One mat Pilates / sculpt class' },
@@ -17,6 +18,12 @@ export function CheckoutPayClient() {
   const kindParam = searchParams?.get('kind') || 'pack';
   const pack = searchParams?.get('pack') || '5pack';
   const customAmt = Number(searchParams?.get('amount_cents') || '0');
+
+  if (!STRIPE_ENABLED) {
+    return (
+      <ErrorPanel message="Card checkout is temporarily unavailable. Please use the Cash or Venmo option from the home page or your dashboard." />
+    );
+  }
 
   if (kindParam === 'gift_custom') {
     if (!customAmt || customAmt < 1000) {
@@ -129,7 +136,7 @@ function PaymentMethodToggle({
           }`}
         >
           <p className="font-semibold">Pay with card</p>
-          <p className="text-xs text-[#6b6b6b]">Card, Apple Pay, Google Pay, Venmo via Stripe &middot; instant credits &middot; +3% service fee</p>
+          <p className="text-xs text-[#6b6b6b]">Card, Apple Pay, Google Pay via Stripe &middot; instant credits &middot; +3% service fee</p>
         </button>
         <button
           type="button"
@@ -141,7 +148,7 @@ function PaymentMethodToggle({
           <span className="absolute -top-2 right-3 bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wider uppercase">
             Save 3%
           </span>
-          <p className="font-semibold">Cash, Zelle, or Venmo</p>
+          <p className="font-semibold">Cash or Venmo</p>
           <p className="text-xs text-[#6b6b6b]">No service fee &middot; credits apply after Chelsea confirms</p>
         </button>
       </div>

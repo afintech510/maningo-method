@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input';
 import { IntegratedCheckout, type CheckoutSummary } from '@/components/checkout/IntegratedCheckout';
 import { formatCents } from '@/lib/pricing';
 import { createClient } from '@/lib/supabase/client';
+import { STRIPE_ENABLED } from '@/lib/feature-flags';
 
 const PACK_INFO: Record<string, { label: string; amount_cents: number; credits: number }> = {
   single: { label: 'Drop-In Class', amount_cents: 2500, credits: 1 },
@@ -27,9 +28,20 @@ export function GiftNewClient() {
   const [recipientEmail, setRecipientEmail] = useState('');
   const [senderMessage, setSenderMessage] = useState('');
   const [deliveryMode, setDeliveryMode] = useState<'email' | 'share'>('share');
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'venmo' | 'cash'>(
+    STRIPE_ENABLED ? 'card' : 'venmo'
+  );
   const [showCheckout, setShowCheckout] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [authState, setAuthState] = useState<'unknown' | 'guest' | 'authed'>('unknown');
+  const [submitting, setSubmitting] = useState(false);
+  const [manualResult, setManualResult] = useState<{
+    code: string;
+    amount_display: string;
+    label: string;
+    payment_method: 'cash' | 'venmo';
+    venmo_handle: string;
+  } | null>(null);
 
   const customCents = Math.round(Number(customAmt) * 100);
   const isCustom = pack === 'custom';
@@ -87,34 +99,116 @@ export function GiftNewClient() {
     ]
   );
 
-  function handleContinue(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError(null);
+  function validate(): string | null {
     if (authState === 'guest') {
-      if (!purchaserName.trim()) {
-        setError('Your name is required so we can email you the gift code.');
-        return;
-      }
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(purchaserEmail)) {
-        setError('Your email looks invalid.');
-        return;
-      }
+      if (!purchaserName.trim()) return 'Your name is required so we can email you the gift code.';
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(purchaserEmail)) return 'Your email looks invalid.';
     }
     if (deliveryMode === 'email') {
-      if (!recipientName.trim()) {
-        setError('Recipient name is required when emailing the gift.');
-        return;
-      }
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail)) {
-        setError('Recipient email looks invalid.');
-        return;
-      }
+      if (!recipientName.trim()) return 'Recipient name is required when emailing the gift.';
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail)) return 'Recipient email looks invalid.';
     }
-    if (isCustom && (!customAmt || customCents < 1000)) {
-      setError('Custom gift must be at least $10.');
+    if (isCustom && (!customAmt || customCents < 1000)) return 'Custom gift must be at least $10.';
+    return null;
+  }
+
+  async function handleContinue(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+    const validationError = validate();
+    if (validationError) {
+      setError(validationError);
       return;
     }
-    setShowCheckout(true);
+
+    if (paymentMethod === 'card') {
+      setShowCheckout(true);
+      return;
+    }
+
+    // Manual flow — create pending gift_pack server-side and show the code.
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/gift-packs/manual', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          kind: isCustom ? 'custom' : 'preset',
+          pack: isCustom ? undefined : pack,
+          amount_cents: isCustom ? customCents : undefined,
+          recipient_name: recipientName || null,
+          recipient_email: recipientEmail || null,
+          sender_message: senderMessage || null,
+          delivery_mode: deliveryMode,
+          payment_method: paymentMethod,
+          purchaser_name: purchaserName || null,
+          purchaser_email: purchaserEmail || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data?.error?.message || 'Could not create gift. Try again.');
+      } else {
+        setManualResult({
+          code: data.code,
+          amount_display: data.amount_display,
+          label: data.label,
+          payment_method: data.payment_method,
+          venmo_handle: data.venmo_handle,
+        });
+      }
+    } catch {
+      setError('Network error. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (manualResult) {
+    return (
+      <div className="max-w-lg mx-auto">
+        <div className="text-center mb-6">
+          <div className="text-3xl mb-2">&#10003;</div>
+          <h1 className="text-2xl font-bold mb-1">Gift code created</h1>
+          <p className="text-sm text-[#6b6b6b]">Activates as soon as Chelsea confirms your payment.</p>
+        </div>
+
+        <div className="rounded-2xl border border-[#e5e2dc] bg-white p-5 mb-4 text-center">
+          <p className="text-[10px] uppercase tracking-[0.25em] text-[#6b6b6b] mb-2">Gift Code</p>
+          <p className="text-2xl font-bold tracking-[0.15em] text-[#c9a96e]">{manualResult.code}</p>
+          <p className="text-xs text-[#6b6b6b] mt-2">
+            {manualResult.label} &middot; {manualResult.amount_display}
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 mb-4 text-sm text-amber-900">
+          <p className="font-semibold mb-1">How to pay</p>
+          {manualResult.payment_method === 'venmo' ? (
+            <p>
+              Send <strong>{manualResult.amount_display}</strong> to{' '}
+              <strong>{manualResult.venmo_handle}</strong> on Venmo. In the note, include your name
+              and the word &ldquo;gift.&rdquo;
+            </p>
+          ) : (
+            <p>
+              Bring <strong>{manualResult.amount_display}</strong> in cash to the studio (295
+              Montauk Hwy, Speonk). Hand it to Chelsea and the code activates immediately.
+            </p>
+          )}
+        </div>
+
+        <p className="text-xs text-[#6b6b6b] mb-4">
+          We&rsquo;ve emailed you a copy of the code and payment instructions.
+          {deliveryMode === 'email'
+            ? ' We will email the recipient as soon as the gift is activated.'
+            : ' You can share this code however you like once payment clears.'}
+        </p>
+
+        <Link href="/" className="block">
+          <Button variant="ghost" className="w-full">Back home</Button>
+        </Link>
+      </div>
+    );
   }
 
   if (showCheckout) {
@@ -284,12 +378,78 @@ export function GiftNewClient() {
           <p className="text-xs text-[#6b6b6b] mt-1">{senderMessage.length}/280</p>
         </div>
 
+        <div>
+          <label className="block text-sm font-medium mb-2">Payment method</label>
+          <div className="grid grid-cols-1 gap-2">
+            {STRIPE_ENABLED && (
+              <PaymentOption
+                on={paymentMethod === 'card'}
+                onClick={() => setPaymentMethod('card')}
+                title="Pay with card"
+                hint={`Card, Apple Pay, Google Pay via Stripe · instant activation · +3% service fee`}
+              />
+            )}
+            <PaymentOption
+              on={paymentMethod === 'venmo'}
+              onClick={() => setPaymentMethod('venmo')}
+              title="Venmo"
+              hint="Send to @Chelsea-Maningo. Code activates after Chelsea confirms."
+              badge={STRIPE_ENABLED ? 'Save 3%' : undefined}
+            />
+            <PaymentOption
+              on={paymentMethod === 'cash'}
+              onClick={() => setPaymentMethod('cash')}
+              title="Cash at the studio"
+              hint="Hand $ to Chelsea at 295 Montauk Hwy, Speonk."
+              badge={STRIPE_ENABLED ? 'Save 3%' : undefined}
+            />
+          </div>
+        </div>
+
         {error && <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-800">{error}</div>}
 
-        <Button type="submit" className="w-full" disabled={authState === 'unknown'}>
-          Continue to payment
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={authState === 'unknown'}
+          loading={submitting}
+        >
+          {paymentMethod === 'card' ? 'Continue to payment' : 'Get gift code'}
         </Button>
       </form>
     </div>
+  );
+}
+
+function PaymentOption({
+  on,
+  onClick,
+  title,
+  hint,
+  badge,
+}: {
+  on: boolean;
+  onClick: () => void;
+  title: string;
+  hint: string;
+  badge?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={on}
+      className={`relative min-h-[64px] rounded-xl border-2 p-3 text-left transition-colors ${
+        on ? 'border-[#c9a96e] bg-[#faf9f6]' : 'border-[#e5e2dc] bg-white hover:border-[#c9a96e]/50'
+      }`}
+    >
+      {badge && (
+        <span className="absolute -top-2 right-3 bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wider uppercase">
+          {badge}
+        </span>
+      )}
+      <p className="font-semibold">{title}</p>
+      <p className="text-xs text-[#6b6b6b]">{hint}</p>
+    </button>
   );
 }
