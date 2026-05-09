@@ -113,12 +113,13 @@ export default function Home() {
       {/* About / Meet Chelsea */}
       <section id="about" className="relative">
         <div className="grid lg:grid-cols-2">
-          <div className="relative h-[400px] lg:h-auto min-h-[400px]">
+          <div className="relative h-[480px] lg:h-auto min-h-[480px] bg-[#2d2d2d]">
             <Image
               src="/chelsea_about-me.jpg"
               alt="Chelsea - Pilates instructor"
               fill
-              className="object-cover"
+              className="object-contain object-center"
+              sizes="(max-width: 1024px) 100vw, 50vw"
             />
           </div>
           <div className="bg-[#2d2d2d] text-white p-8 sm:p-12 lg:p-16 flex flex-col justify-center">
