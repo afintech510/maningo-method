@@ -1,8 +1,8 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { format, addDays, isSameDay } from 'date-fns';
-import { useState } from 'react';
+import { format, addDays, isSameDay, startOfDay, differenceInCalendarDays } from 'date-fns';
+import { useEffect, useMemo, useState } from 'react';
 
 interface DayPickerProps {
   selectedDate: Date;
@@ -12,8 +12,23 @@ interface DayPickerProps {
 }
 
 export function DayPicker({ selectedDate, onSelectDate, datesWithClasses }: DayPickerProps) {
-  const today = new Date();
-  const [weekOffset, setWeekOffset] = useState(0);
+  // Anchor "today" once per render to avoid drift across many renders.
+  const today = useMemo(() => startOfDay(new Date()), []);
+
+  // Default the visible week to the one containing selectedDate.
+  const offsetForDate = (d: Date) => Math.max(0, Math.floor(differenceInCalendarDays(startOfDay(d), today) / 7));
+  const [weekOffset, setWeekOffset] = useState<number>(() => offsetForDate(selectedDate));
+
+  // If selectedDate moves outside the visible 7-day window (e.g. URL changed),
+  // re-align so the picker shows the chosen day.
+  useEffect(() => {
+    const target = offsetForDate(selectedDate);
+    if (target !== weekOffset) {
+      setWeekOffset(target);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate]);
+
   const startDay = addDays(today, weekOffset * 7);
   const days = Array.from({ length: 7 }, (_, i) => addDays(startDay, i));
 
