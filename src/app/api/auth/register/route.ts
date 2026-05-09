@@ -68,29 +68,42 @@ export async function POST(request: NextRequest) {
       .filter(Boolean)
       .join('\n\n') || null;
 
+    // Upsert so we don't rely on the auth.users → profiles trigger having fired.
+    // Earlier signups got an auth row but no profile row, leaving them stranded.
+    const referralCodeForUser = userId.replace(/-/g, '').slice(0, 8).toUpperCase();
     const { error: profileErr } = await admin
       .from('profiles')
-      .update({
-        full_name,
-        phone,
-        sms_consent,
-        sms_consent_at: sms_consent ? now : null,
-        sms_consent_ip: sms_consent ? ip : null,
-        sms_consent_text: consentText,
-        sms_marketing_consent,
-        sms_marketing_consent_at: sms_marketing_consent ? now : null,
-        email_marketing_consent,
-        email_marketing_consent_at: email_marketing_consent ? now : null,
-        tos_accepted_at: now,
-        tos_accepted_ip: ip,
-        tos_version: TOS_VERSION,
-        waiver_acknowledged: true,
-        referred_by: referredBy,
-      })
-      .eq('id', userId);
+      .upsert(
+        {
+          id: userId,
+          full_name,
+          email,
+          phone,
+          role: 'student',
+          referral_code: referralCodeForUser,
+          sms_consent,
+          sms_consent_at: sms_consent ? now : null,
+          sms_consent_ip: sms_consent ? ip : null,
+          sms_consent_text: consentText,
+          sms_marketing_consent,
+          sms_marketing_consent_at: sms_marketing_consent ? now : null,
+          email_marketing_consent,
+          email_marketing_consent_at: email_marketing_consent ? now : null,
+          tos_accepted_at: now,
+          tos_accepted_ip: ip,
+          tos_version: TOS_VERSION,
+          waiver_acknowledged: true,
+          referred_by: referredBy,
+        },
+        { onConflict: 'id', ignoreDuplicates: false }
+      );
 
     if (profileErr) {
-      log.error({ err: profileErr, userId }, 'Failed to record consent on profile');
+      log.error({ err: profileErr, userId }, 'Failed to upsert profile after registration');
+      return NextResponse.json(
+        { error: { code: 'PROFILE_ERROR', message: profileErr.message || 'Could not finalize account.' } },
+        { status: 500 }
+      );
     }
 
     // Sign the user in so they have a session for any redirect (e.g. checkout)
