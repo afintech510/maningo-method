@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/feedback/Skeleton';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { formatStudioDateTime } from '@/lib/timezone';
@@ -44,26 +43,46 @@ export default function AdminClassesPage() {
   }
 
   return (
-    <div className="px-4 py-6">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold">Classes</h1>
-        <Link href="/admin/classes/new">
-          <Button size="sm">+ New Class</Button>
+    <div className="max-w-6xl mx-auto px-4 py-6">
+      <div className="mb-6">
+        <p className="text-xs font-medium uppercase tracking-[0.25em] text-[#c9a96e] mb-1">Classes</p>
+        <h1 className="text-2xl sm:text-3xl font-bold">Manage classes</h1>
+      </div>
+
+      {/* Create actions */}
+      <div className="grid sm:grid-cols-2 gap-3 mb-6">
+        <Link
+          href="/admin/schedule"
+          className="rounded-2xl border-2 border-[#c9a96e] bg-[#c9a96e]/5 p-4 hover:bg-[#c9a96e]/10 transition-colors"
+        >
+          <p className="text-[10px] font-medium uppercase tracking-wider text-[#c9a96e] mb-1">Create</p>
+          <p className="font-semibold">Schedule classes</p>
+          <p className="text-xs text-muted-foreground">Recurring weekly OR one-off &mdash; one form, batch generate.</p>
+        </Link>
+        <Link
+          href="/admin/classes/new"
+          className="rounded-2xl border border-[#e5e2dc] bg-white p-4 hover:border-[#c9a96e] transition-colors"
+        >
+          <p className="text-[10px] font-medium uppercase tracking-wider text-[#6b6b6b] mb-1">Create</p>
+          <p className="font-semibold">Single class (legacy form)</p>
+          <p className="text-xs text-muted-foreground">Quick add a one-off class with the simple form.</p>
         </Link>
       </div>
+
+      <h2 className="text-sm font-semibold uppercase tracking-wider text-[#6b6b6b] mb-3">Manage</h2>
 
       {classes.length === 0 ? (
         <EmptyState
           title="No classes yet"
           description="Create your first class to get started."
-          ctaLabel="Create Class"
-          ctaHref="/admin/classes/new"
+          ctaLabel="Schedule classes"
+          ctaHref="/admin/schedule"
         />
       ) : (
         <div className="space-y-3">
           {classes.map((cls) => (
             <Link key={cls.id} href={`/admin/classes/${cls.id}`}>
-              <Card className="hover:border-primary transition-colors">
+              <Card className="hover:border-[#c9a96e] transition-colors">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="font-semibold">{cls.title}</p>

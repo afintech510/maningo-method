@@ -4,6 +4,8 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { STUDIO_TIMEZONE } from '@/lib/timezone';
+import { fromZonedTime } from 'date-fns-tz';
 
 const DAYS: Array<{ idx: number; short: string; label: string }> = [
   { idx: 0, short: 'Sun', label: 'Sunday' },
@@ -15,8 +17,11 @@ const DAYS: Array<{ idx: number; short: string; label: string }> = [
   { idx: 6, short: 'Sat', label: 'Saturday' },
 ];
 
+type Mode = 'recurring' | 'single';
+
 export default function AdminSchedulePage() {
   const router = useRouter();
+  const [mode, setMode] = useState<Mode>('recurring');
   const [title, setTitle] = useState('Mat Pilates/Sculpt');
   const [description, setDescription] = useState('');
   const [duration, setDuration] = useState(50);
@@ -26,6 +31,9 @@ export default function AdminSchedulePage() {
   const today = new Date().toISOString().slice(0, 10);
   const [startsOn, setStartsOn] = useState(today);
   const [horizonWeeks, setHorizonWeeks] = useState(8);
+  // Single mode
+  const [singleDate, setSingleDate] = useState(today);
+  const [singleTime, setSingleTime] = useState('07:00');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,6 +58,41 @@ export default function AdminSchedulePage() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+
+    if (mode === 'single') {
+      if (!singleDate || !singleTime) {
+        setError('Pick a date and a time.');
+        return;
+      }
+      const localIso = `${singleDate}T${singleTime}:00`;
+      const utc = fromZonedTime(localIso, STUDIO_TIMEZONE);
+      if (utc.getTime() <= Date.now()) {
+        setError('Class start must be in the future.');
+        return;
+      }
+      setSubmitting(true);
+      const res = await fetch('/api/admin/classes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          description: description || undefined,
+          starts_at: utc.toISOString(),
+          duration_minutes: Number(duration),
+          max_capacity: Number(capacity),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data?.error?.message || 'Could not create class.');
+        setSubmitting(false);
+        return;
+      }
+      router.push('/admin/classes');
+      return;
+    }
+
+    // recurring
     if (days.length === 0) {
       setError('Pick at least one day of the week.');
       return;
@@ -84,10 +127,37 @@ export default function AdminSchedulePage() {
 
   return (
     <div className="px-4 py-6 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-1">Schedule classes</h1>
-      <p className="text-sm text-muted-foreground mb-6">
-        Pick days and times, set a horizon, and we&rsquo;ll generate every class in one go. They&rsquo;re grouped so you can manage them as a series later.
-      </p>
+      <div className="mb-5">
+        <p className="text-xs font-medium uppercase tracking-[0.25em] text-[#c9a96e] mb-1">Classes &middot; Create</p>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-1">Schedule classes</h1>
+        <p className="text-sm text-muted-foreground">
+          Create a one-off class or generate a recurring weekly series in one go.
+        </p>
+      </div>
+
+      {/* Mode toggle */}
+      <div className="grid grid-cols-2 gap-2 mb-6">
+        <button
+          type="button"
+          onClick={() => setMode('recurring')}
+          className={`min-h-[64px] rounded-xl border-2 p-3 text-left transition-colors ${
+            mode === 'recurring' ? 'border-[#c9a96e] bg-[#c9a96e]/5' : 'border-[#e5e2dc] bg-white hover:border-[#c9a96e]/50'
+          }`}
+        >
+          <p className="font-semibold text-sm">Recurring weekly</p>
+          <p className="text-xs text-muted-foreground">Days × times × horizon weeks</p>
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode('single')}
+          className={`min-h-[64px] rounded-xl border-2 p-3 text-left transition-colors ${
+            mode === 'single' ? 'border-[#c9a96e] bg-[#c9a96e]/5' : 'border-[#e5e2dc] bg-white hover:border-[#c9a96e]/50'
+          }`}
+        >
+          <p className="font-semibold text-sm">Single class</p>
+          <p className="text-xs text-muted-foreground">One date and time</p>
+        </button>
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <Input
@@ -110,8 +180,8 @@ export default function AdminSchedulePage() {
             type="number"
             value={duration}
             onChange={(e) => setDuration(Number(e.target.value))}
-            min={10}
-            max={240}
+            min={15}
+            max={180}
             required
           />
           <Input
@@ -120,103 +190,134 @@ export default function AdminSchedulePage() {
             value={capacity}
             onChange={(e) => setCapacity(Number(e.target.value))}
             min={1}
-            max={200}
+            max={30}
             required
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Days of week</label>
-          <div className="flex flex-wrap gap-2">
-            {DAYS.map((d) => {
-              const on = days.includes(d.idx);
-              return (
-                <button
-                  key={d.idx}
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() => toggleDay(d.idx)}
-                  className={`min-h-[44px] px-4 rounded-full text-sm font-medium border transition-colors ${
-                    on
-                      ? 'bg-[#2d2d2d] text-white border-[#2d2d2d]'
-                      : 'bg-white text-[#6b6b6b] border-[#e5e2dc] hover:border-[#c9a96e]'
-                  }`}
-                >
-                  {d.short}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        {mode === 'recurring' ? (
+          <>
+            <div>
+              <label className="block text-sm font-medium mb-2">Days of week</label>
+              <div className="flex flex-wrap gap-2">
+                {DAYS.map((d) => {
+                  const on = days.includes(d.idx);
+                  return (
+                    <button
+                      key={d.idx}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => toggleDay(d.idx)}
+                      className={`min-h-[44px] px-4 rounded-full text-sm font-medium border transition-colors ${
+                        on
+                          ? 'bg-[#2d2d2d] text-white border-[#2d2d2d]'
+                          : 'bg-white text-[#6b6b6b] border-[#e5e2dc] hover:border-[#c9a96e]'
+                      }`}
+                    >
+                      {d.short}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-medium">Times of day</label>
-            <button
-              type="button"
-              onClick={addTime}
-              className="text-xs text-[#c9a96e] hover:underline min-h-[44px] px-2"
-            >
-              + Add time
-            </button>
-          </div>
-          <div className="space-y-2">
-            {times.map((t, i) => (
-              <div key={i} className="flex items-center gap-2">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium">Times of day</label>
+                <button
+                  type="button"
+                  onClick={addTime}
+                  className="text-xs text-[#c9a96e] hover:underline min-h-[44px] px-2"
+                >
+                  + Add time
+                </button>
+              </div>
+              <div className="space-y-2">
+                {times.map((t, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <input
+                      type="time"
+                      value={t}
+                      onChange={(e) => updateTime(i, e.target.value)}
+                      className="flex-1 h-12 px-3 rounded-lg border border-[#e5e2dc] bg-white focus:outline-none focus:ring-2 focus:ring-[#c9a96e] focus:border-transparent"
+                    />
+                    {times.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeTime(i)}
+                        aria-label="Remove time"
+                        className="min-w-[44px] min-h-[44px] rounded-lg border border-[#e5e2dc] text-[#6b6b6b] hover:border-[#c9a96e] flex items-center justify-center"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Starts on"
+                type="date"
+                value={startsOn}
+                onChange={(e) => setStartsOn(e.target.value)}
+                required
+              />
+              <Input
+                label="Horizon (weeks)"
+                type="number"
+                value={horizonWeeks}
+                onChange={(e) => setHorizonWeeks(Number(e.target.value))}
+                min={1}
+                max={52}
+                required
+              />
+            </div>
+
+            <div className="rounded-xl border border-[#e5e2dc] bg-[#faf9f6] p-4 text-sm">
+              <p className="font-medium">
+                {previewCount === 0
+                  ? 'Set days and times to see a preview.'
+                  : `Will create ${previewCount} class${previewCount === 1 ? '' : 'es'} between ${startsOn} and ${endsOn}.`}
+              </p>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Date"
+                type="date"
+                value={singleDate}
+                onChange={(e) => setSingleDate(e.target.value)}
+                required
+              />
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Time</label>
                 <input
                   type="time"
-                  value={t}
-                  onChange={(e) => updateTime(i, e.target.value)}
-                  className="flex-1 h-12 px-3 rounded-lg border border-[#e5e2dc] bg-white focus:outline-none focus:ring-2 focus:ring-[#c9a96e] focus:border-transparent"
+                  value={singleTime}
+                  onChange={(e) => setSingleTime(e.target.value)}
+                  required
+                  className="w-full h-12 px-3 text-base rounded-lg border border-[#e5e2dc] bg-white focus:outline-none focus:ring-2 focus:ring-[#c9a96e] focus:border-transparent"
                 />
-                {times.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeTime(i)}
-                    aria-label="Remove time"
-                    className="min-w-[44px] min-h-[44px] rounded-lg border border-[#e5e2dc] text-[#6b6b6b] hover:border-[#c9a96e] flex items-center justify-center"
-                  >
-                    &times;
-                  </button>
-                )}
               </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <Input
-            label="Starts on"
-            type="date"
-            value={startsOn}
-            onChange={(e) => setStartsOn(e.target.value)}
-            required
-          />
-          <Input
-            label="Horizon (weeks)"
-            type="number"
-            value={horizonWeeks}
-            onChange={(e) => setHorizonWeeks(Number(e.target.value))}
-            min={1}
-            max={52}
-            required
-          />
-        </div>
-
-        <div className="rounded-xl border border-[#e5e2dc] bg-[#faf9f6] p-4 text-sm">
-          <p className="font-medium">
-            {previewCount === 0
-              ? 'Set days and times to see a preview.'
-              : `Will create ${previewCount} class${previewCount === 1 ? '' : 'es'} between ${startsOn} and ${endsOn}.`}
-          </p>
-        </div>
+            </div>
+            <div className="rounded-xl border border-[#e5e2dc] bg-[#faf9f6] p-4 text-sm">
+              <p className="font-medium">
+                Will create 1 class on {singleDate} at {singleTime}.
+              </p>
+            </div>
+          </>
+        )}
 
         {error && (
           <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-800">{error}</div>
         )}
 
         <Button type="submit" loading={submitting} className="w-full">
-          Create classes
+          {mode === 'single' ? 'Create class' : 'Create classes'}
         </Button>
       </form>
     </div>
