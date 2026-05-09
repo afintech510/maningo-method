@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/feedback/Skeleton';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { Modal } from '@/components/ui/Modal';
-import { formatStudioDateTime } from '@/lib/timezone';
+import { formatStudioDateTime, formatStudioTime, STUDIO_TIMEZONE } from '@/lib/timezone';
+import { format } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 
 interface ClassItem {
   id: string;
@@ -44,6 +46,7 @@ export default function AdminClassesPage() {
   const [loading, setLoading] = useState(true);
   const [monthFilter, setMonthFilter] = useState<string[]>([]); // empty = all
   const [dayFilter, setDayFilter] = useState<number[]>([]); // empty = all
+  const [timeFilter, setTimeFilter] = useState<string[]>([]); // empty = all; values are 'HH:mm' studio-local
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkRunning, setBulkRunning] = useState(false);
@@ -53,6 +56,21 @@ export default function AdminClassesPage() {
   } | null>(null);
 
   const months = useMemo(() => nextThreeMonths(), []);
+
+  // Unique starting times (studio-local 'HH:mm' keys + display label) sorted chronologically
+  const timeOptions = useMemo(() => {
+    const map = new Map<string, string>(); // 'HH:mm' -> 'h:mm a'
+    classes.forEach((c) => {
+      const z = toZonedTime(new Date(c.starts_at), STUDIO_TIMEZONE);
+      const key = format(z, 'HH:mm');
+      if (!map.has(key)) {
+        map.set(key, formatStudioTime(c.starts_at));
+      }
+    });
+    return Array.from(map.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([key, label]) => ({ key, label }));
+  }, [classes]);
 
   async function load() {
     setLoading(true);
@@ -72,20 +90,28 @@ export default function AdminClassesPage() {
   function toggleDay(d: number) {
     setDayFilter((days) => (days.includes(d) ? days.filter((k) => k !== d) : [...days, d]));
   }
+  function toggleTime(t: string) {
+    setTimeFilter((times) => (times.includes(t) ? times.filter((k) => k !== t) : [...times, t]));
+  }
 
   const filtered = useMemo(() => {
     return classes.filter((c) => {
       const start = new Date(c.starts_at);
+      const z = toZonedTime(start, STUDIO_TIMEZONE);
       if (monthFilter.length > 0) {
-        const monthKey = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}`;
+        const monthKey = `${z.getFullYear()}-${String(z.getMonth() + 1).padStart(2, '0')}`;
         if (!monthFilter.includes(monthKey)) return false;
       }
       if (dayFilter.length > 0) {
-        if (!dayFilter.includes(start.getDay())) return false;
+        if (!dayFilter.includes(z.getDay())) return false;
+      }
+      if (timeFilter.length > 0) {
+        const timeKey = format(z, 'HH:mm');
+        if (!timeFilter.includes(timeKey)) return false;
       }
       return true;
     });
-  }, [classes, monthFilter, dayFilter]);
+  }, [classes, monthFilter, dayFilter, timeFilter]);
 
   function toggleSelect(id: string) {
     setSelected((s) => {
@@ -137,26 +163,16 @@ export default function AdminClassesPage() {
       </div>
 
       {/* Create actions */}
-      <div className="grid sm:grid-cols-2 gap-3 mb-6">
-        <Link
-          href="/admin/schedule"
-          className="rounded-2xl border-2 border-[#c9a96e] bg-[#c9a96e]/5 p-4 hover:bg-[#c9a96e]/10 transition-colors"
-        >
-          <p className="text-[10px] font-medium uppercase tracking-wider text-[#c9a96e] mb-1">Create</p>
-          <p className="font-semibold">Schedule classes</p>
-          <p className="text-xs text-muted-foreground">
-            Recurring weekly OR one-off &mdash; one form, batch generate.
-          </p>
-        </Link>
-        <Link
-          href="/admin/classes/new"
-          className="rounded-2xl border border-[#e5e2dc] bg-white p-4 hover:border-[#c9a96e] transition-colors"
-        >
-          <p className="text-[10px] font-medium uppercase tracking-wider text-[#6b6b6b] mb-1">Create</p>
-          <p className="font-semibold">Single class (legacy form)</p>
-          <p className="text-xs text-muted-foreground">Quick add a one-off class with the simple form.</p>
-        </Link>
-      </div>
+      <Link
+        href="/admin/schedule"
+        className="block rounded-2xl border-2 border-[#c9a96e] bg-[#c9a96e]/5 p-4 hover:bg-[#c9a96e]/10 transition-colors mb-6"
+      >
+        <p className="text-[10px] font-medium uppercase tracking-wider text-[#c9a96e] mb-1">Create</p>
+        <p className="font-semibold">Schedule classes</p>
+        <p className="text-xs text-muted-foreground">
+          Recurring weekly OR one-off &mdash; one form, batch generate.
+        </p>
+      </Link>
 
       {/* Manage header + filters */}
       <div className="flex flex-wrap items-center gap-3 mb-3">
@@ -164,12 +180,13 @@ export default function AdminClassesPage() {
         <span className="text-xs text-muted-foreground">
           {filtered.length} of {classes.length}
         </span>
-        {(monthFilter.length > 0 || dayFilter.length > 0) && (
+        {(monthFilter.length > 0 || dayFilter.length > 0 || timeFilter.length > 0) && (
           <button
             type="button"
             onClick={() => {
               setMonthFilter([]);
               setDayFilter([]);
+              setTimeFilter([]);
             }}
             className="text-xs text-[#c9a96e] hover:underline ml-auto"
           >
@@ -225,6 +242,31 @@ export default function AdminClassesPage() {
             })}
           </div>
         </div>
+        {timeOptions.length > 0 && (
+          <div>
+            <p className="text-[11px] uppercase tracking-wider text-[#6b6b6b] font-medium mb-1.5">Starting time</p>
+            <div className="flex flex-wrap gap-1.5">
+              {timeOptions.map((t) => {
+                const on = timeFilter.includes(t.key);
+                return (
+                  <button
+                    key={t.key}
+                    type="button"
+                    onClick={() => toggleTime(t.key)}
+                    aria-pressed={on}
+                    className={`min-h-[36px] px-3 rounded-full text-xs font-medium border transition-colors ${
+                      on
+                        ? 'bg-[#2d2d2d] text-white border-[#2d2d2d]'
+                        : 'bg-white text-[#6b6b6b] border-[#e5e2dc] hover:border-[#c9a96e]'
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Bulk action bar */}
