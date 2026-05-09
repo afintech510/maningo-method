@@ -324,8 +324,8 @@ export function ClassSchedule({
             ) : (
               filteredClasses.map((cls) => (
                 <div key={cls.id}>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-[#6b6b6b] mb-1">
-                    {formatStudioDate(cls.starts_at, 'EEE MMM d')}
+                  <p className="text-base sm:text-lg font-bold text-[#1a1a1a] mb-1.5">
+                    {formatStudioDate(cls.starts_at, 'EEE, MMM d')}
                   </p>
                   {renderClassCard(cls)}
                 </div>

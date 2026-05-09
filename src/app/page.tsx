@@ -115,7 +115,7 @@ export default function Home() {
         <div className="grid lg:grid-cols-2">
           <div className="relative h-[400px] lg:h-auto min-h-[400px]">
             <Image
-              src="https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=800&q=80"
+              src="/chelsea_about-me.jpg"
               alt="Chelsea - Pilates instructor"
               fill
               className="object-cover"

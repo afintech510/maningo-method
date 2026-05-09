@@ -11,6 +11,7 @@ import { ToastProvider } from '@/components/feedback/Toast';
 import { Card } from '@/components/ui/Card';
 import { LogoutButton } from '@/components/layout/LogoutButton';
 import { format } from 'date-fns';
+import { formatStudioDate, formatStudioTime } from '@/lib/timezone';
 
 export default async function DashboardPage() {
   const auth = await getAuth();
@@ -202,7 +203,7 @@ function NextClassCard({
   if (!next) {
     return (
       <section className="rounded-2xl border-2 border-dashed border-[#e5e2dc] bg-white p-5 text-center">
-        <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#c9a96e] mb-1">Next class</p>
+        <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#c9a96e] mb-1">My Next Class</p>
         <p className="font-semibold text-base mb-1">Nothing booked yet</p>
         <p className="text-sm text-muted-foreground mb-4">Pick a slot from the schedule and lock in your spot.</p>
         <a
@@ -215,10 +216,11 @@ function NextClassCard({
     );
   }
 
-  const startsAt = new Date(next.class_starts_at);
-  const day = startsAt.toLocaleDateString('en-US', { weekday: 'short' });
-  const monthDay = startsAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  const time = startsAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  // Render every part of the date in studio time so users on other tz still see ET.
+  const day = formatStudioDate(next.class_starts_at, 'EEE');
+  const dayNum = formatStudioDate(next.class_starts_at, 'd');
+  const month = formatStudioDate(next.class_starts_at, 'MMM');
+  const time = formatStudioTime(next.class_starts_at);
 
   return (
     <section className="rounded-2xl bg-[#2d2d2d] text-white p-5 sm:p-6 relative overflow-hidden">
@@ -227,13 +229,11 @@ function NextClassCard({
         {/* Date stamp */}
         <div className="flex-shrink-0 w-16 sm:w-20 rounded-xl bg-[#c9a96e] text-[#1a1a1a] flex flex-col items-center justify-center text-center py-2">
           <p className="text-[10px] uppercase tracking-wider font-bold leading-none">{day}</p>
-          <p className="text-2xl sm:text-3xl font-bold leading-none mt-1">{startsAt.getDate()}</p>
-          <p className="text-[10px] uppercase tracking-wider font-bold leading-none mt-0.5">
-            {monthDay.split(' ')[0]}
-          </p>
+          <p className="text-2xl sm:text-3xl font-bold leading-none mt-1">{dayNum}</p>
+          <p className="text-[10px] uppercase tracking-wider font-bold leading-none mt-0.5">{month}</p>
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#c9a96e] mb-1">Next class</p>
+          <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#c9a96e] mb-1">My Next Class</p>
           <p className="font-semibold text-lg sm:text-xl truncate">{next.class_title}</p>
           <p className="text-sm text-white/80 mt-0.5">
             {time} &middot; {next.class_duration_minutes} min
