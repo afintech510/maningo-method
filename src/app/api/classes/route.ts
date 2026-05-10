@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logger, generateCorrelationId } from '@/lib/logger';
+import { getStudioSettings } from '@/lib/studio-settings';
 
 export async function GET(request: NextRequest) {
   const correlationId = generateCorrelationId();
@@ -9,8 +10,18 @@ export async function GET(request: NextRequest) {
 
   try {
     const { searchParams } = request.nextUrl;
-    const from = searchParams.get('from') || new Date().toISOString();
-    const to = searchParams.get('to') || new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+    const { booking_horizon_days } = await getStudioSettings();
+    const horizonMs = booking_horizon_days * 24 * 60 * 60 * 1000;
+    const nowMs = Date.now();
+    const horizonCap = new Date(nowMs + horizonMs).toISOString();
+
+    const fromRaw = searchParams.get('from');
+    const toRaw = searchParams.get('to');
+    const from = fromRaw || new Date(nowMs).toISOString();
+    // Clamp the upper bound so students never see classes beyond the studio's
+    // configured booking horizon (default 30 days).
+    const requestedTo = toRaw || horizonCap;
+    const to = requestedTo > horizonCap ? horizonCap : requestedTo;
 
     // Use admin client to bypass RLS for public schedule
     const supabase = createAdminClient();

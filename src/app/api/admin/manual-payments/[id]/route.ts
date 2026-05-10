@@ -3,6 +3,14 @@ import { requireAuth, isAuthError } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logger, generateCorrelationId } from '@/lib/logger';
 import { applyCreditDelta } from '@/lib/credits';
+import { sendAdminPurchase } from '@/lib/resend';
+
+const ADMIN_EMAIL = 'chelsea@maningomethod.com';
+const PACK_LABEL: Record<string, string> = {
+  single: 'Drop-In Class',
+  '5pack': '5-Class Pack',
+  '10pack': '10-Class Pack',
+};
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   const correlationId = generateCorrelationId();
@@ -23,7 +31,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     const supabase = createAdminClient();
     const { data: payment, error: fetchErr } = await supabase
       .from('manual_payments')
-      .select('id, student_id, credits, status')
+      .select('id, student_id, credits, status, pack_type, amount_cents, payment_method')
       .eq('id', params.id)
       .single();
 
@@ -58,6 +66,24 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         adminId: auth.user.id,
         relatedId: params.id,
       });
+
+      // Notify admin of the realized sale (after Chelsea confirmed payment)
+      void (async () => {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, email')
+          .eq('id', payment.student_id)
+          .single();
+        await sendAdminPurchase(ADMIN_EMAIL, {
+          buyerName: profile?.full_name || 'Unknown',
+          buyerEmail: profile?.email || 'unknown',
+          packLabel: PACK_LABEL[payment.pack_type] || payment.pack_type,
+          credits: payment.credits,
+          amount: `$${(payment.amount_cents / 100).toFixed(2)}`,
+          channel: payment.payment_method === 'venmo' ? 'venmo' : 'cash',
+          reference: params.id,
+        });
+      })();
 
       log.info(
         { paymentId: params.id, studentId: payment.student_id, credits: payment.credits, newBalance },

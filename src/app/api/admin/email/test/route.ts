@@ -15,6 +15,8 @@ import { ReferralRewardEarned } from '@/emails/ReferralRewardEarned';
 import { CreditPurchaseReceipt } from '@/emails/CreditPurchaseReceipt';
 import { ClassReminder } from '@/emails/ClassReminder';
 import { ManualPaymentSubmitted } from '@/emails/ManualPaymentSubmitted';
+import { AdminNewMember } from '@/emails/AdminNewMember';
+import { AdminPurchase } from '@/emails/AdminPurchase';
 import { logger, generateCorrelationId } from '@/lib/logger';
 
 const schema = z.object({
@@ -268,6 +270,40 @@ export async function POST(request: NextRequest) {
             amount: '$112.00',
             method: 'venmo',
             paymentId: '00000000-0000-0000-0000-000000000000',
+          }),
+        }),
+    },
+    {
+      name: 'AdminNewMember',
+      run: () =>
+        resend.emails.send({
+          ...baseHeaders,
+          subject: 'New member: Alex Tester',
+          react: createElement(AdminNewMember, {
+            memberName: 'Alex Tester',
+            memberEmail: 'alex@example.com',
+            memberPhone: '+1 555 123 4567',
+            smsMarketingConsent: true,
+            emailMarketingConsent: true,
+            referredByName: 'Chelsea Maningo',
+            createdAt: new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }),
+          }),
+        }),
+    },
+    {
+      name: 'AdminPurchase',
+      run: () =>
+        resend.emails.send({
+          ...baseHeaders,
+          subject: 'New sale: 5-Class Pack — $115.36 (card)',
+          react: createElement(AdminPurchase, {
+            buyerName: 'Alex Tester',
+            buyerEmail: 'alex@example.com',
+            packLabel: '5-Class Pack',
+            credits: 5,
+            amount: '$115.36',
+            channel: 'card',
+            reference: 'pi_test_1234567890',
           }),
         }),
     },

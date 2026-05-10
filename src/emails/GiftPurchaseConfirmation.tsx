@@ -1,4 +1,5 @@
-import { Html, Head, Body, Container, Heading, Text, Hr, Section } from '@react-email/components';
+import { Text } from '@react-email/components';
+import { EmailLayout, EmailCard, EmailParagraph, EMAIL_BRAND } from './components/EmailLayout';
 
 interface Props {
   purchaserName: string;
@@ -20,37 +21,57 @@ export function GiftPurchaseConfirmation({
   deliveryMode,
 }: Props) {
   return (
-    <Html>
-      <Head />
-      <Body style={{ fontFamily: 'system-ui, sans-serif', backgroundColor: '#faf9f6' }}>
-        <Container style={{ maxWidth: '600px', margin: '0 auto', padding: '40px 20px' }}>
-          <Heading style={{ fontSize: '24px', color: '#1a1a1a' }}>Your gift is ready</Heading>
-          <Text style={{ color: '#1a1a1a' }}>
-            Hi {purchaserName}, thanks for gifting Maningo Method
-            {recipientName ? ` to ${recipientName}` : ''}.
+    <EmailLayout
+      kicker="Gift confirmation"
+      heading="Your gift is ready."
+      preview={`Gift code · ${code}`}
+    >
+      <EmailParagraph>
+        Hi {purchaserName}, thanks for gifting Maningo Method{recipientName ? ` to ${recipientName}` : ''}.
+      </EmailParagraph>
+
+      <EmailCard tone="gold">
+        <Text style={{ margin: 0, fontFamily: 'Georgia, serif', fontSize: '18px', fontWeight: 700 }}>
+          {packLabel}
+        </Text>
+        <Text style={{ margin: '4px 0 0', color: EMAIL_BRAND.muted, fontSize: '13px' }}>
+          {amountDisplay}
+        </Text>
+      </EmailCard>
+
+      <EmailCard>
+        <Text style={{ margin: 0, fontSize: '11px', textTransform: 'uppercase' as const, letterSpacing: '0.22em', color: EMAIL_BRAND.muted, textAlign: 'center' as const }}>
+          Gift code
+        </Text>
+        <Text
+          style={{
+            margin: '8px 0 0',
+            fontFamily: 'Georgia, serif',
+            fontSize: '26px',
+            fontWeight: 700,
+            letterSpacing: '0.12em',
+            color: EMAIL_BRAND.gold,
+            textAlign: 'center' as const,
+          }}
+        >
+          {code}
+        </Text>
+      </EmailCard>
+
+      {deliveryMode === 'email' && recipientName ? (
+        <EmailParagraph>
+          We sent the code straight to {recipientName} so they can redeem it. Keep this for your records.
+        </EmailParagraph>
+      ) : (
+        <>
+          <EmailParagraph>
+            Share this code with the recipient however you like — text, card, in person. They redeem at:
+          </EmailParagraph>
+          <Text style={{ color: EMAIL_BRAND.gold, fontSize: '14px', wordBreak: 'break-all' as const, margin: '0 0 8px' }}>
+            {redemptionUrl}
           </Text>
-          <Hr style={{ borderColor: '#e5e2dc' }} />
-          <Text style={{ fontWeight: 'bold', fontSize: '18px' }}>{packLabel} &mdash; {amountDisplay}</Text>
-          <Section style={{ backgroundColor: '#ffffff', border: '1px solid #e5e2dc', padding: '20px', borderRadius: '12px', textAlign: 'center' as const, margin: '20px 0' }}>
-            <Text style={{ fontSize: '12px', color: '#6b6b6b', margin: '0 0 8px', textTransform: 'uppercase' as const, letterSpacing: '2px' }}>Gift Code</Text>
-            <Text style={{ fontSize: '24px', fontWeight: 'bold', color: '#c9a96e', letterSpacing: '2px', margin: '0' }}>{code}</Text>
-          </Section>
-          {deliveryMode === 'email' && recipientName ? (
-            <Text style={{ color: '#6b6b6b' }}>
-              We sent the code directly to {recipientName} so they can redeem it. Keep this email for your records.
-            </Text>
-          ) : (
-            <>
-              <Text style={{ color: '#6b6b6b' }}>
-                Share this code with the recipient however you like &mdash; text, card, in person. They can redeem it at:
-              </Text>
-              <Text style={{ color: '#c9a96e', wordBreak: 'break-all' as const }}>{redemptionUrl}</Text>
-            </>
-          )}
-          <Hr style={{ borderColor: '#e5e2dc' }} />
-          <Text style={{ fontSize: '14px', color: '#6b6b6b', marginTop: '24px' }}>&mdash; Maningo Method</Text>
-        </Container>
-      </Body>
-    </Html>
+        </>
+      )}
+    </EmailLayout>
   );
 }

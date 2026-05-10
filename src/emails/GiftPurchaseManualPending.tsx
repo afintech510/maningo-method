@@ -1,4 +1,5 @@
-import { Html, Head, Body, Container, Heading, Text, Hr, Section } from '@react-email/components';
+import { Text } from '@react-email/components';
+import { EmailLayout, EmailCard, EmailParagraph, EMAIL_BRAND } from './components/EmailLayout';
 
 interface Props {
   purchaserName: string;
@@ -24,100 +25,76 @@ export function GiftPurchaseManualPending({
   deliveryMode,
 }: Props) {
   return (
-    <Html>
-      <Head />
-      <Body style={{ fontFamily: 'system-ui, sans-serif', backgroundColor: '#faf9f6' }}>
-        <Container style={{ maxWidth: '600px', margin: '0 auto', padding: '40px 20px' }}>
-          <Heading style={{ fontSize: '24px', color: '#1a1a1a' }}>Gift code created — payment pending</Heading>
-          <Text style={{ color: '#1a1a1a' }}>
-            Hi {purchaserName}, here&rsquo;s your Maningo Method gift code
-            {recipientName ? ` for ${recipientName}` : ''}. The code activates as soon as Chelsea
-            confirms your payment.
+    <EmailLayout
+      kicker="Gift code · payment pending"
+      heading="One more step to activate."
+      preview={`${packLabel} · ${amountDisplay}`}
+    >
+      <EmailParagraph>
+        Hi {purchaserName}, your code is reserved{recipientName ? ` for ${recipientName}` : ''}. It activates as
+        soon as Chelsea confirms your payment.
+      </EmailParagraph>
+
+      <EmailCard tone="amber">
+        <Text style={{ margin: 0, fontWeight: 700, fontSize: '14px', color: '#9a3412' }}>
+          How to pay
+        </Text>
+        {paymentMethod === 'venmo' ? (
+          <Text style={{ margin: '6px 0 0', color: '#7c2d12', fontSize: '14px', lineHeight: 1.6 }}>
+            Send <strong>{amountDisplay}</strong> to <strong>{venmoHandle}</strong> on Venmo. In the
+            note, include your name and the word &ldquo;gift.&rdquo;
           </Text>
-
-          <Section
-            style={{
-              backgroundColor: '#fff7ed',
-              border: '1px solid #fdba74',
-              padding: '16px',
-              borderRadius: '12px',
-              margin: '20px 0',
-            }}
-          >
-            <Text style={{ fontWeight: 'bold', fontSize: '14px', margin: 0, color: '#9a3412' }}>
-              How to pay
-            </Text>
-            {paymentMethod === 'venmo' ? (
-              <Text style={{ color: '#7c2d12', margin: '6px 0 0', fontSize: '14px' }}>
-                Send <strong>{amountDisplay}</strong> to <strong>{venmoHandle}</strong> on Venmo. In
-                the note, include your name and the word &ldquo;gift.&rdquo;
-              </Text>
-            ) : (
-              <Text style={{ color: '#7c2d12', margin: '6px 0 0', fontSize: '14px' }}>
-                Bring <strong>{amountDisplay}</strong> in cash to the studio (295 Montauk Hwy,
-                Speonk). Hand it to Chelsea and the code activates immediately.
-              </Text>
-            )}
-          </Section>
-
-          <Hr style={{ borderColor: '#e5e2dc' }} />
-          <Text style={{ fontWeight: 'bold', fontSize: '18px' }}>
-            {packLabel} &mdash; {amountDisplay}
+        ) : (
+          <Text style={{ margin: '6px 0 0', color: '#7c2d12', fontSize: '14px', lineHeight: 1.6 }}>
+            Bring <strong>{amountDisplay}</strong> in cash to the studio (295 Montauk Hwy, Speonk).
+            Hand it to Chelsea and the code activates immediately.
           </Text>
-          <Section
-            style={{
-              backgroundColor: '#ffffff',
-              border: '1px solid #e5e2dc',
-              padding: '20px',
-              borderRadius: '12px',
-              textAlign: 'center' as const,
-              margin: '20px 0',
-            }}
-          >
-            <Text
-              style={{
-                fontSize: '12px',
-                color: '#6b6b6b',
-                margin: '0 0 8px',
-                textTransform: 'uppercase' as const,
-                letterSpacing: '2px',
-              }}
-            >
-              Gift Code
-            </Text>
-            <Text
-              style={{
-                fontSize: '24px',
-                fontWeight: 'bold',
-                color: '#c9a96e',
-                letterSpacing: '2px',
-                margin: '0',
-              }}
-            >
-              {code}
-            </Text>
-            <Text style={{ fontSize: '12px', color: '#6b6b6b', margin: '8px 0 0' }}>
-              Status: <strong>pending payment</strong>
-            </Text>
-          </Section>
+        )}
+      </EmailCard>
 
-          {deliveryMode === 'email' && recipientName ? (
-            <Text style={{ color: '#6b6b6b' }}>
-              Once payment clears, we&rsquo;ll email the code directly to {recipientName}.
-            </Text>
-          ) : (
-            <>
-              <Text style={{ color: '#6b6b6b' }}>
-                After your payment is confirmed the recipient can redeem at:
-              </Text>
-              <Text style={{ color: '#c9a96e', wordBreak: 'break-all' as const }}>{redemptionUrl}</Text>
-            </>
-          )}
+      <EmailCard tone="gold">
+        <Text style={{ margin: 0, fontFamily: 'Georgia, serif', fontSize: '18px', fontWeight: 700 }}>
+          {packLabel}
+        </Text>
+        <Text style={{ margin: '4px 0 0', color: EMAIL_BRAND.muted, fontSize: '13px' }}>
+          {amountDisplay}
+        </Text>
+      </EmailCard>
 
-          <Hr style={{ borderColor: '#e5e2dc' }} />
-          <Text style={{ fontSize: '14px', color: '#6b6b6b', marginTop: '24px' }}>&mdash; Maningo Method</Text>
-        </Container>
-      </Body>
-    </Html>
+      <EmailCard>
+        <Text style={{ margin: 0, fontSize: '11px', textTransform: 'uppercase' as const, letterSpacing: '0.22em', color: EMAIL_BRAND.muted, textAlign: 'center' as const }}>
+          Gift code
+        </Text>
+        <Text
+          style={{
+            margin: '8px 0 0',
+            fontFamily: 'Georgia, serif',
+            fontSize: '26px',
+            fontWeight: 700,
+            letterSpacing: '0.12em',
+            color: EMAIL_BRAND.gold,
+            textAlign: 'center' as const,
+          }}
+        >
+          {code}
+        </Text>
+        <Text style={{ margin: '8px 0 0', fontSize: '12px', color: EMAIL_BRAND.muted, textAlign: 'center' as const }}>
+          Status: <strong>pending payment</strong>
+        </Text>
+      </EmailCard>
+
+      {deliveryMode === 'email' && recipientName ? (
+        <EmailParagraph>
+          Once payment clears we&rsquo;ll email the code directly to {recipientName}.
+        </EmailParagraph>
+      ) : (
+        <>
+          <EmailParagraph>After your payment is confirmed the recipient redeems at:</EmailParagraph>
+          <Text style={{ color: EMAIL_BRAND.gold, fontSize: '14px', wordBreak: 'break-all' as const, margin: '0 0 8px' }}>
+            {redemptionUrl}
+          </Text>
+        </>
+      )}
+    </EmailLayout>
   );
 }

@@ -1,4 +1,5 @@
-import { Html, Head, Body, Container, Heading, Text, Hr, Section, Button } from '@react-email/components';
+import { Section, Text } from '@react-email/components';
+import { EmailLayout, EmailCard, EmailButton, EmailParagraph, EMAIL_BRAND } from './components/EmailLayout';
 
 interface BookingConfirmationProps {
   studentName: string;
@@ -25,99 +26,45 @@ export function BookingConfirmation({
   icsUrl,
 }: BookingConfirmationProps) {
   return (
-    <Html>
-      <Head />
-      <Body style={{ fontFamily: 'system-ui, sans-serif', backgroundColor: '#faf9f6' }}>
-        <Container style={{ maxWidth: '600px', margin: '0 auto', padding: '40px 20px' }}>
-          <Heading style={{ fontSize: '24px', color: '#1a1a1a' }}>You&rsquo;re Booked!</Heading>
-          <Text style={{ color: '#1a1a1a' }}>Hi {studentName}, your spot is confirmed.</Text>
+    <EmailLayout
+      kicker="Booking confirmed"
+      heading="You&rsquo;re on the mat."
+      preview={`${classTitle} · ${classDate} at ${classTime}`}
+    >
+      <EmailParagraph>Hi {studentName}, your spot is locked in.</EmailParagraph>
 
-          <Hr style={{ borderColor: '#e5e2dc' }} />
+      <EmailCard tone="gold">
+        <Text style={{ margin: 0, fontFamily: 'Georgia, serif', fontSize: '20px', fontWeight: 700, color: EMAIL_BRAND.ink }}>
+          {classTitle}
+        </Text>
+        <Text style={{ margin: '6px 0 0', color: EMAIL_BRAND.muted, fontSize: '14px' }}>
+          {classDate} &middot; {classTime} &middot; {duration} min
+        </Text>
+        <Text style={{ margin: '4px 0 0', color: EMAIL_BRAND.muted, fontSize: '13px' }}>
+          295 Montauk Hwy, Suite 7, Speonk, NY
+        </Text>
+      </EmailCard>
 
-          <Section
-            style={{
-              backgroundColor: '#ffffff',
-              border: '1px solid #e5e2dc',
-              borderRadius: '12px',
-              padding: '20px',
-              margin: '12px 0',
-            }}
-          >
-            <Text style={{ fontWeight: 'bold', fontSize: '18px', margin: 0 }}>{classTitle}</Text>
-            <Text style={{ color: '#6b6b6b', margin: '6px 0 0' }}>
-              {classDate} at {classTime} &middot; {duration} min
-            </Text>
-            <Text style={{ color: '#6b6b6b', margin: '6px 0 0', fontSize: '13px' }}>
-              Maningo Method &middot; 295 Montauk Hwy, Suite 7, Speonk, NY
-            </Text>
-          </Section>
-
-          {(googleCalUrl || icsUrl) && (
-            <Section style={{ textAlign: 'center' as const, margin: '20px 0' }}>
-              <Text style={{ fontSize: '13px', color: '#6b6b6b', margin: '0 0 10px' }}>
-                Add to your calendar:
-              </Text>
-              <table role="presentation" cellSpacing={0} cellPadding={0} style={{ margin: '0 auto' }}>
-                <tbody>
-                  <tr>
-                    {googleCalUrl && (
-                      <td style={{ padding: '0 6px' }}>
-                        <Button
-                          href={googleCalUrl}
-                          style={{
-                            backgroundColor: '#c9a96e',
-                            color: '#ffffff',
-                            padding: '10px 18px',
-                            borderRadius: '999px',
-                            fontWeight: 'bold',
-                            textDecoration: 'none',
-                            fontSize: '13px',
-                          }}
-                        >
-                          Add to Google
-                        </Button>
-                      </td>
-                    )}
-                    {icsUrl && (
-                      <td style={{ padding: '0 6px' }}>
-                        <Button
-                          href={icsUrl}
-                          style={{
-                            backgroundColor: '#2d2d2d',
-                            color: '#ffffff',
-                            padding: '10px 18px',
-                            borderRadius: '999px',
-                            fontWeight: 'bold',
-                            textDecoration: 'none',
-                            fontSize: '13px',
-                          }}
-                        >
-                          Apple / Outlook
-                        </Button>
-                      </td>
-                    )}
-                  </tr>
-                </tbody>
-              </table>
-            </Section>
-          )}
-
-          <Hr style={{ borderColor: '#e5e2dc' }} />
-
-          <Text style={{ color: '#6b6b6b', fontSize: '14px' }}>
-            Bring a mat and a small towel. Wear grippy socks or be barefoot. Cancel up to 12 hours before
-            class start for a full credit refund.
+      {(googleCalUrl || icsUrl) && (
+        <Section style={{ textAlign: 'center' as const, margin: '16px 0 4px' }}>
+          <Text style={{ fontSize: '12px', color: EMAIL_BRAND.muted, margin: '0 0 8px', textTransform: 'uppercase' as const, letterSpacing: '0.15em' }}>
+            Add to your calendar
           </Text>
+          {googleCalUrl && <EmailButton href={googleCalUrl}>Google Calendar</EmailButton>}
+          {icsUrl && <EmailButton href={icsUrl} tone="dark">Apple / Outlook</EmailButton>}
+        </Section>
+      )}
 
-          {typeof creditsRemaining === 'number' && (
-            <Text style={{ color: '#6b6b6b', fontSize: '13px', marginTop: '16px' }}>
-              Credits remaining: <strong style={{ color: '#1a1a1a' }}>{creditsRemaining}</strong>
-            </Text>
-          )}
+      <EmailParagraph>
+        Bring a mat and a small towel. Grippy socks or barefoot are both perfect. Cancel up to 12 hours
+        before class for a full credit refund.
+      </EmailParagraph>
 
-          <Text style={{ fontSize: '14px', color: '#6b6b6b', marginTop: '24px' }}>&mdash; Maningo Method</Text>
-        </Container>
-      </Body>
-    </Html>
+      {typeof creditsRemaining === 'number' && (
+        <Text style={{ color: EMAIL_BRAND.muted, fontSize: '13px', margin: '4px 0 0' }}>
+          Credits remaining: <strong style={{ color: EMAIL_BRAND.ink }}>{creditsRemaining}</strong>
+        </Text>
+      )}
+    </EmailLayout>
   );
 }

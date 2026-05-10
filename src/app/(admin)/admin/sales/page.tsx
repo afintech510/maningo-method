@@ -5,6 +5,7 @@ import { LogoutButton } from '@/components/layout/LogoutButton';
 import { formatCents } from '@/lib/pricing';
 import { ActivateGiftButton } from './activate-gift-button';
 import { SendTestEmailsButton } from './send-test-emails-button';
+import { StudioSettingsCard } from './studio-settings-card';
 
 export default async function AdminSalesPage() {
   const supabase = createAdminClient();
@@ -329,6 +330,12 @@ export default async function AdminSalesPage() {
             ))}
           </div>
         )}
+      </section>
+
+      {/* Studio settings */}
+      <section className="mt-8">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-[#6b6b6b] mb-3">Studio Settings</h2>
+        <StudioSettingsCard />
       </section>
 
       {/* Tools */}

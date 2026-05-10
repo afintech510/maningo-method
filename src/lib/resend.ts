@@ -12,6 +12,8 @@ import { ReferralRewardEarned } from '@/emails/ReferralRewardEarned';
 import { CreditPurchaseReceipt } from '@/emails/CreditPurchaseReceipt';
 import { ManualPaymentSubmitted } from '@/emails/ManualPaymentSubmitted';
 import { ClassReminder } from '@/emails/ClassReminder';
+import { AdminNewMember } from '@/emails/AdminNewMember';
+import { AdminPurchase, type AdminPurchaseChannel } from '@/emails/AdminPurchase';
 import { createElement } from 'react';
 
 let resendInstance: Resend | null = null;
@@ -381,6 +383,61 @@ export async function sendClassReminderBatch(
     );
   } catch (err) {
     logger.error({ err, count: recipients.length }, 'Failed to send class reminder batch');
+  }
+}
+
+export async function sendAdminNewMember(
+  to: string,
+  data: {
+    memberName: string;
+    memberEmail: string;
+    memberPhone: string | null;
+    smsMarketingConsent: boolean;
+    emailMarketingConsent: boolean;
+    referredByName?: string | null;
+    createdAt: string;
+  }
+) {
+  try {
+    const resend = getResend();
+    await resend.emails.send({
+      from: `Maningo Method <${FROM_EMAIL}>`,
+      replyTo: REPLY_TO,
+      to,
+      subject: `New member: ${data.memberName}`,
+      react: createElement(AdminNewMember, data),
+    });
+  } catch (err) {
+    logger.error({ err, to }, 'Failed to send admin new-member notification');
+  }
+}
+
+export async function sendAdminPurchase(
+  to: string,
+  data: {
+    buyerName: string;
+    buyerEmail: string;
+    packLabel: string;
+    credits: number;
+    amount: string;
+    channel: AdminPurchaseChannel;
+    giftCode?: string;
+    recipientName?: string | null;
+    recipientEmail?: string | null;
+    reference?: string;
+  }
+) {
+  try {
+    const resend = getResend();
+    await resend.emails.send({
+      from: `Maningo Method <${FROM_EMAIL}>`,
+      replyTo: REPLY_TO,
+      to,
+      subject: `New sale: ${data.packLabel} — ${data.amount} (${data.channel})`,
+      react: createElement(AdminPurchase, data),
+    });
+  } catch (err) {
+    logger.error({ err, to }, 'Failed to send admin purchase notification');
   }
 }
 

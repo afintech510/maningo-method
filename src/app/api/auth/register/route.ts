@@ -3,6 +3,9 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { registerSchema } from '@/validations/auth';
 import { logger, generateCorrelationId } from '@/lib/logger';
+import { sendAdminNewMember } from '@/lib/resend';
+
+const ADMIN_EMAIL = 'chelsea@maningomethod.com';
 
 const SMS_TRANSACTIONAL_CONSENT_TEXT =
   'I provide my prior express written consent to receive recurring transactional text messages (class reminders, schedule changes, account alerts) from Maningo Method, including by means of automated technology, at the mobile number I provided. Consent is not a condition of purchase. Message frequency varies. Message and data rates may apply. Reply STOP to opt out, HELP for help. Maningo Method does not share, sell, or transfer phone numbers or SMS opt-in data with third parties for marketing.';
@@ -112,6 +115,28 @@ export async function POST(request: NextRequest) {
     if (signInErr) {
       log.error({ err: signInErr }, 'Auto sign-in after register failed');
     }
+
+    // Notify Chelsea — fire-and-forget so a Resend hiccup never blocks signup
+    void (async () => {
+      let referredByName: string | null = null;
+      if (referredBy) {
+        const { data: ref } = await admin
+          .from('profiles')
+          .select('full_name')
+          .eq('id', referredBy)
+          .maybeSingle();
+        referredByName = ref?.full_name || null;
+      }
+      await sendAdminNewMember(ADMIN_EMAIL, {
+        memberName: full_name,
+        memberEmail: email,
+        memberPhone: phone || null,
+        smsMarketingConsent: sms_marketing_consent,
+        emailMarketingConsent: email_marketing_consent,
+        referredByName,
+        createdAt: new Date(now).toLocaleString('en-US', { timeZone: 'America/New_York' }),
+      });
+    })();
 
     log.info(
       { userId, sms_consent, sms_marketing_consent, email_marketing_consent },

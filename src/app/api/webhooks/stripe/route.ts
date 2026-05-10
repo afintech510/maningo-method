@@ -9,8 +9,11 @@ import {
   sendGiftReceived,
   sendReferralRewardEarned,
   sendCreditPurchaseReceipt,
+  sendAdminPurchase,
 } from '@/lib/resend';
 import { getBaseUrl } from '@/lib/utils';
+
+const ADMIN_EMAIL = 'chelsea@maningomethod.com';
 
 const PACK_LABEL: Record<string, string> = {
   single: 'Drop-In Class',
@@ -98,6 +101,15 @@ export async function POST(request: NextRequest) {
             packType,
             creditsAdded: creditsNum,
             amountCents: session.amount_total || 0,
+            log,
+          });
+          await notifyAdminPurchase({
+            studentId,
+            packType,
+            creditsAdded: creditsNum,
+            amountCents: session.amount_total || 0,
+            channel: 'card',
+            reference: paymentIntent || session.id,
             log,
           });
           await rewardReferrerIfApplicable(studentId, paymentIntent || session.id, log, creditsAfter);
@@ -236,6 +248,20 @@ export async function POST(request: NextRequest) {
               redemptionUrl,
             });
           }
+          // Notify admin of the new gift sale
+          await sendAdminPurchase(ADMIN_EMAIL, {
+            buyerName: purchaserName || 'Guest',
+            buyerEmail: purchaserEmail || 'unknown',
+            packLabel,
+            credits: giftCredits,
+            amount: amountDisplay,
+            channel: 'gift',
+            giftCode: gift.code,
+            recipientName,
+            recipientEmail,
+            reference: intent.id,
+          });
+
           log.info({ giftId: gift.id, code: gift.code, deliveryMode }, 'Gift purchase complete');
           break;
         }
@@ -281,6 +307,15 @@ export async function POST(request: NextRequest) {
             creditsAdded: creditsNum,
             amountCents: intent.amount_received || intent.amount,
             serviceFeeCents: Number(md.service_fee_cents || 0),
+            log,
+          });
+          await notifyAdminPurchase({
+            studentId,
+            packType,
+            creditsAdded: creditsNum,
+            amountCents: intent.amount_received || intent.amount,
+            channel: 'card',
+            reference: intent.id,
             log,
           });
           await rewardReferrerIfApplicable(studentId, intent.id, log, creditsAfter);
@@ -331,6 +366,38 @@ async function sendPurchaseReceipt(args: {
     log.info({ studentId, packType, creditsAdded }, 'Purchase receipt sent');
   } catch (err) {
     log.error({ err, studentId }, 'Purchase receipt email failed');
+  }
+}
+
+// Send "new sale" notification to Chelsea for every paid purchase.
+async function notifyAdminPurchase(args: {
+  studentId: string;
+  packType: string;
+  creditsAdded: number;
+  amountCents: number;
+  channel: 'card' | 'cash' | 'venmo';
+  reference?: string;
+  log: { info: (...a: unknown[]) => void; error: (...a: unknown[]) => void };
+}): Promise<void> {
+  const { studentId, packType, creditsAdded, amountCents, channel, reference, log } = args;
+  try {
+    const supabase = createAdminClient();
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name, email')
+      .eq('id', studentId)
+      .single();
+    await sendAdminPurchase(ADMIN_EMAIL, {
+      buyerName: profile?.full_name || 'Unknown',
+      buyerEmail: profile?.email || 'unknown',
+      packLabel: PACK_LABEL[packType] || packType,
+      credits: creditsAdded,
+      amount: `$${(amountCents / 100).toFixed(2)}`,
+      channel,
+      reference,
+    });
+  } catch (err) {
+    log.error({ err, studentId }, 'Admin purchase notification failed');
   }
 }
 

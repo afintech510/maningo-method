@@ -1,4 +1,5 @@
-import { Html, Head, Body, Container, Heading, Text, Hr, Section } from '@react-email/components';
+import { Text } from '@react-email/components';
+import { EmailLayout, EmailCard, EmailButton, EmailParagraph, EMAIL_BRAND, EMAIL_SITE } from './components/EmailLayout';
 
 interface Props {
   studentName: string;
@@ -16,78 +17,39 @@ const METHOD_LABEL: Record<Props['method'], string> = {
   venmo: 'Venmo (direct)',
 };
 
-export function ManualPaymentSubmitted({
-  studentName,
-  studentEmail,
-  studentPhone,
-  packLabel,
-  amount,
-  method,
-  paymentId,
-}: Props) {
+export function ManualPaymentSubmitted({ studentName, studentEmail, studentPhone, packLabel, amount, method, paymentId }: Props) {
   return (
-    <Html>
-      <Head />
-      <Body style={{ fontFamily: 'system-ui, sans-serif', backgroundColor: '#faf9f6' }}>
-        <Container style={{ maxWidth: '600px', margin: '0 auto', padding: '40px 20px' }}>
-          <Heading style={{ fontSize: '22px', color: '#1a1a1a' }}>New manual payment request</Heading>
-          <Text style={{ color: '#1a1a1a' }}>
-            A student just submitted a {METHOD_LABEL[method]} payment request. Look out for the transfer
-            (or cash at the studio), then mark it paid in admin to apply credits.
-          </Text>
+    <EmailLayout
+      kicker="Manual payment pending"
+      heading="Heads up — payment request."
+      preview={`${studentName} · ${amount} · ${METHOD_LABEL[method]}`}
+    >
+      <EmailParagraph>
+        A student just submitted a {METHOD_LABEL[method]} payment request. Look out for the transfer (or
+        cash at the studio), then mark it paid in admin to apply credits.
+      </EmailParagraph>
 
-          <Hr style={{ borderColor: '#e5e2dc' }} />
+      <EmailCard>
+        <Text style={{ margin: 0, fontWeight: 700, fontSize: '16px' }}>{studentName}</Text>
+        <Text style={{ margin: '4px 0 0', color: EMAIL_BRAND.muted, fontSize: '13px' }}>{studentEmail}</Text>
+        {studentPhone && (
+          <Text style={{ margin: '2px 0 0', color: EMAIL_BRAND.muted, fontSize: '13px' }}>{studentPhone}</Text>
+        )}
+        <div style={{ borderTop: `1px solid ${EMAIL_BRAND.border}`, margin: '14px 0' }} />
+        <Text style={{ margin: 0 }}>
+          <strong>{packLabel}</strong> &middot; {amount}
+        </Text>
+        <Text style={{ color: EMAIL_BRAND.muted, margin: '4px 0 0', fontSize: '13px' }}>
+          Method: {METHOD_LABEL[method]}
+        </Text>
+        <Text style={{ color: EMAIL_BRAND.muted, margin: '2px 0 0', fontSize: '11px' }}>
+          Ref: {paymentId}
+        </Text>
+      </EmailCard>
 
-          <Section
-            style={{
-              backgroundColor: '#ffffff',
-              border: '1px solid #e5e2dc',
-              borderRadius: '12px',
-              padding: '18px',
-              margin: '12px 0',
-            }}
-          >
-            <Text style={{ fontWeight: 'bold', fontSize: '16px', margin: 0 }}>{studentName}</Text>
-            <Text style={{ color: '#6b6b6b', margin: '4px 0 0', fontSize: '13px' }}>{studentEmail}</Text>
-            {studentPhone && (
-              <Text style={{ color: '#6b6b6b', margin: '2px 0 0', fontSize: '13px' }}>{studentPhone}</Text>
-            )}
-
-            <Hr style={{ borderColor: '#e5e2dc', margin: '14px 0' }} />
-
-            <Text style={{ margin: 0 }}>
-              <strong>{packLabel}</strong> &middot; {amount}
-            </Text>
-            <Text style={{ color: '#6b6b6b', margin: '4px 0 0', fontSize: '13px' }}>
-              Method: {METHOD_LABEL[method]}
-            </Text>
-            <Text style={{ color: '#6b6b6b', margin: '2px 0 0', fontSize: '11px' }}>
-              Ref: {paymentId}
-            </Text>
-          </Section>
-
-          <Section style={{ textAlign: 'center' as const, margin: '20px 0' }}>
-            <a
-              href="https://www.maningomethod.com/admin/manual-payments"
-              style={{
-                backgroundColor: '#c9a96e',
-                color: '#ffffff',
-                padding: '12px 22px',
-                borderRadius: '999px',
-                fontWeight: 'bold',
-                textDecoration: 'none',
-                display: 'inline-block',
-              }}
-            >
-              Mark paid in admin
-            </a>
-          </Section>
-
-          <Text style={{ fontSize: '14px', color: '#6b6b6b', marginTop: '24px' }}>
-            &mdash; Maningo Method
-          </Text>
-        </Container>
-      </Body>
-    </Html>
+      <div style={{ textAlign: 'center' as const, margin: '20px 0 6px' }}>
+        <EmailButton href={`${EMAIL_SITE}/admin/manual-payments`}>Mark paid in admin</EmailButton>
+      </div>
+    </EmailLayout>
   );
 }
