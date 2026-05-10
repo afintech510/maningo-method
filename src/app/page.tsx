@@ -216,11 +216,10 @@ export default function Home() {
         <div className="absolute inset-0 bg-[#1a1a1a]/60 flex items-center justify-center px-6">
           <blockquote className="text-center max-w-2xl">
             <p className="text-white text-xl sm:text-2xl font-serif italic leading-relaxed">
-              &ldquo;The Maningo Method has completely transformed how I feel in my body.
-              Chelsea&apos;s attention to detail makes every class feel personal.&rdquo;
+              &ldquo;Pilates is complete coordination of body, mind, and spirit.&rdquo;
             </p>
             <cite className="text-[#c9a96e] text-sm mt-4 block not-italic font-medium">
-              — Sarah J., Member since 2024
+              — Joseph Pilates
             </cite>
           </blockquote>
         </div>
