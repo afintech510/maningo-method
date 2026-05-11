@@ -1,7 +1,7 @@
 import { Card } from '@/components/ui/Card';
 import { SpotsIndicator } from '@/components/schedule/SpotsIndicator';
 import { BookingButton } from '@/components/booking/BookingButton';
-import { formatStudioTime } from '@/lib/timezone';
+import { formatStudioTime, formatStudioDate } from '@/lib/timezone';
 
 interface ClassCardProps {
   classData: {
@@ -35,9 +35,14 @@ export function ClassCard({
   return (
     <Card>
       <div className="flex justify-between items-start mb-1">
-        <span className="text-lg font-semibold">
-          {formatStudioTime(classData.starts_at)}
-        </span>
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.15em] text-[#6b6b6b] font-medium">
+            {formatStudioDate(classData.starts_at, 'EEE, MMM d')}
+          </p>
+          <span className="text-lg font-semibold">
+            {formatStudioTime(classData.starts_at)}
+          </span>
+        </div>
         <SpotsIndicator
           remaining={classData.spots_remaining}
           total={classData.max_capacity}

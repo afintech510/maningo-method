@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/feedback/Skeleton';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { format } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
-import { STUDIO_TIMEZONE, formatStudioTime, formatStudioDate } from '@/lib/timezone';
+import { STUDIO_TIMEZONE, formatStudioTime } from '@/lib/timezone';
 
 interface ClassData {
   id: string;
@@ -75,6 +75,7 @@ export function ClassSchedule({
   const [monthFilter, setMonthFilter] = useState<string[]>([]);
   const [dayFilter, setDayFilter] = useState<number[]>([]);
   const [timeFilter, setTimeFilter] = useState<string[]>([]);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
   // Single fetch covering 90 days; both views slice this in memory.
   useEffect(() => {
@@ -126,9 +127,9 @@ export function ClassSchedule({
     });
   }, [allClasses, selectedDate]);
 
-  // Filter view: classes matching chip filters
+  // Filter view: classes matching chip filters, sorted by chosen direction.
   const filteredClasses = useMemo(() => {
-    return allClasses.filter((c) => {
+    const matched = allClasses.filter((c) => {
       const z = toZonedTime(new Date(c.starts_at), STUDIO_TIMEZONE);
       if (monthFilter.length > 0) {
         const monthKey = `${z.getFullYear()}-${String(z.getMonth() + 1).padStart(2, '0')}`;
@@ -142,7 +143,13 @@ export function ClassSchedule({
       }
       return true;
     });
-  }, [allClasses, monthFilter, dayFilter, timeFilter]);
+    matched.sort((a, b) => {
+      const ta = new Date(a.starts_at).getTime();
+      const tb = new Date(b.starts_at).getTime();
+      return sortDir === 'asc' ? ta - tb : tb - ta;
+    });
+    return matched;
+  }, [allClasses, monthFilter, dayFilter, timeFilter, sortDir]);
 
   const renderClassCard = (cls: ClassData) => (
     <ClassCard
@@ -318,9 +325,30 @@ export function ClassSchedule({
             )}
           </div>
 
-          <p className="text-[11px] text-muted-foreground mt-2 mb-3">
-            {filteredClasses.length} of {allClasses.length} classes match
-          </p>
+          <div className="flex items-center justify-between mt-2 mb-3 gap-3">
+            <p className="text-[11px] text-muted-foreground">
+              {filteredClasses.length} of {allClasses.length} classes match
+            </p>
+            <button
+              type="button"
+              onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
+              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full border border-[#e5e2dc] bg-white text-xs font-medium text-[#1a1a1a] hover:border-[#c9a96e] transition-colors"
+              aria-label={`Sort ${sortDir === 'asc' ? 'newest first' : 'oldest first'}`}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                {sortDir === 'asc' ? (
+                  <>
+                    <path d="M3 6h13" /><path d="M3 12h9" /><path d="M3 18h5" /><path d="M18 8v13" /><path d="m15 18 3 3 3-3" />
+                  </>
+                ) : (
+                  <>
+                    <path d="M3 6h13" /><path d="M3 12h9" /><path d="M3 18h5" /><path d="M18 21V8" /><path d="m15 11 3-3 3 3" />
+                  </>
+                )}
+              </svg>
+              {sortDir === 'asc' ? 'Soonest first' : 'Latest first'}
+            </button>
+          </div>
 
           <div className="space-y-3">
             {loading ? (
@@ -334,14 +362,7 @@ export function ClassSchedule({
                 description="Try clearing or relaxing your filters."
               />
             ) : (
-              filteredClasses.map((cls) => (
-                <div key={cls.id}>
-                  <p className="text-base sm:text-lg font-bold text-[#1a1a1a] mb-1.5">
-                    {formatStudioDate(cls.starts_at, 'EEE, MMM d')}
-                  </p>
-                  {renderClassCard(cls)}
-                </div>
-              ))
+              filteredClasses.map(renderClassCard)
             )}
           </div>
         </>
