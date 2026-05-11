@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     const adminClient = createAdminClient();
     const { data: profile } = await adminClient
       .from('profiles')
-      .select('credits, waiver_signed_at')
+      .select('credits, gift_balance_cents, waiver_signed_at')
       .eq('id', auth.user.id)
       .single();
 
@@ -45,6 +45,50 @@ export async function POST(request: Request) {
         },
         { status: 412 }
       );
+    }
+
+    // If they don't have a regular credit but have at least $25 of gift
+    // balance, silently convert $25 of balance → 1 credit so the booking can
+    // proceed. Anything less than $25 stays parked on their account until
+    // they top up.
+    const GIFT_BALANCE_PER_CREDIT_CENTS = 2500;
+    if (
+      profile &&
+      profile.credits < 1 &&
+      (profile.gift_balance_cents || 0) >= GIFT_BALANCE_PER_CREDIT_CENTS
+    ) {
+      // Decrement balance with a conditional WHERE so concurrent bookings
+      // can't both spend the same $25.
+      const newBalanceCents =
+        (profile.gift_balance_cents || 0) - GIFT_BALANCE_PER_CREDIT_CENTS;
+      const { data: updatedRow, error: balanceErr } = await adminClient
+        .from('profiles')
+        .update({ gift_balance_cents: newBalanceCents })
+        .eq('id', auth.user.id)
+        .gte('gift_balance_cents', GIFT_BALANCE_PER_CREDIT_CENTS)
+        .select('id')
+        .maybeSingle();
+      if (balanceErr || !updatedRow) {
+        log.error({ err: balanceErr }, 'Gift balance debit failed; falling through to NO_CREDITS');
+      } else {
+        try {
+          await applyCreditDelta({
+            studentId: auth.user.id,
+            delta: 1,
+            reason: 'Converted $25 of gift balance to 1 credit at booking time',
+            source: 'gift_redeem',
+            relatedId: null,
+          });
+          profile.credits = (profile.credits || 0) + 1;
+        } catch (creditErr) {
+          // Refund the balance — we couldn't grant the credit.
+          await adminClient
+            .from('profiles')
+            .update({ gift_balance_cents: profile.gift_balance_cents })
+            .eq('id', auth.user.id);
+          log.error({ err: creditErr }, 'Credit grant failed after balance debit; refunded');
+        }
+      }
     }
 
     if (!profile || profile.credits < 1) {

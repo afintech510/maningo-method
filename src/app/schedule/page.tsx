@@ -18,12 +18,14 @@ export default async function SchedulePage() {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('credits')
+      .select('credits, gift_balance_cents')
       .eq('id', auth.user.id)
       .single();
 
     credits = profile?.credits || 0;
-    hasCredits = credits > 0;
+    const giftBalanceCents = profile?.gift_balance_cents || 0;
+    // Either a regular credit or enough gift balance to auto-convert one.
+    hasCredits = credits > 0 || giftBalanceCents >= 2500;
 
     const { data: bookings } = await supabase
       .from('bookings')

@@ -61,12 +61,15 @@ export function GiftNewClient() {
 
   const summary: CheckoutSummary = useMemo(() => {
     if (isCustom) {
+      // Custom amount = dollar-balance gift card. The recipient's account
+      // carries the full dollar value; we don't pre-convert it to whole
+      // credits, so a $30 gift doesn't quietly lose $5.
       return {
-        label: 'Custom Gift Pack',
+        label: 'Custom Gift Card',
         price_display: formatCents(customCents),
         amount_cents: customCents,
-        credits: Math.floor(customCents / 2500),
-        description: 'A custom-amount gift toward Maningo Method classes',
+        credits: 0,
+        description: `${formatCents(customCents)} gift balance — converts to credits as the recipient books ($25 per credit).`,
       };
     }
     const p = PACK_INFO[pack];

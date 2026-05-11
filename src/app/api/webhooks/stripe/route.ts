@@ -227,6 +227,7 @@ export async function POST(request: NextRequest) {
           const packLabel = PACK_LABEL[packType] || 'Maningo Method gift';
           const amountDisplay = `$${((intent.amount_received || intent.amount) / 100).toFixed(2)}`;
 
+          const isDollarBalance = packType === 'custom';
           if (purchaserEmail) {
             await sendGiftPurchaseConfirmation(purchaserEmail, {
               purchaserName: purchaserName || 'there',
@@ -236,6 +237,7 @@ export async function POST(request: NextRequest) {
               code: gift.code,
               redemptionUrl,
               deliveryMode,
+              isDollarBalance,
             });
           }
           if (deliveryMode === 'email' && recipientEmail) {
@@ -246,6 +248,8 @@ export async function POST(request: NextRequest) {
               packLabel,
               code: gift.code,
               redemptionUrl,
+              amountDisplay: isDollarBalance ? amountDisplay : null,
+              isDollarBalance,
             });
           }
           // Notify admin of the new gift sale

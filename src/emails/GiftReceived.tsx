@@ -8,9 +8,21 @@ interface Props {
   packLabel: string;
   code: string;
   redemptionUrl: string;
+  /** When set, gift is a dollar-balance card; copy switches to "$X gift balance". */
+  amountDisplay?: string | null;
+  isDollarBalance?: boolean;
 }
 
-export function GiftReceived({ recipientName, senderName, senderMessage, packLabel, code, redemptionUrl }: Props) {
+export function GiftReceived({
+  recipientName,
+  senderName,
+  senderMessage,
+  packLabel,
+  code,
+  redemptionUrl,
+  amountDisplay,
+  isDollarBalance,
+}: Props) {
   return (
     <EmailLayout
       kicker={`From ${senderName}`}
@@ -18,7 +30,8 @@ export function GiftReceived({ recipientName, senderName, senderMessage, packLab
       preview={`${senderName} sent you a Maningo Method gift`}
     >
       <EmailParagraph>
-        {senderName} sent you a Maningo Method gift — {packLabel.toLowerCase()}.
+        {senderName} sent you a Maningo Method gift
+        {isDollarBalance && amountDisplay ? ` — ${amountDisplay} of class credit` : ` — ${packLabel.toLowerCase()}`}.
       </EmailParagraph>
 
       {senderMessage && (
@@ -41,8 +54,14 @@ export function GiftReceived({ recipientName, senderName, senderMessage, packLab
 
       <EmailCard tone="gold">
         <Text style={{ margin: 0, fontFamily: 'Georgia, serif', fontSize: '18px', fontWeight: 700 }}>
-          {packLabel}
+          {isDollarBalance && amountDisplay ? `${amountDisplay} gift balance` : packLabel}
         </Text>
+        {isDollarBalance && (
+          <Text style={{ margin: '4px 0 0', fontSize: '12px', color: EMAIL_BRAND.muted }}>
+            Converts to credits as you book ($25 per class). Anything left over stays on your
+            account for next time.
+          </Text>
+        )}
       </EmailCard>
 
       <EmailCard>

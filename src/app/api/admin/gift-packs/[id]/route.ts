@@ -77,6 +77,7 @@ export async function PATCH(
 
     // If activated and delivery=email, send the recipient their gift now.
     if (parsed.data.status === 'active' && gift.delivery_mode === 'email' && gift.recipient_email) {
+      const isDollarBalance = gift.pack_type === 'custom';
       void sendGiftReceived(gift.recipient_email, {
         recipientName: gift.recipient_name || 'there',
         senderName: gift.purchaser_name || 'A friend',
@@ -84,6 +85,8 @@ export async function PATCH(
         packLabel: PACK_LABEL[gift.pack_type] || `Gift (${formatCents(gift.amount_cents)})`,
         code: gift.code,
         redemptionUrl: `${SITE_URL}/redeem`,
+        amountDisplay: isDollarBalance ? formatCents(gift.amount_cents) : null,
+        isDollarBalance,
       });
     }
 

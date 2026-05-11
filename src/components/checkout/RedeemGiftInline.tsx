@@ -14,7 +14,12 @@ export function RedeemGiftInline({ className = '' }: { className?: string }) {
   const [code, setCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<{ credits: number; balance: number } | null>(null);
+  const [success, setSuccess] = useState<{
+    kind: 'credits' | 'balance';
+    credits: number;
+    giftBalanceCents: number;
+    creditsAfter: number;
+  } | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -35,19 +40,39 @@ export function RedeemGiftInline({ className = '' }: { className?: string }) {
       setError(data?.error?.message || 'Could not redeem.');
       return;
     }
-    setSuccess({ credits: data.credits_added, balance: data.new_balance });
+    setSuccess({
+      kind: data.kind || (data.gift_balance_added_cents > 0 ? 'balance' : 'credits'),
+      credits: data.credits_added || 0,
+      giftBalanceCents: data.gift_balance_added_cents || 0,
+      creditsAfter: data.new_balance || 0,
+    });
   }
 
   if (success) {
+    const giftDollars = (success.giftBalanceCents / 100).toFixed(2);
     return (
       <div className={`rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 ${className}`}>
-        <p className="text-sm font-semibold text-emerald-900">
-          +{success.credits} class credit{success.credits === 1 ? '' : 's'} added.
-        </p>
-        <p className="text-xs text-emerald-800 mt-1">
-          New balance: <strong>{success.balance}</strong>. You can stop here and book a class, or
-          continue this purchase if you want more credits.
-        </p>
+        {success.kind === 'balance' ? (
+          <>
+            <p className="text-sm font-semibold text-emerald-900">
+              ${giftDollars} gift balance added.
+            </p>
+            <p className="text-xs text-emerald-800 mt-1">
+              $25 converts to 1 class credit automatically when you book. Any leftover stays on
+              your account for next time.
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="text-sm font-semibold text-emerald-900">
+              +{success.credits} class credit{success.credits === 1 ? '' : 's'} added.
+            </p>
+            <p className="text-xs text-emerald-800 mt-1">
+              New balance: <strong>{success.creditsAfter}</strong>. You can stop here and book a
+              class, or continue this purchase if you want more credits.
+            </p>
+          </>
+        )}
         <div className="mt-3 flex flex-wrap gap-2">
           <Link
             href="/dashboard"

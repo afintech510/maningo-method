@@ -37,7 +37,9 @@ export async function POST(request: NextRequest) {
     const supabase = createAdminClient();
     const { data: gift, error: fetchErr } = await supabase
       .from('gift_packs')
-      .select('id, code, status, credits, pack_type, purchaser_id, purchaser_email, purchaser_name, recipient_name')
+      .select(
+        'id, code, status, credits, amount_cents, pack_type, purchaser_id, purchaser_email, purchaser_name, recipient_name'
+      )
       .eq('code', formatted)
       .maybeSingle();
 
@@ -74,15 +76,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Two transfer modes:
+    //   - Custom gifts → full amount_cents lands on profile.gift_balance_cents,
+    //     no fractional credits to round away.
+    //   - Preset gifts → credits transfer (existing semantics).
+    const isCustom = gift.pack_type === 'custom';
     const credits = gift.credits || 0;
-    if (credits <= 0) {
+    const amountCents = gift.amount_cents || 0;
+    if (isCustom ? amountCents <= 0 : credits <= 0) {
       return NextResponse.json(
-        { error: { code: 'NO_CREDITS', message: 'This gift has no credits to apply.' } },
+        { error: { code: 'NO_CREDITS', message: 'This gift has no value to apply.' } },
         { status: 400 }
       );
     }
 
-    // Mark redeemed first; if the credit apply fails, we revert
+    // Mark redeemed first; if the credit/balance apply fails, we revert
     const { error: markErr } = await supabase
       .from('gift_packs')
       .update({
@@ -98,13 +106,39 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      const { newBalance } = await applyCreditDelta({
-        studentId: auth.user.id,
-        delta: credits,
-        reason: `Gift redemption (${gift.code})`,
-        source: 'gift_redeem',
-        relatedId: gift.id,
-      });
+      let newBalance = 0;
+      let giftBalanceAddedCents = 0;
+      let creditsAdded = 0;
+
+      if (isCustom) {
+        // Add full dollar amount to gift_balance_cents on the redeemer's
+        // profile. Gift-redeem flows are inherently rare and per-user, so a
+        // read-then-write is acceptable; in the worst case two concurrent
+        // redemptions by the same person could lose one, which we accept.
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('gift_balance_cents, credits')
+          .eq('id', auth.user.id)
+          .single();
+        const next = (profile?.gift_balance_cents || 0) + amountCents;
+        const { error: writeErr } = await supabase
+          .from('profiles')
+          .update({ gift_balance_cents: next })
+          .eq('id', auth.user.id);
+        if (writeErr) throw writeErr;
+        giftBalanceAddedCents = amountCents;
+        newBalance = profile?.credits || 0;
+      } else {
+        const r = await applyCreditDelta({
+          studentId: auth.user.id,
+          delta: credits,
+          reason: `Gift redemption (${gift.code})`,
+          source: 'gift_redeem',
+          relatedId: gift.id,
+        });
+        newBalance = r.newBalance;
+        creditsAdded = credits;
+      }
 
       // Notify the original purchaser. For account purchases, use the live
       // profile. For guest purchases, fall back to fields stored on the gift row.
@@ -133,8 +167,22 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      log.info({ giftId: gift.id, redeemerId: auth.user.id, credits }, 'Gift redeemed');
-      return NextResponse.json({ credits_added: credits, new_balance: newBalance });
+      log.info(
+        {
+          giftId: gift.id,
+          redeemerId: auth.user.id,
+          isCustom,
+          creditsAdded,
+          giftBalanceAddedCents,
+        },
+        'Gift redeemed'
+      );
+      return NextResponse.json({
+        kind: isCustom ? 'balance' : 'credits',
+        credits_added: creditsAdded,
+        gift_balance_added_cents: giftBalanceAddedCents,
+        new_balance: newBalance,
+      });
     } catch (err) {
       // Revert gift status
       await supabase

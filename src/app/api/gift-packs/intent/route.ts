@@ -78,8 +78,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: { code: 'VALIDATION_ERROR', message: 'Minimum custom gift is $10.' } }, { status: 400 });
       }
       baseCents = Math.round(a);
-      credits = Math.floor(baseCents / 2500); // $25 per credit
-      label = 'Custom Gift Pack';
+      // Dollar-balance gift card — full amount transfers to recipient at
+      // redemption. Stored credits=0; amount_cents is the source of truth.
+      credits = 0;
+      label = 'Custom Gift Card';
       packType = 'custom';
     }
 

@@ -184,6 +184,7 @@ export async function sendGiftPurchaseConfirmation(
     code: string;
     redemptionUrl: string;
     deliveryMode: 'email' | 'share';
+    isDollarBalance?: boolean;
   }
 ) {
   try {
@@ -269,6 +270,8 @@ export async function sendGiftReceived(
     packLabel: string;
     code: string;
     redemptionUrl: string;
+    amountDisplay?: string | null;
+    isDollarBalance?: boolean;
   }
 ) {
   try {

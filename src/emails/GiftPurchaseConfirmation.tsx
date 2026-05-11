@@ -9,6 +9,7 @@ interface Props {
   code: string;
   redemptionUrl: string;
   deliveryMode: 'email' | 'share';
+  isDollarBalance?: boolean;
 }
 
 export function GiftPurchaseConfirmation({
@@ -19,6 +20,7 @@ export function GiftPurchaseConfirmation({
   code,
   redemptionUrl,
   deliveryMode,
+  isDollarBalance,
 }: Props) {
   return (
     <EmailLayout
@@ -36,6 +38,7 @@ export function GiftPurchaseConfirmation({
         </Text>
         <Text style={{ margin: '4px 0 0', color: EMAIL_BRAND.muted, fontSize: '13px' }}>
           {amountDisplay}
+          {isDollarBalance ? ' gift balance · drains $25 at a time as the recipient books.' : ''}
         </Text>
       </EmailCard>
 

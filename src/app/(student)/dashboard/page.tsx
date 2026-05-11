@@ -24,11 +24,14 @@ export default async function DashboardPage() {
   // Fetch profile with credits, referral code, and signup timestamp
   const { data: profile } = await supabase
     .from('profiles')
-    .select('credits, referral_code, created_at')
+    .select('credits, gift_balance_cents, referral_code, created_at')
     .eq('id', auth.user.id)
     .single();
 
   const credits = profile?.credits || 0;
+  const giftBalanceCents = profile?.gift_balance_cents || 0;
+  // Members can also book using their gift-card dollar balance ($25 = 1 credit).
+  const hasBookingCurrency = credits > 0 || giftBalanceCents >= 2500;
 
   // Generate referral code if missing
   let referralCode = profile?.referral_code;
@@ -101,6 +104,11 @@ export default async function DashboardPage() {
             <div className="flex-1 rounded-xl bg-white/70 backdrop-blur-sm border border-[#e5e2dc] px-3 py-2.5">
               <p className="text-[10px] uppercase tracking-wider text-[#6b6b6b] font-medium">Credits</p>
               <p className="text-xl sm:text-2xl font-bold leading-none mt-0.5">{credits}</p>
+              {giftBalanceCents > 0 && (
+                <p className="text-[10px] text-[#c9a96e] font-medium mt-0.5">
+                  + ${(giftBalanceCents / 100).toFixed(2)} gift
+                </p>
+              )}
             </div>
             <div className="flex-1 rounded-xl bg-white/70 backdrop-blur-sm border border-[#e5e2dc] px-3 py-2.5">
               <p className="text-[10px] uppercase tracking-wider text-[#6b6b6b] font-medium">Attended</p>
@@ -149,7 +157,7 @@ export default async function DashboardPage() {
           <h2 className="text-lg font-semibold mb-3">Upcoming Classes</h2>
           <WeeklySchedule
             bookedClassIds={upcoming.map((b) => b.class_id)}
-            hasCredits={credits > 0}
+            hasCredits={hasBookingCurrency}
             credits={credits}
           />
         </div>

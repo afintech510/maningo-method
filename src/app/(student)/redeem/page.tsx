@@ -10,7 +10,12 @@ export default function RedeemPage() {
   const [code, setCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<{ credits: number; balance: number } | null>(null);
+  const [success, setSuccess] = useState<{
+    kind: 'credits' | 'balance';
+    credits: number;
+    giftBalanceCents: number;
+    creditsAfter: number;
+  } | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -28,22 +33,38 @@ export default function RedeemPage() {
       setSubmitting(false);
       return;
     }
-    setSuccess({ credits: data.credits_added, balance: data.new_balance });
+    setSuccess({
+      kind: data.kind || (data.gift_balance_added_cents > 0 ? 'balance' : 'credits'),
+      credits: data.credits_added || 0,
+      giftBalanceCents: data.gift_balance_added_cents || 0,
+      creditsAfter: data.new_balance || 0,
+    });
     setSubmitting(false);
   }
 
   if (success) {
+    const giftDollars = (success.giftBalanceCents / 100).toFixed(2);
     return (
       <div className="bg-[#faf9f6] min-h-[calc(100vh-64px)] flex items-center justify-center px-5 py-10">
         <div className="max-w-md w-full text-center">
           <div className="text-5xl mb-4">&#10003;</div>
           <h1 className="text-2xl font-bold mb-2">Gift redeemed</h1>
-          <p className="text-[#6b6b6b] mb-1">
-            +{success.credits} class credit{success.credits === 1 ? '' : 's'} added.
-          </p>
-          <p className="text-sm text-[#6b6b6b] mb-6">
-            Your new balance: <strong className="text-[#2d2d2d]">{success.balance}</strong>
-          </p>
+          {success.kind === 'balance' ? (
+            <>
+              <p className="text-[#6b6b6b] mb-1">
+                <strong className="text-[#2d2d2d]">${giftDollars}</strong> gift balance added.
+              </p>
+              <p className="text-xs text-[#6b6b6b] mb-6">
+                $25 converts to 1 class credit automatically when you book. Any leftover stays on
+                your account for next time.
+              </p>
+            </>
+          ) : (
+            <p className="text-sm text-[#6b6b6b] mb-6">
+              +{success.credits} class credit{success.credits === 1 ? '' : 's'} added. New
+              balance: <strong className="text-[#2d2d2d]">{success.creditsAfter}</strong>
+            </p>
+          )}
           <Button onClick={() => router.push('/dashboard')} className="w-full">
             Go to dashboard
           </Button>
