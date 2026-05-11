@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { IntegratedCheckout, type CheckoutSummary } from '@/components/checkout/IntegratedCheckout';
 import { ManualPayInline } from '@/components/checkout/ManualPayInline';
+import { RedeemGiftInline } from '@/components/checkout/RedeemGiftInline';
 import { formatCents } from '@/lib/pricing';
 import { STRIPE_ENABLED } from '@/lib/feature-flags';
 
@@ -52,7 +53,14 @@ export function CheckoutPayClient() {
   }
 
   // kind === 'pack' — show payment-method toggle (Card vs Cash/Zelle/Venmo)
-  return <PackCheckoutWithToggle pack={pack as 'single' | '5pack' | '10pack'} summary={base} />;
+  return (
+    <>
+      <div className="max-w-5xl mx-auto mb-4">
+        <RedeemGiftInline />
+      </div>
+      <PackCheckoutWithToggle pack={pack as 'single' | '5pack' | '10pack'} summary={base} />
+    </>
+  );
 }
 
 function PackCheckoutWithToggle({

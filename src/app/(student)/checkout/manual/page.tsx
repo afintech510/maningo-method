@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { RedeemGiftInline } from '@/components/checkout/RedeemGiftInline';
 
 const PACK_INFO: Record<string, { label: string; price: string; credits: number }> = {
   single: { label: 'Drop-In Class', price: '$25', credits: 1 },
@@ -95,6 +96,8 @@ function ManualCheckoutContent() {
           <p className="text-xl font-bold">{pack.price}</p>
         </div>
       </Card>
+
+      <RedeemGiftInline className="mb-4" />
 
       {error && <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-800 mb-4">{error}</div>}
 
