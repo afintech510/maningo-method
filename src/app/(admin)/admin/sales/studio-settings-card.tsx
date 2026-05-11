@@ -44,10 +44,12 @@ export function StudioSettingsCard() {
 
   return (
     <div className="rounded-2xl border border-[#e5e2dc] bg-white p-4">
-      <p className="text-sm font-semibold mb-1">Booking horizon</p>
+      <p className="text-sm font-semibold mb-1">Booking lock window</p>
       <p className="text-xs text-[#6b6b6b] mb-3">
-        Hide classes from the public schedule beyond this many days into the future. Members can only
-        book classes within this window. Increase it (e.g. 60, 90) when you want a longer view.
+        How far ahead members can book a class. Classes beyond this window still appear on the
+        schedule but are locked &mdash; the &ldquo;Book&rdquo; button shows the date bookings open.
+        Lower it (e.g. 14) to push bookings closer to class day; raise it (e.g. 60, 90) for longer
+        lead time.
       </p>
       <div className="flex flex-wrap items-center gap-2">
         <input

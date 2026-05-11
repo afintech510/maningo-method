@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/feedback/Toast';
-import { formatStudioDateTime } from '@/lib/timezone';
+import { formatStudioDate, formatStudioDateTime } from '@/lib/timezone';
 
 interface BookingButtonProps {
   classId: string;
@@ -22,6 +22,10 @@ interface BookingButtonProps {
   classStartsAt?: string;
   classDurationMinutes?: number;
   classSpotsRemaining?: number;
+  /** True when the class is within the studio's booking-horizon window. */
+  bookable?: boolean;
+  /** ISO date when bookings open for this class. */
+  bookableFrom?: string;
 }
 
 export function BookingButton({
@@ -36,6 +40,8 @@ export function BookingButton({
   classStartsAt,
   classDurationMinutes,
   classSpotsRemaining,
+  bookable = true,
+  bookableFrom,
 }: BookingButtonProps) {
   const router = useRouter();
   const { showToast } = useToast();
@@ -123,6 +129,14 @@ export function BookingButton({
 
   if (isFull && !isBooked) {
     return <Button variant="ghost" size="lg" className="w-full" disabled>Class Full</Button>;
+  }
+  if (!bookable && !isBooked) {
+    const opensLabel = bookableFrom ? formatStudioDate(bookableFrom, 'EEE, MMM d') : 'soon';
+    return (
+      <Button variant="ghost" size="lg" className="w-full" disabled>
+        Books open {opensLabel}
+      </Button>
+    );
   }
   if (state === 'booked' || isBooked) {
     if (!bookingId) {

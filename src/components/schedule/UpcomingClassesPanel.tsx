@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { addDays, format } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
-import { formatStudioTime, STUDIO_TIMEZONE } from '@/lib/timezone';
+import { formatStudioTime, formatStudioDate, STUDIO_TIMEZONE } from '@/lib/timezone';
 
 interface ClassItem {
   id: string;
@@ -13,6 +13,8 @@ interface ClassItem {
   duration_minutes: number;
   spots_remaining: number;
   max_capacity: number;
+  bookable?: boolean;
+  bookable_from?: string;
 }
 
 interface UpcomingClassesPanelProps {
@@ -278,15 +280,25 @@ function DayColumn({
         {items.map((cls) => {
           const isBooked = bookedClassIds.includes(cls.id);
           const isFull = cls.spots_remaining <= 0;
+          const isLocked = cls.bookable === false;
           const Body = (
             <>
-              <p className="text-xs font-semibold text-[#6b6b6b] mb-0.5">
-                {formatStudioTime(cls.starts_at)}
-              </p>
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-xs font-semibold text-[#6b6b6b] mb-0.5">
+                  {formatStudioTime(cls.starts_at)}
+                </p>
+                {isLocked && (
+                  <span className="text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded-full bg-[#e5e2dc] text-[#6b6b6b]">
+                    Locked
+                  </span>
+                )}
+              </div>
               <p className="font-medium text-sm leading-tight truncate">{cls.title}</p>
               <p className="text-[11px] text-[#6b6b6b] mt-1">
                 {isBooked ? (
                   <span className="text-emerald-600 font-medium">Booked</span>
+                ) : isLocked && cls.bookable_from ? (
+                  <span>Books open {formatStudioDate(cls.bookable_from, 'MMM d')}</span>
                 ) : isFull ? (
                   <span>Full</span>
                 ) : (
@@ -298,8 +310,9 @@ function DayColumn({
               </p>
             </>
           );
-          const className =
-            'block w-full text-left rounded-xl border border-[#e5e2dc] bg-[#faf9f6] hover:border-[#c9a96e] hover:bg-white transition-colors p-3 min-h-[88px]';
+          const className = isLocked
+            ? 'block w-full text-left rounded-xl border border-[#e5e2dc] bg-[#f4f2ec] hover:border-[#c9a96e]/40 transition-colors p-3 min-h-[88px] opacity-90'
+            : 'block w-full text-left rounded-xl border border-[#e5e2dc] bg-[#faf9f6] hover:border-[#c9a96e] hover:bg-white transition-colors p-3 min-h-[88px]';
           if (onClassClick) {
             return (
               <button key={cls.id} type="button" onClick={() => onClassClick(cls)} className={className}>

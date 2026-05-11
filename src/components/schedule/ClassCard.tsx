@@ -12,6 +12,8 @@ interface ClassCardProps {
     duration_minutes: number;
     max_capacity: number;
     spots_remaining: number;
+    bookable?: boolean;
+    bookable_from?: string;
   };
   isAuthenticated: boolean;
   hasCredits: boolean;
@@ -67,6 +69,8 @@ export function ClassCard({
         classStartsAt={classData.starts_at}
         classDurationMinutes={classData.duration_minutes}
         classSpotsRemaining={classData.spots_remaining}
+        bookable={classData.bookable}
+        bookableFrom={classData.bookable_from}
       />
     </Card>
   );

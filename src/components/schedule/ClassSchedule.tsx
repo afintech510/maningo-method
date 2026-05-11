@@ -18,6 +18,8 @@ interface ClassData {
   duration_minutes: number;
   max_capacity: number;
   spots_remaining: number;
+  bookable?: boolean;
+  bookable_from?: string;
 }
 
 interface ClassScheduleProps {

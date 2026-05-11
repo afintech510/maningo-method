@@ -8,6 +8,7 @@ import { sendBookingConfirmation } from '@/lib/resend';
 import { googleCalendarUrl, icsUrl } from '@/lib/calendar';
 import { formatStudioDate, formatStudioTime } from '@/lib/timezone';
 import { getBaseUrl } from '@/lib/utils';
+import { getStudioSettings } from '@/lib/studio-settings';
 
 export async function POST(request: Request) {
   const correlationId = generateCorrelationId();
@@ -51,6 +52,29 @@ export async function POST(request: Request) {
         { error: { code: 'NO_CREDITS', message: 'You need class credits to book. Purchase a class pack first.' } },
         { status: 402 }
       );
+    }
+
+    // Booking horizon — reject bookings on classes too far out, mirroring the
+    // client-side lock so a crafted request can't slip through.
+    const { data: cls } = await adminClient
+      .from('classes')
+      .select('starts_at')
+      .eq('id', class_id)
+      .single();
+    if (cls?.starts_at) {
+      const { booking_horizon_days } = await getStudioSettings();
+      const bookableFromMs = new Date(cls.starts_at).getTime() - booking_horizon_days * 86400000;
+      if (Date.now() < bookableFromMs) {
+        return NextResponse.json(
+          {
+            error: {
+              code: 'BOOKING_LOCKED',
+              message: `Bookings for this class open ${booking_horizon_days} days ahead. Try again closer to the date.`,
+            },
+          },
+          { status: 409 }
+        );
+      }
     }
 
     // Create booking via RPC

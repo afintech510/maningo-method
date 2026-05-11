@@ -13,15 +13,14 @@ export async function GET(request: NextRequest) {
     const { booking_horizon_days } = await getStudioSettings();
     const horizonMs = booking_horizon_days * 24 * 60 * 60 * 1000;
     const nowMs = Date.now();
-    const horizonCap = new Date(nowMs + horizonMs).toISOString();
 
     const fromRaw = searchParams.get('from');
     const toRaw = searchParams.get('to');
     const from = fromRaw || new Date(nowMs).toISOString();
-    // Clamp the upper bound so students never see classes beyond the studio's
-    // configured booking horizon (default 30 days).
-    const requestedTo = toRaw || horizonCap;
-    const to = requestedTo > horizonCap ? horizonCap : requestedTo;
+    // Show everything in the requested window — classes beyond the booking
+    // horizon are returned but flagged not-yet-bookable so the UI can render
+    // them as read-only previews instead of hiding them.
+    const to = toRaw || new Date(nowMs + 90 * 24 * 60 * 60 * 1000).toISOString();
 
     // Use admin client to bypass RLS for public schedule
     const supabase = createAdminClient();
@@ -59,16 +58,23 @@ export async function GET(request: NextRequest) {
       }, {} as Record<string, number>);
     }
 
-    const result = (classes || []).map((c) => ({
-      id: c.id,
-      title: c.title,
-      description: c.description,
-      starts_at: c.starts_at,
-      duration_minutes: c.duration_minutes,
-      max_capacity: c.max_capacity,
-      spots_remaining: c.max_capacity - (bookingCounts[c.id] || 0),
-      status: c.status,
-    }));
+    const result = (classes || []).map((c) => {
+      const startsAtMs = new Date(c.starts_at).getTime();
+      const bookableFromMs = startsAtMs - horizonMs;
+      const bookable = nowMs >= bookableFromMs;
+      return {
+        id: c.id,
+        title: c.title,
+        description: c.description,
+        starts_at: c.starts_at,
+        duration_minutes: c.duration_minutes,
+        max_capacity: c.max_capacity,
+        spots_remaining: c.max_capacity - (bookingCounts[c.id] || 0),
+        status: c.status,
+        bookable,
+        bookable_from: new Date(bookableFromMs).toISOString(),
+      };
+    });
 
     log.info({ duration_ms: Date.now() - start, count: result.length }, 'GET /api/classes');
     return NextResponse.json({ classes: result });
