@@ -3,9 +3,9 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { Card } from '@/components/ui/Card';
 import { LogoutButton } from '@/components/layout/LogoutButton';
 import { formatCents } from '@/lib/pricing';
-import { ActivateGiftButton } from './activate-gift-button';
 import { SendTestEmailsButton } from './send-test-emails-button';
 import { StudioSettingsCard } from './studio-settings-card';
+import { ReconcileActions } from './reconcile-actions';
 
 export default async function AdminSalesPage() {
   const supabase = createAdminClient();
@@ -144,11 +144,10 @@ export default async function AdminSalesPage() {
           <Stat label="Bookings (this month)" value={String(bookingsThisMonth)} />
           <Stat label="Active members" value={String(memberCount)} />
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-3">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mt-3">
           <Stat label="Card revenue (all time)" value={formatCents(stripeAllTotal)} muted />
           <Stat label="Cash/Venmo (all time)" value={formatCents(manualAllTotal)} muted />
-          <Stat label="Pending manual payments" value={String(pending.length)} muted />
-          <Stat label="Pending gift codes" value={String(giftsPending.length)} muted />
+          <Stat label="Pending reconciliations" value={String(pending.length + giftsPending.length)} muted />
         </div>
       </section>
 
@@ -223,7 +222,7 @@ export default async function AdminSalesPage() {
         </div>
       </section>
 
-      {/* Reconcile */}
+      {/* Reconcile — Manual Payments (packs + gifts in one list) */}
       <section>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-[#6b6b6b]">
@@ -234,100 +233,101 @@ export default async function AdminSalesPage() {
           </Link>
         </div>
 
-        {pending.length === 0 ? (
+        {pending.length === 0 && giftsPending.length === 0 ? (
           <Card>
-            <p className="text-sm text-muted-foreground">No pending manual payments. You&rsquo;re all caught up.</p>
+            <p className="text-sm text-muted-foreground">
+              No pending cash/Venmo payments — packs or gift codes. You&rsquo;re all caught up.
+            </p>
           </Card>
         ) : (
           <div className="space-y-2">
-            {pending.slice(0, 6).map((p) => {
-              const profile = (p as unknown as { profiles?: { full_name: string; email: string; phone: string } }).profiles;
-              return (
-                <Card key={p.id}>
+            {[
+              ...pending.map((p) => {
+                const profile = (p as unknown as {
+                  profiles?: { full_name: string; email: string; phone: string };
+                }).profiles;
+                return {
+                  kind: 'pack' as const,
+                  id: p.id,
+                  buyer_name: profile?.full_name || 'Unknown',
+                  buyer_email: profile?.email || '',
+                  amount_cents: p.amount_cents,
+                  credits: p.credits,
+                  pack_type: p.pack_type,
+                  payment_method: p.payment_method,
+                  created_at: p.created_at,
+                };
+              }),
+              ...giftsPending.map((g) => ({
+                kind: 'gift' as const,
+                id: g.id,
+                buyer_name: g.purchaser_name || 'Guest',
+                buyer_email: g.purchaser_email || '',
+                amount_cents: g.amount_cents,
+                credits: g.credits,
+                pack_type: g.pack_type,
+                code: g.code,
+                recipient_name: g.recipient_name,
+                recipient_email: g.recipient_email,
+                delivery_mode: g.delivery_mode,
+                created_at: g.created_at,
+              })),
+            ]
+              .sort(
+                (a, b) =>
+                  new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+              )
+              .slice(0, 8)
+              .map((row) => (
+                <Card key={`${row.kind}-${row.id}`}>
                   <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-medium">{profile?.full_name || 'Unknown'}</p>
-                        <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#c9a96e]/15 text-[#8c7647] font-semibold">
-                          {p.payment_method}
+                        <span
+                          className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full font-semibold ${
+                            row.kind === 'gift'
+                              ? 'bg-[#c9a96e]/15 text-[#8c7647]'
+                              : 'bg-[#2d2d2d]/10 text-[#2d2d2d]'
+                          }`}
+                        >
+                          {row.kind === 'gift' ? 'Gift' : 'Pack'}
                         </span>
+                        <p className="font-medium">{row.buyer_name}</p>
+                        {row.kind === 'pack' && (
+                          <span className="text-[10px] uppercase tracking-wider text-[#c9a96e]">
+                            {row.payment_method}
+                          </span>
+                        )}
                       </div>
-                      <p className="text-xs text-muted-foreground break-all">{profile?.email}</p>
+                      <p className="text-xs text-muted-foreground break-all">{row.buyer_email}</p>
                       <p className="text-sm mt-1">
-                        <strong>{formatCents(p.amount_cents)}</strong> for {p.credits}{' '}
-                        credit{p.credits === 1 ? '' : 's'} ({p.pack_type})
+                        <strong>{formatCents(row.amount_cents)}</strong> &middot; {row.credits}{' '}
+                        credit{row.credits === 1 ? '' : 's'} ({row.pack_type})
                       </p>
+                      {row.kind === 'gift' && (
+                        <p className="text-xs text-[#6b6b6b] mt-1">
+                          Code <span className="font-mono">{row.code}</span>
+                          {row.delivery_mode === 'email' && row.recipient_email
+                            ? ` · email ${row.recipient_name || ''} <${row.recipient_email}>`
+                            : ' · share-only'}
+                        </p>
+                      )}
                       <p className="text-[10px] text-muted-foreground">
-                        Submitted {new Date(p.created_at).toLocaleString()}
+                        Submitted {new Date(row.created_at).toLocaleString()}
                       </p>
                     </div>
-                    <Link
-                      href="/admin/manual-payments"
-                      className="inline-flex items-center justify-center h-9 px-4 rounded-full bg-[#c9a96e] text-white text-xs font-medium hover:bg-[#b8955d]"
-                    >
-                      Review
-                    </Link>
+                    <ReconcileActions kind={row.kind} id={row.id} />
                   </div>
                 </Card>
-              );
-            })}
-            {pending.length > 6 && (
+              ))}
+            {pending.length + giftsPending.length > 8 && (
               <p className="text-xs text-muted-foreground text-center pt-2">
-                +{pending.length - 6} more &mdash;{' '}
+                +{pending.length + giftsPending.length - 8} more &mdash;{' '}
                 <Link href="/admin/manual-payments" className="text-[#c9a96e] hover:underline">
                   see all
                 </Link>
               </p>
             )}
-          </div>
-        )}
-      </section>
-
-      {/* Reconcile — Pending Gifts */}
-      <section className="mt-8">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-[#6b6b6b]">
-            Reconcile &mdash; Pending Gift Codes
-          </h2>
-        </div>
-
-        {giftsPending.length === 0 ? (
-          <Card>
-            <p className="text-sm text-muted-foreground">
-              No pending gift codes. They appear here when someone buys a gift via Cash or Venmo.
-            </p>
-          </Card>
-        ) : (
-          <div className="space-y-2">
-            {giftsPending.map((g) => (
-              <Card key={g.id}>
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-medium">{g.purchaser_name || 'Unknown'}</p>
-                      <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#c9a96e]/15 text-[#8c7647] font-semibold">
-                        Pending
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground break-all">{g.purchaser_email}</p>
-                    <p className="text-sm mt-1">
-                      <strong>{formatCents(g.amount_cents)}</strong> &middot; {g.credits} credit
-                      {g.credits === 1 ? '' : 's'} ({g.pack_type})
-                    </p>
-                    <p className="text-xs text-[#6b6b6b] mt-1">
-                      Code <span className="font-mono">{g.code}</span>
-                      {g.delivery_mode === 'email' && g.recipient_email
-                        ? ` · email recipient ${g.recipient_name || ''} <${g.recipient_email}>`
-                        : ' · share-only'}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground">
-                      Created {new Date(g.created_at).toLocaleString()}
-                    </p>
-                  </div>
-                  <ActivateGiftButton giftId={g.id} />
-                </div>
-              </Card>
-            ))}
           </div>
         )}
       </section>
