@@ -25,7 +25,7 @@ export async function GET() {
     supabase
       .from('manual_payments')
       .select(
-        'id, pack_type, credits, amount_cents, payment_method, status, created_at, paid_at, cancelled_at, profiles:student_id (full_name, email, phone)'
+        'id, pack_type, credits, amount_cents, payment_method, status, created_at, paid_at, cancelled_at, provisional_credits_applied, profiles:student_id (full_name, email, phone)'
       )
       .order('created_at', { ascending: false }),
     supabase
@@ -51,6 +51,7 @@ export async function GET() {
         completed_at: string | null;
         pack_type: string;
         credits: number;
+        provisional_credits_applied: number;
       }
     | {
         kind: 'gift';
@@ -87,6 +88,7 @@ export async function GET() {
       completed_at: p.paid_at || p.cancelled_at || null,
       pack_type: p.pack_type,
       credits: p.credits,
+      provisional_credits_applied: p.provisional_credits_applied || 0,
     };
   });
 

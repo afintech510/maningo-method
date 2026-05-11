@@ -3,8 +3,10 @@ import { requireAuth, isAuthError } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logger, generateCorrelationId } from '@/lib/logger';
 import { sendManualPaymentSubmitted } from '@/lib/resend';
+import { applyCreditDelta } from '@/lib/credits';
 
 const ADMIN_EMAIL = 'chelsea@maningomethod.com';
+const PROVISIONAL_CREDITS = 1;
 
 const PACK_PRICING: Record<string, { credits: number; amount_cents: number; label: string }> = {
   single: { credits: 1, amount_cents: 2500, label: 'Drop-In Class' },
@@ -32,6 +34,12 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = createAdminClient();
+
+    // Provisional grant: give the buyer 1 credit immediately so they can book
+    // and attend one class while we wait on the actual payment. The remainder
+    // lands on mark_paid; admin cancel claws this back (subject to balance).
+    const provisional = Math.min(PROVISIONAL_CREDITS, pack.credits);
+
     const { data: payment, error } = await supabase
       .from('manual_payments')
       .insert({
@@ -40,6 +48,7 @@ export async function POST(request: NextRequest) {
         credits: pack.credits,
         amount_cents: pack.amount_cents,
         payment_method,
+        provisional_credits_applied: provisional,
       })
       .select('id')
       .single();
@@ -52,7 +61,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    log.info({ studentId: auth.user.id, packType: pack_type, method: payment_method, paymentId: payment.id }, 'Manual payment created');
+    let newBalance: number | null = null;
+    if (provisional > 0) {
+      try {
+        const result = await applyCreditDelta({
+          studentId: auth.user.id,
+          delta: provisional,
+          reason: `Manual payment ${payment.id} — provisional credit at submission`,
+          source: 'manual_payment',
+          relatedId: payment.id,
+        });
+        newBalance = result.newBalance;
+      } catch (err) {
+        // If the provisional grant fails for any reason, the row stays as
+        // submitted but we zero the column so mark_paid issues the full amount.
+        log.error({ err, paymentId: payment.id }, 'Provisional credit grant failed');
+        await supabase
+          .from('manual_payments')
+          .update({ provisional_credits_applied: 0 })
+          .eq('id', payment.id);
+      }
+    }
+
+    log.info(
+      { studentId: auth.user.id, packType: pack_type, method: payment_method, paymentId: payment.id, provisional },
+      'Manual payment created'
+    );
 
     // Notify Chelsea so she can keep an eye out for the transfer.
     void (async () => {
@@ -77,7 +111,13 @@ export async function POST(request: NextRequest) {
       }
     })();
 
-    return NextResponse.json({ payment_id: payment.id, label: pack.label, amount_cents: pack.amount_cents });
+    return NextResponse.json({
+      payment_id: payment.id,
+      label: pack.label,
+      amount_cents: pack.amount_cents,
+      provisional_credits: provisional,
+      new_balance: newBalance,
+    });
   } catch (err) {
     log.error({ err }, 'POST /api/manual-payments failed');
     return NextResponse.json(

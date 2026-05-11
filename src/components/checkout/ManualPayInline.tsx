@@ -45,7 +45,9 @@ export function ManualPayInline({ packType, amountCents, packLabel }: Props) {
           <div className="text-3xl mb-2">&#10003;</div>
           <h3 className="text-lg font-semibold">Payment recorded</h3>
           <p className="text-sm text-[#6b6b6b]">
-            Chelsea will confirm receipt and credits will appear on your dashboard. Usually within a day.
+            We&rsquo;ve added <strong className="text-[#1a1a1a]">1 class credit</strong> to your
+            account right away so you can book your first class. The remaining credits land as soon
+            as Chelsea confirms your payment.
           </p>
         </div>
 
@@ -76,7 +78,8 @@ export function ManualPayInline({ packType, amountCents, packLabel }: Props) {
     <div>
       <h2 className="text-lg font-semibold mb-1">Pay another way</h2>
       <p className="text-xs text-[#6b6b6b] mb-5">
-        No service fee. Credits apply once Chelsea confirms your payment.
+        No service fee. <strong className="text-[#1a1a1a]">1 credit lands immediately</strong> so
+        you can book a class right away — the rest apply once Chelsea confirms.
       </p>
 
       <div className="space-y-2 mb-5">

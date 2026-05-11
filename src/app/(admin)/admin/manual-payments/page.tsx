@@ -25,6 +25,7 @@ interface BaseRow {
 
 interface PackRow extends BaseRow {
   kind: 'pack';
+  provisional_credits_applied?: number;
 }
 
 interface GiftRow extends BaseRow {
@@ -128,8 +129,10 @@ export default function AdminManualPaymentsPage() {
       <div>
         <h1 className="text-2xl font-bold">Manual Payments</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Cash and Venmo for both class packs and gift cards. Credits / gift codes only become
-          usable after you confirm payment here.
+          Cash and Venmo for both class packs and gift cards. Pack buyers get 1 provisional
+          credit at submission so they can attend a class while settling up; the remainder lands
+          when you mark paid. Cancelling claws the provisional credit back if it&rsquo;s still
+          on their balance. Gift codes stay inactive until you activate them here.
         </p>
       </div>
 
@@ -223,6 +226,13 @@ function Row({
             <strong>{amount}</strong> &middot; {row.credits} credit
             {row.credits === 1 ? '' : 's'} ({packLabel})
           </p>
+          {row.kind === 'pack' && row.provisional_credits_applied && row.provisional_credits_applied > 0 && (
+            <p className="text-[11px] text-amber-700 mt-1">
+              {row.provisional_credits_applied} provisional credit
+              {row.provisional_credits_applied === 1 ? '' : 's'} already on their balance &middot;
+              {row.status === 'pending' ? ` mark paid will add the remaining ${Math.max(0, row.credits - row.provisional_credits_applied)}` : ''}
+            </p>
+          )}
           {row.kind === 'gift' && (
             <p className="text-xs text-muted-foreground mt-1">
               Code <span className="font-mono">{row.code}</span>

@@ -51,7 +51,9 @@ function ManualCheckoutContent() {
           <div className="text-4xl mb-3">&#10003;</div>
           <h1 className="text-2xl font-bold mb-2">Payment Recorded</h1>
           <p className="text-[#6b6b6b] text-sm">
-            Chelsea will confirm receipt and your credits will appear on your dashboard. Most are turned around within a day.
+            We added <strong className="text-[#1a1a1a]">1 class credit</strong> to your account so
+            you can book your first class right away. The rest land as soon as Chelsea confirms
+            your payment — usually within a day.
           </p>
         </div>
 
@@ -85,7 +87,10 @@ function ManualCheckoutContent() {
       <button onClick={() => router.back()} className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] mb-6">&larr; Back</button>
 
       <h1 className="text-2xl font-bold mb-2">Pay another way</h1>
-      <p className="text-sm text-[#6b6b6b] mb-6">Credits apply once Chelsea confirms payment. Usually within a day.</p>
+      <p className="text-sm text-[#6b6b6b] mb-6">
+        <strong className="text-[#1a1a1a]">1 credit lands immediately</strong> so you can attend
+        a class on day one. The rest apply once Chelsea confirms — usually within a day.
+      </p>
 
       <Card className="mb-4">
         <div className="flex items-center justify-between">

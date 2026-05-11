@@ -32,7 +32,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     const supabase = createAdminClient();
     const { data: payment, error: fetchErr } = await supabase
       .from('manual_payments')
-      .select('id, student_id, credits, status, pack_type, amount_cents, payment_method')
+      .select(
+        'id, student_id, credits, status, pack_type, amount_cents, payment_method, provisional_credits_applied'
+      )
       .eq('id', params.id)
       .single();
 
@@ -59,14 +61,30 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         return NextResponse.json({ error: { code: 'INTERNAL_ERROR', message: 'DB error.' } }, { status: 500 });
       }
 
-      const { newBalance } = await applyCreditDelta({
-        studentId: payment.student_id,
-        delta: payment.credits,
-        reason: `Manual payment ${params.id} marked paid`,
-        source: 'manual_payment',
-        adminId: auth.user.id,
-        relatedId: params.id,
-      });
+      // Provisional credit was already granted at submission; only issue the
+      // remainder here so the buyer doesn't end up with double credits.
+      const provisional = payment.provisional_credits_applied || 0;
+      const remaining = payment.credits - provisional;
+      let newBalance: number | null = null;
+      if (remaining > 0) {
+        const r = await applyCreditDelta({
+          studentId: payment.student_id,
+          delta: remaining,
+          reason: `Manual payment ${params.id} marked paid (remainder)`,
+          source: 'manual_payment',
+          adminId: auth.user.id,
+          relatedId: params.id,
+        });
+        newBalance = r.newBalance;
+      } else if (provisional > 0) {
+        // No remainder to add — fetch current balance for the response.
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('credits')
+          .eq('id', payment.student_id)
+          .single();
+        newBalance = profile?.credits ?? null;
+      }
 
       // Referral reward — one credit per referred friend, on their first paid pack
       void rewardReferrerOnce(payment.student_id, params.id, log);
@@ -90,10 +108,56 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       })();
 
       log.info(
-        { paymentId: params.id, studentId: payment.student_id, credits: payment.credits, newBalance },
+        {
+          paymentId: params.id,
+          studentId: payment.student_id,
+          credits: payment.credits,
+          provisional,
+          remaining,
+          newBalance,
+        },
         'Manual payment marked paid'
       );
-      return NextResponse.json({ status: 'paid', credits_added: payment.credits, new_balance: newBalance });
+      return NextResponse.json({
+        status: 'paid',
+        credits_added: payment.credits,
+        provisional_already_granted: provisional,
+        new_balance: newBalance,
+      });
+    }
+
+    // cancel — claw back the provisional credit we granted at submission, but
+    // never push the student's balance negative (they may have already booked
+    // and attended a class on that credit). Audit row goes in either way.
+    const provisional = payment.provisional_credits_applied || 0;
+    let reclaimed = 0;
+    if (provisional > 0) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('credits')
+        .eq('id', payment.student_id)
+        .single();
+      reclaimed = Math.min(provisional, profile?.credits ?? 0);
+      if (reclaimed > 0) {
+        try {
+          await applyCreditDelta({
+            studentId: payment.student_id,
+            delta: -reclaimed,
+            reason: `Manual payment ${params.id} cancelled — reclaiming provisional credit`,
+            source: 'manual_payment',
+            adminId: auth.user.id,
+            relatedId: params.id,
+          });
+        } catch (err) {
+          log.error({ err, paymentId: params.id }, 'Provisional reclaim failed');
+        }
+      }
+      if (reclaimed < provisional) {
+        log.info(
+          { paymentId: params.id, provisional, reclaimed },
+          'Cancel could not reclaim all provisional credits (member already used some)'
+        );
+      }
     }
 
     const { error: cancelErr } = await supabase
@@ -103,7 +167,11 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     if (cancelErr) {
       return NextResponse.json({ error: { code: 'INTERNAL_ERROR', message: 'DB error.' } }, { status: 500 });
     }
-    return NextResponse.json({ status: 'cancelled' });
+    return NextResponse.json({
+      status: 'cancelled',
+      provisional_reclaimed: reclaimed,
+      provisional_outstanding: provisional - reclaimed,
+    });
   } catch (err) {
     log.error({ err }, 'PATCH /api/admin/manual-payments/[id] failed');
     return NextResponse.json({ error: { code: 'INTERNAL_ERROR', message: 'Something went wrong.' } }, { status: 500 });
