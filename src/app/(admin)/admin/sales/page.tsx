@@ -25,6 +25,7 @@ export default async function AdminSalesPage() {
     { data: recentCustomers },
     { data: recentStripeSales },
     { data: recentManualSales },
+    { data: recentGiftSales },
   ] = await Promise.all([
     supabase.from('credit_purchases').select('amount_paid_cents'),
     supabase.from('credit_purchases').select('amount_paid_cents').gte('created_at', monthStart),
@@ -71,6 +72,14 @@ export default async function AdminSalesPage() {
       .eq('status', 'paid')
       .order('paid_at', { ascending: false })
       .limit(5),
+    supabase
+      .from('gift_packs')
+      .select(
+        'id, pack_type, amount_cents, purchaser_name, purchaser_email, stripe_payment_intent_id, status, created_at, redeemed_at'
+      )
+      .in('status', ['active', 'redeemed'])
+      .order('created_at', { ascending: false })
+      .limit(5),
   ]);
 
   const stripeAllTotal = (stripeAll || []).reduce((s, r) => s + (r.amount_paid_cents || 0), 0);
@@ -93,7 +102,7 @@ export default async function AdminSalesPage() {
     email: string;
     pack_type: string;
     amount_cents: number;
-    method: 'card' | 'cash' | 'venmo' | 'zelle' | 'manual';
+    method: 'card' | 'cash' | 'venmo' | 'zelle' | 'manual' | 'gift';
     when: string;
   };
 
@@ -124,6 +133,16 @@ export default async function AdminSalesPage() {
         when: s.paid_at,
       };
     })),
+    ...((recentGiftSales || []).map((g) => ({
+      id: g.id,
+      name: g.purchaser_name || 'Guest',
+      email: g.purchaser_email || '',
+      // pack_type='custom' shows up as the dollar-balance label downstream
+      pack_type: g.pack_type === 'custom' ? 'gift card' : `gift · ${g.pack_type}`,
+      amount_cents: g.amount_cents || 0,
+      method: 'gift' as const,
+      when: g.created_at,
+    }))),
   ]
     .sort((a, b) => new Date(b.when).getTime() - new Date(a.when).getTime())
     .slice(0, 5);

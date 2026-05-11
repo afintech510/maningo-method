@@ -5,7 +5,7 @@ import { useState } from 'react';
 export function SendTestEmailsButton() {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<string | null>(null);
-  const [target, setTarget] = useState('alark51@gmail.com');
+  const [target, setTarget] = useState('chelsea@maningomethod.com');
 
   async function send() {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(target)) {
@@ -42,7 +42,7 @@ export function SendTestEmailsButton() {
           value={target}
           onChange={(e) => setTarget(e.target.value)}
           className="h-10 rounded-lg border border-[#e5e2dc] bg-white px-3 text-sm flex-1 min-w-[220px]"
-          placeholder="alark51@gmail.com"
+          placeholder="chelsea@maningomethod.com"
         />
         <button
           type="button"
