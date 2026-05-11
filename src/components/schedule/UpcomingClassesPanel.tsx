@@ -271,13 +271,18 @@ function DayColumn({
   // re-zone (and shift back a few hours on UTC midnight). Render directly.
   const [yy, mm, dd] = day.split('-').map(Number);
   const headerLabel = format(new Date(yy, (mm || 1) - 1, dd || 1), 'EEE MMM d');
+  // Collapse long days — show the first 2, reveal the rest on demand.
+  const PREVIEW_COUNT = 2;
+  const [expanded, setExpanded] = useState(false);
+  const hiddenCount = Math.max(0, items.length - PREVIEW_COUNT);
+  const visibleItems = expanded ? items : items.slice(0, PREVIEW_COUNT);
   return (
     <div className={`min-w-0 ${snapAlign === 'start' ? 'snap-start' : ''}`}>
       <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[#6b6b6b] mb-2">
         {headerLabel}
       </p>
       <div className="space-y-2">
-        {items.map((cls) => {
+        {visibleItems.map((cls) => {
           const isBooked = bookedClassIds.includes(cls.id);
           const isFull = cls.spots_remaining <= 0;
           const isLocked = cls.bookable === false;
@@ -326,6 +331,15 @@ function DayColumn({
             </Link>
           );
         })}
+        {hiddenCount > 0 && (
+          <button
+            type="button"
+            onClick={() => setExpanded((e) => !e)}
+            className="w-full text-center text-xs font-medium text-[#c9a96e] hover:text-[#8c7647] py-1.5"
+          >
+            {expanded ? 'Show fewer' : `+${hiddenCount} more`}
+          </button>
+        )}
       </div>
     </div>
   );
