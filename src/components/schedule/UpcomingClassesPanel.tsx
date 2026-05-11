@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { format, addDays } from 'date-fns';
-import { formatStudioTime, formatStudioDate } from '@/lib/timezone';
+import { addDays, format } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
+import { formatStudioTime, STUDIO_TIMEZONE } from '@/lib/timezone';
 
 interface ClassItem {
   id: string;
@@ -61,11 +62,13 @@ export function UpcomingClassesPanel({
       .catch(() => setLoading(false));
   }, [horizonDays]);
 
-  // Group by day → array of [dayIso, classes[]] pairs, sorted by day
+  // Group by studio-local day so non-ET visitors don't see classes shuffled into
+  // the wrong bucket (e.g. an 8 AM ET class showing up under the previous day).
   const days = useMemo(() => {
     const grouped: Record<string, ClassItem[]> = {};
     classes.forEach((c) => {
-      const day = format(new Date(c.starts_at), 'yyyy-MM-dd');
+      const zoned = toZonedTime(new Date(c.starts_at), STUDIO_TIMEZONE);
+      const day = format(zoned, 'yyyy-MM-dd');
       if (!grouped[day]) grouped[day] = [];
       grouped[day].push(c);
     });
@@ -262,10 +265,14 @@ function DayColumn({
   onClassClick?: (cls: ClassItem) => void;
   snapAlign: 'start' | 'none';
 }) {
+  // `day` is already a studio-local YYYY-MM-DD string; formatting it would
+  // re-zone (and shift back a few hours on UTC midnight). Render directly.
+  const [yy, mm, dd] = day.split('-').map(Number);
+  const headerLabel = format(new Date(yy, (mm || 1) - 1, dd || 1), 'EEE MMM d');
   return (
     <div className={`min-w-0 ${snapAlign === 'start' ? 'snap-start' : ''}`}>
       <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[#6b6b6b] mb-2">
-        {formatStudioDate(day, 'EEE MMM d')}
+        {headerLabel}
       </p>
       <div className="space-y-2">
         {items.map((cls) => {
@@ -300,9 +307,8 @@ function DayColumn({
               </button>
             );
           }
-          const dayKey = format(new Date(cls.starts_at), 'yyyy-MM-dd');
           return (
-            <Link key={cls.id} href={`/schedule?date=${dayKey}`} className={className}>
+            <Link key={cls.id} href={`/schedule?date=${day}`} className={className}>
               {Body}
             </Link>
           );
