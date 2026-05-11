@@ -202,6 +202,28 @@ export default function Home() {
               subtitle="Tap a class to see the full schedule"
             />
           </div>
+
+          {/* Studio photo trio */}
+          <div className="mt-12 sm:mt-16 max-w-5xl mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+              {(['MM-class_00', 'MM-class_01', 'MM-class_02'] as const).map((slug, i) => (
+                <div
+                  key={slug}
+                  className={`relative overflow-hidden rounded-2xl bg-[#2d2d2d] shadow-sm group ${
+                    i === 0 ? 'aspect-[4/5] sm:aspect-[3/4]' : i === 1 ? 'aspect-[4/5] sm:aspect-[3/4] sm:translate-y-6' : 'aspect-[4/5] sm:aspect-[3/4]'
+                  }`}
+                >
+                  <Image
+                    src={`/${slug}.jpg`}
+                    alt="Maningo Method class"
+                    fill
+                    sizes="(max-width: 640px) 100vw, 33vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
