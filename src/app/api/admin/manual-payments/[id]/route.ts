@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { logger, generateCorrelationId } from '@/lib/logger';
 import { applyCreditDelta } from '@/lib/credits';
 import { sendAdminPurchase } from '@/lib/resend';
+import { rewardReferrerOnce } from '@/lib/referrals';
 
 const ADMIN_EMAIL = 'chelsea@maningomethod.com';
 const PACK_LABEL: Record<string, string> = {
@@ -66,6 +67,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         adminId: auth.user.id,
         relatedId: params.id,
       });
+
+      // Referral reward — one credit per referred friend, on their first paid pack
+      void rewardReferrerOnce(payment.student_id, params.id, log);
 
       // Notify admin of the realized sale (after Chelsea confirmed payment)
       void (async () => {

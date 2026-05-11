@@ -7,10 +7,10 @@ import { generateGiftCode } from '@/lib/gift-codes';
 import {
   sendGiftPurchaseConfirmation,
   sendGiftReceived,
-  sendReferralRewardEarned,
   sendCreditPurchaseReceipt,
   sendAdminPurchase,
 } from '@/lib/resend';
+import { rewardReferrerOnce } from '@/lib/referrals';
 import { getBaseUrl } from '@/lib/utils';
 
 const ADMIN_EMAIL = 'chelsea@maningomethod.com';
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'DB error' }, { status: 500 });
           }
 
-          const { newBalance: creditsAfter } = await applyCreditDelta({
+          await applyCreditDelta({
             studentId,
             delta: creditsNum,
             reason: `Stripe purchase ${packType}`,
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
             reference: paymentIntent || session.id,
             log,
           });
-          await rewardReferrerIfApplicable(studentId, paymentIntent || session.id, log, creditsAfter);
+          await rewardReferrerOnce(studentId, paymentIntent || session.id, log);
         } else if (bookingId) {
           const { error } = await supabase
             .from('bookings')
@@ -292,7 +292,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'DB error' }, { status: 500 });
           }
 
-          const { newBalance: creditsAfter } = await applyCreditDelta({
+          await applyCreditDelta({
             studentId,
             delta: creditsNum,
             reason: `Stripe purchase ${packType}`,
@@ -318,7 +318,7 @@ export async function POST(request: NextRequest) {
             reference: intent.id,
             log,
           });
-          await rewardReferrerIfApplicable(studentId, intent.id, log, creditsAfter);
+          await rewardReferrerOnce(studentId, intent.id, log);
         }
         break;
       }
@@ -401,51 +401,3 @@ async function notifyAdminPurchase(args: {
   }
 }
 
-// On every pack purchase by a referred user, reward the referrer with +1 credit.
-async function rewardReferrerIfApplicable(
-  buyerId: string,
-  triggerId: string,
-  log: { info: (...a: unknown[]) => void; error: (...a: unknown[]) => void },
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _buyerCreditsAfter?: number
-): Promise<void> {
-  const supabase = createAdminClient();
-  const { data: buyer } = await supabase
-    .from('profiles')
-    .select('referred_by, full_name')
-    .eq('id', buyerId)
-    .single();
-  if (!buyer?.referred_by) return;
-
-  try {
-    const { newBalance } = await applyCreditDelta({
-      studentId: buyer.referred_by,
-      delta: 1,
-      reason: 'Referral reward — friend purchased a pack',
-      source: 'referral_reward',
-      relatedId: triggerId,
-    });
-
-    await supabase.from('referral_rewards').insert({
-      referrer_id: buyer.referred_by,
-      referred_id: buyerId,
-      credits_rewarded: 1,
-    });
-
-    const { data: referrer } = await supabase
-      .from('profiles')
-      .select('email, full_name')
-      .eq('id', buyer.referred_by)
-      .single();
-    if (referrer?.email) {
-      await sendReferralRewardEarned(referrer.email, {
-        referrerName: referrer.full_name || 'there',
-        friendName: buyer.full_name,
-        newBalance,
-      });
-    }
-    log.info({ referrerId: buyer.referred_by, buyerId, triggerId }, 'Referral reward issued');
-  } catch (err) {
-    log.error({ err, referrerId: buyer.referred_by, buyerId }, 'Referral reward failed');
-  }
-}
