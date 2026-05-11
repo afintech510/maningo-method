@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { UpcomingBookings } from '@/components/dashboard/UpcomingBookings';
 import { ClassHistory } from '@/components/dashboard/ClassHistory';
 import { BuyPacks } from '@/components/dashboard/BuyPacks';
+import { GiftCardCard } from '@/components/dashboard/GiftCardCard';
 import { ReferralCard } from '@/components/dashboard/ReferralCard';
 import { HostHamptonPromo } from '@/components/dashboard/HostHamptonPromo';
 import { WeeklySchedule } from '@/components/dashboard/WeeklySchedule';
@@ -128,8 +129,13 @@ export default async function DashboardPage() {
           <BuyPacks />
         </div>
 
-        {/* Referral */}
+        {/* Gift a friend */}
         <div className="mt-6">
+          <GiftCardCard />
+        </div>
+
+        {/* Referral */}
+        <div className="mt-4">
           <ReferralCard referralCode={referralCode} />
         </div>
 
