@@ -49,11 +49,10 @@ function ManualCheckoutContent() {
       <div className="max-w-lg mx-auto px-5 py-12">
         <div className="text-center mb-6">
           <div className="text-4xl mb-3">&#10003;</div>
-          <h1 className="text-2xl font-bold mb-2">Payment Recorded</h1>
+          <h1 className="text-2xl font-bold mb-2">You&rsquo;re set</h1>
           <p className="text-[#6b6b6b] text-sm">
-            We added <strong className="text-[#1a1a1a]">1 class credit</strong> to your account so
-            you can book your first class right away. The rest land as soon as Chelsea confirms
-            your payment — usually within a day.
+            Your full pack is on your dashboard now — book any class right away. Chelsea will
+            reconcile your cash or Venmo payment on her side.
           </p>
         </div>
 
@@ -88,8 +87,8 @@ function ManualCheckoutContent() {
 
       <h1 className="text-2xl font-bold mb-2">Pay another way</h1>
       <p className="text-sm text-[#6b6b6b] mb-6">
-        <strong className="text-[#1a1a1a]">1 credit lands immediately</strong> so you can attend
-        a class on day one. The rest apply once Chelsea confirms — usually within a day.
+        Your full pack lands on your account right away — book any class immediately and settle
+        up with Chelsea on her end.
       </p>
 
       <Card className="mb-4">

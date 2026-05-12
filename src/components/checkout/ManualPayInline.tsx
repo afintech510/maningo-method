@@ -43,11 +43,10 @@ export function ManualPayInline({ packType, amountCents, packLabel }: Props) {
       <div>
         <div className="text-center mb-5">
           <div className="text-3xl mb-2">&#10003;</div>
-          <h3 className="text-lg font-semibold">Payment recorded</h3>
+          <h3 className="text-lg font-semibold">You&rsquo;re set — credits added</h3>
           <p className="text-sm text-[#6b6b6b]">
-            We&rsquo;ve added <strong className="text-[#1a1a1a]">1 class credit</strong> to your
-            account right away so you can book your first class. The remaining credits land as soon
-            as Chelsea confirms your payment.
+            Your full pack is on your dashboard. Book any class right away — Chelsea will reconcile
+            the payment on her side.
           </p>
         </div>
 
@@ -78,8 +77,8 @@ export function ManualPayInline({ packType, amountCents, packLabel }: Props) {
     <div>
       <h2 className="text-lg font-semibold mb-1">Pay another way</h2>
       <p className="text-xs text-[#6b6b6b] mb-5">
-        No service fee. <strong className="text-[#1a1a1a]">1 credit lands immediately</strong> so
-        you can book a class right away — the rest apply once Chelsea confirms.
+        No service fee. Your full pack lands on your account immediately — book any class right
+        away and settle up with Chelsea when you come in.
       </p>
 
       <div className="space-y-2 mb-5">

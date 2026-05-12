@@ -6,7 +6,6 @@ import { sendManualPaymentSubmitted } from '@/lib/resend';
 import { applyCreditDelta } from '@/lib/credits';
 
 const ADMIN_EMAIL = 'chelsea@maningomethod.com';
-const PROVISIONAL_CREDITS = 1;
 
 const PACK_PRICING: Record<string, { credits: number; amount_cents: number; label: string }> = {
   single: { credits: 1, amount_cents: 2500, label: 'Drop-In Class' },
@@ -35,10 +34,11 @@ export async function POST(request: NextRequest) {
 
     const supabase = createAdminClient();
 
-    // Provisional grant: give the buyer 1 credit immediately so they can book
-    // and attend one class while we wait on the actual payment. The remainder
-    // lands on mark_paid; admin cancel claws this back (subject to balance).
-    const provisional = Math.min(PROVISIONAL_CREDITS, pack.credits);
+    // Provisional grant: drop the FULL pack onto the buyer's balance right away
+    // so they can book any class while we wait on the cash/Venmo to land.
+    // Admin mark-paid is a no-op for credits afterwards; admin cancel claws
+    // back whatever's still on the balance.
+    const provisional = pack.credits;
 
     const { data: payment, error } = await supabase
       .from('manual_payments')
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
         const result = await applyCreditDelta({
           studentId: auth.user.id,
           delta: provisional,
-          reason: `Manual payment ${payment.id} — provisional credit at submission`,
+          reason: `Manual payment ${payment.id} — full pack credited at submission (cash/venmo)`,
           source: 'manual_payment',
           relatedId: payment.id,
         });
