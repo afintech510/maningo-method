@@ -33,24 +33,6 @@ interface ClassScheduleProps {
 const HORIZON_DAYS = 90;
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-interface MonthOpt {
-  key: string; // 'YYYY-MM'
-  label: string; // 'May 2026'
-}
-
-function nextThreeMonths(): MonthOpt[] {
-  const now = new Date();
-  const out: MonthOpt[] = [];
-  for (let i = 0; i < 3; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-    out.push({
-      key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
-      label: d.toLocaleString('en-US', { month: 'short', year: 'numeric' }),
-    });
-  }
-  return out;
-}
-
 export function ClassSchedule({
   isAuthenticated,
   hasCredits,
@@ -104,7 +86,32 @@ export function ClassSchedule({
     return set;
   }, [allClasses]);
 
-  const months = useMemo(() => nextThreeMonths(), []);
+  // Only surface filter chips for months that actually have classes posted.
+  const months = useMemo(() => {
+    const map = new Map<string, string>(); // 'YYYY-MM' → 'May 2026'
+    allClasses.forEach((c) => {
+      const z = toZonedTime(new Date(c.starts_at), STUDIO_TIMEZONE);
+      const key = `${z.getFullYear()}-${String(z.getMonth() + 1).padStart(2, '0')}`;
+      if (!map.has(key)) {
+        map.set(key, format(z, 'MMM yyyy'));
+      }
+    });
+    return Array.from(map.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([key, label]) => ({ key, label }));
+  }, [allClasses]);
+
+  // Days of week that have classes in the current dataset.
+  const dayOptions = useMemo(() => {
+    const present = new Set<number>();
+    allClasses.forEach((c) => {
+      const z = toZonedTime(new Date(c.starts_at), STUDIO_TIMEZONE);
+      present.add(z.getDay());
+    });
+    return Array.from(present)
+      .sort((a, b) => a - b)
+      .map((idx) => ({ idx, label: DAY_LABELS[idx] }));
+  }, [allClasses]);
 
   const timeOptions = useMemo(() => {
     const map = new Map<string, string>();
@@ -223,76 +230,82 @@ export function ClassSchedule({
         </>
       ) : (
         <>
-          {/* Filter chips */}
+          {/* Filter chips — Month + Day of week share a row */}
           <div className="rounded-2xl border border-[#e5e2dc] bg-white p-3 sm:p-4 space-y-3">
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <p className="text-[11px] uppercase tracking-wider text-[#6b6b6b] font-medium">Month</p>
-                {(monthFilter.length > 0 || dayFilter.length > 0 || timeFilter.length > 0) && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMonthFilter([]);
-                      setDayFilter([]);
-                      setTimeFilter([]);
-                    }}
-                    className="text-xs text-[#c9a96e] hover:underline"
-                  >
-                    Clear filters
-                  </button>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {months.map((m) => {
-                  const on = monthFilter.includes(m.key);
-                  return (
-                    <button
-                      key={m.key}
-                      type="button"
-                      onClick={() =>
-                        setMonthFilter((f) =>
-                          f.includes(m.key) ? f.filter((k) => k !== m.key) : [...f, m.key]
-                        )
-                      }
-                      aria-pressed={on}
-                      className={`min-h-[36px] px-3 rounded-full text-xs font-medium border transition-colors ${
-                        on
-                          ? 'bg-[#2d2d2d] text-white border-[#2d2d2d]'
-                          : 'bg-white text-[#6b6b6b] border-[#e5e2dc] hover:border-[#c9a96e]'
-                      }`}
-                    >
-                      {m.label}
-                    </button>
-                  );
-                })}
-              </div>
+            <div className="flex items-center justify-end -mb-1">
+              {(monthFilter.length > 0 || dayFilter.length > 0 || timeFilter.length > 0) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMonthFilter([]);
+                    setDayFilter([]);
+                    setTimeFilter([]);
+                  }}
+                  className="text-xs text-[#c9a96e] hover:underline"
+                >
+                  Clear filters
+                </button>
+              )}
             </div>
-            <div>
-              <p className="text-[11px] uppercase tracking-wider text-[#6b6b6b] font-medium mb-1.5">Day of week</p>
-              <div className="flex flex-wrap gap-1.5">
-                {DAY_LABELS.map((label, idx) => {
-                  const on = dayFilter.includes(idx);
-                  return (
-                    <button
-                      key={label}
-                      type="button"
-                      onClick={() =>
-                        setDayFilter((f) =>
-                          f.includes(idx) ? f.filter((k) => k !== idx) : [...f, idx]
-                        )
-                      }
-                      aria-pressed={on}
-                      className={`min-h-[36px] min-w-[44px] px-2 rounded-full text-xs font-medium border transition-colors ${
-                        on
-                          ? 'bg-[#2d2d2d] text-white border-[#2d2d2d]'
-                          : 'bg-white text-[#6b6b6b] border-[#e5e2dc] hover:border-[#c9a96e]'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
+            <div className="flex flex-col sm:flex-row sm:items-start sm:gap-6 gap-3">
+              {months.length > 0 && (
+                <div className="min-w-0">
+                  <p className="text-[11px] uppercase tracking-wider text-[#6b6b6b] font-medium mb-1.5">Month</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {months.map((m) => {
+                      const on = monthFilter.includes(m.key);
+                      return (
+                        <button
+                          key={m.key}
+                          type="button"
+                          onClick={() =>
+                            setMonthFilter((f) =>
+                              f.includes(m.key) ? f.filter((k) => k !== m.key) : [...f, m.key]
+                            )
+                          }
+                          aria-pressed={on}
+                          className={`min-h-[36px] px-3 rounded-full text-xs font-medium border transition-colors ${
+                            on
+                              ? 'bg-[#2d2d2d] text-white border-[#2d2d2d]'
+                              : 'bg-white text-[#6b6b6b] border-[#e5e2dc] hover:border-[#c9a96e]'
+                          }`}
+                        >
+                          {m.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              {dayOptions.length > 0 && (
+                <div className="min-w-0">
+                  <p className="text-[11px] uppercase tracking-wider text-[#6b6b6b] font-medium mb-1.5">Day of week</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {dayOptions.map((d) => {
+                      const on = dayFilter.includes(d.idx);
+                      return (
+                        <button
+                          key={d.idx}
+                          type="button"
+                          onClick={() =>
+                            setDayFilter((f) =>
+                              f.includes(d.idx) ? f.filter((k) => k !== d.idx) : [...f, d.idx]
+                            )
+                          }
+                          aria-pressed={on}
+                          className={`min-h-[36px] min-w-[44px] px-2 rounded-full text-xs font-medium border transition-colors ${
+                            on
+                              ? 'bg-[#2d2d2d] text-white border-[#2d2d2d]'
+                              : 'bg-white text-[#6b6b6b] border-[#e5e2dc] hover:border-[#c9a96e]'
+                          }`}
+                        >
+                          {d.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
             {timeOptions.length > 0 && (
               <div>
@@ -350,23 +363,76 @@ export function ClassSchedule({
             </button>
           </div>
 
-          <div className="space-y-3">
-            {loading ? (
-              <>
-                <Skeleton variant="card" />
-                <Skeleton variant="card" />
-              </>
-            ) : filteredClasses.length === 0 ? (
-              <EmptyState
-                title="Nothing matches"
-                description="Try clearing or relaxing your filters."
-              />
-            ) : (
-              filteredClasses.map(renderClassCard)
-            )}
-          </div>
+          {loading ? (
+            <div className="space-y-3">
+              <Skeleton variant="card" />
+              <Skeleton variant="card" />
+            </div>
+          ) : filteredClasses.length === 0 ? (
+            <EmptyState
+              title="Nothing matches"
+              description="Try clearing or relaxing your filters."
+            />
+          ) : (
+            <FilteredByDay
+              classes={filteredClasses}
+              sortDir={sortDir}
+              renderCard={renderClassCard}
+            />
+          )}
         </>
       )}
+    </div>
+  );
+}
+
+/**
+ * Renders filter-view classes grouped into per-day columns. On mobile this is
+ * one column of stacked classes; on wider screens the grid expands so multiple
+ * days sit side-by-side for a denser overview.
+ */
+function FilteredByDay({
+  classes,
+  sortDir,
+  renderCard,
+}: {
+  classes: ClassData[];
+  sortDir: 'asc' | 'desc';
+  renderCard: (cls: ClassData) => React.ReactNode;
+}) {
+  const days = useMemo(() => {
+    const map = new Map<string, ClassData[]>();
+    classes.forEach((c) => {
+      const z = toZonedTime(new Date(c.starts_at), STUDIO_TIMEZONE);
+      const key = format(z, 'yyyy-MM-dd');
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(c);
+    });
+    const keys = Array.from(map.keys()).sort((a, b) =>
+      sortDir === 'asc' ? a.localeCompare(b) : b.localeCompare(a)
+    );
+    return keys.map((day) => {
+      const [yy, mm, dd] = day.split('-').map(Number);
+      const headerLabel = format(new Date(yy, (mm || 1) - 1, dd || 1), 'EEE, MMM d');
+      const items = map.get(day)!.slice().sort((a, b) => {
+        const ta = new Date(a.starts_at).getTime();
+        const tb = new Date(b.starts_at).getTime();
+        return ta - tb;
+      });
+      return { day, headerLabel, items };
+    });
+  }, [classes, sortDir]);
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {days.map(({ day, headerLabel, items }) => (
+        <div key={day} className="space-y-2">
+          <p className="text-[11px] uppercase tracking-[0.15em] font-semibold text-[#6b6b6b]">
+            {headerLabel}
+          </p>
+          {items.map((cls) => renderCard(cls))}
+        </div>
+      ))}
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/feedback/Skeleton';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { Modal } from '@/components/ui/Modal';
-import { formatStudioDateTime, formatStudioTime, STUDIO_TIMEZONE } from '@/lib/timezone';
+import { formatStudioTime, STUDIO_TIMEZONE } from '@/lib/timezone';
 import { format } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 
@@ -23,24 +23,6 @@ interface ClassItem {
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-interface MonthOpt {
-  key: string; // 'YYYY-MM'
-  label: string; // 'May 2026'
-}
-
-function nextThreeMonths(): MonthOpt[] {
-  const now = new Date();
-  const out: MonthOpt[] = [];
-  for (let i = 0; i < 3; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-    out.push({
-      key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
-      label: d.toLocaleString('en-US', { month: 'short', year: 'numeric' }),
-    });
-  }
-  return out;
-}
-
 export default function AdminClassesPage() {
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +37,30 @@ export default function AdminClassesPage() {
     failed: Array<{ title: string; reason: string }>;
   } | null>(null);
 
-  const months = useMemo(() => nextThreeMonths(), []);
+  // Only months with classes actually posted.
+  const months = useMemo(() => {
+    const map = new Map<string, string>();
+    classes.forEach((c) => {
+      const z = toZonedTime(new Date(c.starts_at), STUDIO_TIMEZONE);
+      const key = `${z.getFullYear()}-${String(z.getMonth() + 1).padStart(2, '0')}`;
+      if (!map.has(key)) map.set(key, format(z, 'MMM yyyy'));
+    });
+    return Array.from(map.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([key, label]) => ({ key, label }));
+  }, [classes]);
+
+  // Days of week with at least one class.
+  const dayOptions = useMemo(() => {
+    const present = new Set<number>();
+    classes.forEach((c) => {
+      const z = toZonedTime(new Date(c.starts_at), STUDIO_TIMEZONE);
+      present.add(z.getDay());
+    });
+    return Array.from(present)
+      .sort((a, b) => a - b)
+      .map((idx) => ({ idx, label: DAY_LABELS[idx] }));
+  }, [classes]);
 
   // Unique starting times (studio-local 'HH:mm' keys + display label) sorted chronologically
   const timeOptions = useMemo(() => {
@@ -196,51 +201,57 @@ export default function AdminClassesPage() {
       </div>
 
       <div className="rounded-2xl border border-[#e5e2dc] bg-white p-3 sm:p-4 mb-4 space-y-3">
-        <div>
-          <p className="text-[11px] uppercase tracking-wider text-[#6b6b6b] font-medium mb-1.5">Month</p>
-          <div className="flex flex-wrap gap-1.5">
-            {months.map((m) => {
-              const on = monthFilter.includes(m.key);
-              return (
-                <button
-                  key={m.key}
-                  type="button"
-                  onClick={() => toggleMonth(m.key)}
-                  aria-pressed={on}
-                  className={`min-h-[36px] px-3 rounded-full text-xs font-medium border transition-colors ${
-                    on
-                      ? 'bg-[#2d2d2d] text-white border-[#2d2d2d]'
-                      : 'bg-white text-[#6b6b6b] border-[#e5e2dc] hover:border-[#c9a96e]'
-                  }`}
-                >
-                  {m.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        <div>
-          <p className="text-[11px] uppercase tracking-wider text-[#6b6b6b] font-medium mb-1.5">Day of week</p>
-          <div className="flex flex-wrap gap-1.5">
-            {DAY_LABELS.map((label, idx) => {
-              const on = dayFilter.includes(idx);
-              return (
-                <button
-                  key={label}
-                  type="button"
-                  onClick={() => toggleDay(idx)}
-                  aria-pressed={on}
-                  className={`min-h-[36px] min-w-[44px] px-2 rounded-full text-xs font-medium border transition-colors ${
-                    on
-                      ? 'bg-[#2d2d2d] text-white border-[#2d2d2d]'
-                      : 'bg-white text-[#6b6b6b] border-[#e5e2dc] hover:border-[#c9a96e]'
-                  }`}
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:gap-6 gap-3">
+          {months.length > 0 && (
+            <div className="min-w-0">
+              <p className="text-[11px] uppercase tracking-wider text-[#6b6b6b] font-medium mb-1.5">Month</p>
+              <div className="flex flex-wrap gap-1.5">
+                {months.map((m) => {
+                  const on = monthFilter.includes(m.key);
+                  return (
+                    <button
+                      key={m.key}
+                      type="button"
+                      onClick={() => toggleMonth(m.key)}
+                      aria-pressed={on}
+                      className={`min-h-[36px] px-3 rounded-full text-xs font-medium border transition-colors ${
+                        on
+                          ? 'bg-[#2d2d2d] text-white border-[#2d2d2d]'
+                          : 'bg-white text-[#6b6b6b] border-[#e5e2dc] hover:border-[#c9a96e]'
+                      }`}
+                    >
+                      {m.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          {dayOptions.length > 0 && (
+            <div className="min-w-0">
+              <p className="text-[11px] uppercase tracking-wider text-[#6b6b6b] font-medium mb-1.5">Day of week</p>
+              <div className="flex flex-wrap gap-1.5">
+                {dayOptions.map((d) => {
+                  const on = dayFilter.includes(d.idx);
+                  return (
+                    <button
+                      key={d.idx}
+                      type="button"
+                      onClick={() => toggleDay(d.idx)}
+                      aria-pressed={on}
+                      className={`min-h-[36px] min-w-[44px] px-2 rounded-full text-xs font-medium border transition-colors ${
+                        on
+                          ? 'bg-[#2d2d2d] text-white border-[#2d2d2d]'
+                          : 'bg-white text-[#6b6b6b] border-[#e5e2dc] hover:border-[#c9a96e]'
+                      }`}
+                    >
+                      {d.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
         {timeOptions.length > 0 && (
           <div>
@@ -315,51 +326,11 @@ export default function AdminClassesPage() {
           ctaHref={classes.length === 0 ? '/admin/schedule' : undefined}
         />
       ) : (
-        <div className="space-y-2">
-          {filtered.map((cls) => {
-            const isSelected = selected.has(cls.id);
-            return (
-              <div
-                key={cls.id}
-                className={`flex items-stretch gap-2 rounded-2xl border bg-white transition-colors ${
-                  isSelected ? 'border-[#c9a96e] bg-[#c9a96e]/5' : 'border-[#e5e2dc]'
-                }`}
-              >
-                <label className="flex items-center pl-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => toggleSelect(cls.id)}
-                    aria-label={`Select ${cls.title}`}
-                    className="h-5 w-5 rounded border-[#e5e2dc] text-[#c9a96e] focus:ring-[#c9a96e]"
-                  />
-                </label>
-                <Link href={`/admin/classes/${cls.id}`} className="flex-1 min-w-0 p-3 sm:p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-semibold truncate">{cls.title}</p>
-                      <p className="text-sm text-muted-foreground">{formatStudioDateTime(cls.starts_at)}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {cls.booked_count}/{cls.max_capacity} booked
-                      </p>
-                    </div>
-                    <Badge
-                      variant={
-                        cls.status === 'scheduled'
-                          ? 'success'
-                          : cls.status === 'cancelled'
-                            ? 'error'
-                            : 'neutral'
-                      }
-                    >
-                      {cls.status}
-                    </Badge>
-                  </div>
-                </Link>
-              </div>
-            );
-          })}
-        </div>
+        <FilteredByDay
+          classes={filtered}
+          selected={selected}
+          onToggleSelect={toggleSelect}
+        />
       )}
 
       <Modal
@@ -421,6 +392,98 @@ export default function AdminClassesPage() {
           </>
         )}
       </Modal>
+    </div>
+  );
+}
+
+/**
+ * Renders the class list grouped into per-day columns. The grid widens with
+ * screen size so an admin can see more days at a glance on desktop.
+ */
+function FilteredByDay({
+  classes,
+  selected,
+  onToggleSelect,
+}: {
+  classes: ClassItem[];
+  selected: Set<string>;
+  onToggleSelect: (id: string) => void;
+}) {
+  const days = useMemo(() => {
+    const map = new Map<string, ClassItem[]>();
+    classes.forEach((c) => {
+      const z = toZonedTime(new Date(c.starts_at), STUDIO_TIMEZONE);
+      const key = format(z, 'yyyy-MM-dd');
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(c);
+    });
+    return Array.from(map.keys())
+      .sort()
+      .map((day) => {
+        const [yy, mm, dd] = day.split('-').map(Number);
+        const headerLabel = format(new Date(yy, (mm || 1) - 1, dd || 1), 'EEE, MMM d');
+        const items = map
+          .get(day)!
+          .slice()
+          .sort(
+            (a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime()
+          );
+        return { day, headerLabel, items };
+      });
+  }, [classes]);
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {days.map(({ day, headerLabel, items }) => (
+        <div key={day} className="space-y-2">
+          <p className="text-[11px] uppercase tracking-[0.15em] font-semibold text-[#6b6b6b]">
+            {headerLabel}
+          </p>
+          {items.map((cls) => {
+            const isSelected = selected.has(cls.id);
+            return (
+              <div
+                key={cls.id}
+                className={`flex items-stretch gap-2 rounded-2xl border bg-white transition-colors ${
+                  isSelected ? 'border-[#c9a96e] bg-[#c9a96e]/5' : 'border-[#e5e2dc]'
+                }`}
+              >
+                <label className="flex items-center pl-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => onToggleSelect(cls.id)}
+                    aria-label={`Select ${cls.title}`}
+                    className="h-5 w-5 rounded border-[#e5e2dc] text-[#c9a96e] focus:ring-[#c9a96e]"
+                  />
+                </label>
+                <Link href={`/admin/classes/${cls.id}`} className="flex-1 min-w-0 p-3 sm:p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-semibold truncate">{cls.title}</p>
+                      <p className="text-sm text-muted-foreground">{formatStudioTime(cls.starts_at)}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {cls.booked_count}/{cls.max_capacity} booked
+                      </p>
+                    </div>
+                    <Badge
+                      variant={
+                        cls.status === 'scheduled'
+                          ? 'success'
+                          : cls.status === 'cancelled'
+                            ? 'error'
+                            : 'neutral'
+                      }
+                    >
+                      {cls.status}
+                    </Badge>
+                  </div>
+                </Link>
+              </div>
+            );
+          })}
+        </div>
+      ))}
     </div>
   );
 }
