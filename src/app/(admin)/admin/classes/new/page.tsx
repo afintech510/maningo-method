@@ -50,7 +50,7 @@ export default function NewClassPage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Input label="Title" name="title" required placeholder="e.g. Mat Pilates/Sculpt" defaultValue="Mat Pilates/Sculpt" />
+        <Input label="Title" name="title" required placeholder="e.g. Mat Pilates × Sculpt" defaultValue="Mat Pilates × Sculpt" />
         <Input label="Description" name="description" placeholder="Optional description" />
         <Input label="Start Date & Time" name="starts_at" type="datetime-local" required />
         <Input label="Duration (minutes)" name="duration_minutes" type="number" required placeholder="50" defaultValue="50" />

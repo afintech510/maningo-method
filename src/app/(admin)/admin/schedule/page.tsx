@@ -22,7 +22,7 @@ type Mode = 'recurring' | 'single';
 export default function AdminSchedulePage() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>('recurring');
-  const [title, setTitle] = useState('Mat Pilates/Sculpt');
+  const [title, setTitle] = useState('Mat Pilates × Sculpt');
   const [description, setDescription] = useState('');
   const [duration, setDuration] = useState(50);
   const [capacity, setCapacity] = useState(20);
@@ -165,7 +165,7 @@ export default function AdminSchedulePage() {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           required
-          placeholder="Mat Pilates/Sculpt"
+          placeholder="Mat Pilates × Sculpt"
         />
         <Input
           label="Description (optional)"

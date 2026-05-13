@@ -59,6 +59,25 @@ export function ClassSchedule({
   const [timeFilter, setTimeFilter] = useState<string[]>([]);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
+  // Prune the time selection when its options disappear (e.g. user picked 7 AM,
+  // then narrowed by Thursday which has no 7 AM class).
+  useEffect(() => {
+    if (timeFilter.length === 0) return;
+    const stillValid = new Set<string>();
+    allClasses.forEach((c) => {
+      const z = toZonedTime(new Date(c.starts_at), STUDIO_TIMEZONE);
+      if (monthFilter.length > 0) {
+        const monthKey = `${z.getFullYear()}-${String(z.getMonth() + 1).padStart(2, '0')}`;
+        if (!monthFilter.includes(monthKey)) return;
+      }
+      if (dayFilter.length > 0 && !dayFilter.includes(z.getDay())) return;
+      stillValid.add(format(z, 'HH:mm'));
+    });
+    const next = timeFilter.filter((t) => stillValid.has(t));
+    if (next.length !== timeFilter.length) setTimeFilter(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [monthFilter, dayFilter, allClasses]);
+
   // Single fetch covering 90 days; both views slice this in memory.
   useEffect(() => {
     const from = new Date();
@@ -113,17 +132,24 @@ export function ClassSchedule({
       .map((idx) => ({ idx, label: DAY_LABELS[idx] }));
   }, [allClasses]);
 
+  // Time chips narrow as the month / day filters narrow — selecting "Thursday"
+  // when classes run 8:30 and 9:30 AM on Thursdays drops every other time chip.
   const timeOptions = useMemo(() => {
     const map = new Map<string, string>();
     allClasses.forEach((c) => {
       const z = toZonedTime(new Date(c.starts_at), STUDIO_TIMEZONE);
+      if (monthFilter.length > 0) {
+        const monthKey = `${z.getFullYear()}-${String(z.getMonth() + 1).padStart(2, '0')}`;
+        if (!monthFilter.includes(monthKey)) return;
+      }
+      if (dayFilter.length > 0 && !dayFilter.includes(z.getDay())) return;
       const key = format(z, 'HH:mm');
       if (!map.has(key)) map.set(key, formatStudioTime(c.starts_at));
     });
     return Array.from(map.entries())
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([key, label]) => ({ key, label }));
-  }, [allClasses]);
+  }, [allClasses, monthFilter, dayFilter]);
 
   // Calendar view: classes for the selected day
   const dayClasses = useMemo(() => {

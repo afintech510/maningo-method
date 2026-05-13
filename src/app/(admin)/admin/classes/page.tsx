@@ -66,11 +66,16 @@ export default function AdminClassesPage() {
       .map((idx) => ({ idx, label: DAY_LABELS[idx] }));
   }, [classes]);
 
-  // Unique starting times (studio-local 'HH:mm' keys + display label) sorted chronologically
+  // Time chips narrow as month / day filters narrow.
   const timeOptions = useMemo(() => {
     const map = new Map<string, string>(); // 'HH:mm' -> 'h:mm a'
     classes.forEach((c) => {
       const z = toZonedTime(new Date(c.starts_at), STUDIO_TIMEZONE);
+      if (monthFilter.length > 0) {
+        const monthKey = `${z.getFullYear()}-${String(z.getMonth() + 1).padStart(2, '0')}`;
+        if (!monthFilter.includes(monthKey)) return;
+      }
+      if (dayFilter.length > 0 && !dayFilter.includes(z.getDay())) return;
       const key = format(z, 'HH:mm');
       if (!map.has(key)) {
         map.set(key, formatStudioTime(c.starts_at));
@@ -79,7 +84,16 @@ export default function AdminClassesPage() {
     return Array.from(map.entries())
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([key, label]) => ({ key, label }));
-  }, [classes]);
+  }, [classes, monthFilter, dayFilter]);
+
+  // Drop any selected times that are no longer offered after narrowing.
+  useEffect(() => {
+    if (timeFilter.length === 0) return;
+    const valid = new Set(timeOptions.map((t) => t.key));
+    const next = timeFilter.filter((t) => valid.has(t));
+    if (next.length !== timeFilter.length) setTimeFilter(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeOptions]);
 
   async function load() {
     setLoading(true);
