@@ -29,6 +29,10 @@ export default function AdminClassesPage() {
   const [monthFilter, setMonthFilter] = useState<string[]>([]); // empty = all
   const [dayFilter, setDayFilter] = useState<number[]>([]); // empty = all
   const [timeFilter, setTimeFilter] = useState<string[]>([]); // empty = all; values are 'HH:mm' studio-local
+  // 'upcoming' = next future class on top, past classes below (default)
+  // 'latest' = strict descending by date — newest scheduled class on top
+  // 'oldest' = strict ascending by date — oldest first
+  const [sortMode, setSortMode] = useState<'upcoming' | 'latest' | 'oldest'>('upcoming');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkRunning, setBulkRunning] = useState(false);
@@ -185,19 +189,31 @@ export default function AdminClassesPage() {
         <span className="text-xs text-muted-foreground">
           {filtered.length} of {classes.length}
         </span>
-        {(monthFilter.length > 0 || dayFilter.length > 0 || timeFilter.length > 0) && (
-          <button
-            type="button"
-            onClick={() => {
-              setMonthFilter([]);
-              setDayFilter([]);
-              setTimeFilter([]);
-            }}
-            className="text-xs text-[#c9a96e] hover:underline ml-auto"
+        <div className="ml-auto flex items-center gap-2">
+          <label className="text-[11px] uppercase tracking-wider text-[#6b6b6b] font-medium">Sort</label>
+          <select
+            value={sortMode}
+            onChange={(e) => setSortMode(e.target.value as 'upcoming' | 'latest' | 'oldest')}
+            className="h-8 px-2 rounded-lg border border-[#e5e2dc] bg-white text-xs font-medium text-[#1a1a1a] focus:border-[#c9a96e] outline-none"
           >
-            Clear filters
-          </button>
-        )}
+            <option value="upcoming">Upcoming first</option>
+            <option value="latest">Latest first</option>
+            <option value="oldest">Oldest first</option>
+          </select>
+          {(monthFilter.length > 0 || dayFilter.length > 0 || timeFilter.length > 0) && (
+            <button
+              type="button"
+              onClick={() => {
+                setMonthFilter([]);
+                setDayFilter([]);
+                setTimeFilter([]);
+              }}
+              className="text-xs text-[#c9a96e] hover:underline"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="rounded-2xl border border-[#e5e2dc] bg-white p-3 sm:p-4 mb-4 space-y-3">
@@ -330,6 +346,7 @@ export default function AdminClassesPage() {
           classes={filtered}
           selected={selected}
           onToggleSelect={toggleSelect}
+          sortMode={sortMode}
         />
       )}
 
@@ -404,10 +421,12 @@ function FilteredByDay({
   classes,
   selected,
   onToggleSelect,
+  sortMode = 'upcoming',
 }: {
   classes: ClassItem[];
   selected: Set<string>;
   onToggleSelect: (id: string) => void;
+  sortMode?: 'upcoming' | 'latest' | 'oldest';
 }) {
   const days = useMemo(() => {
     const map = new Map<string, ClassItem[]>();
@@ -417,20 +436,36 @@ function FilteredByDay({
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(c);
     });
-    return Array.from(map.keys())
-      .sort()
-      .map((day) => {
-        const [yy, mm, dd] = day.split('-').map(Number);
-        const headerLabel = format(new Date(yy, (mm || 1) - 1, dd || 1), 'EEE, MMM d');
-        const items = map
-          .get(day)!
-          .slice()
-          .sort(
-            (a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime()
-          );
-        return { day, headerLabel, items };
-      });
-  }, [classes]);
+    const dayKeys = Array.from(map.keys());
+
+    // 'upcoming' splits the list at today: future days ascending (closest
+    // class first), then past days descending (most-recent past below the
+    // future, oldest at the very bottom). 'latest' / 'oldest' are strict
+    // chronological orders.
+    const todayKey = format(toZonedTime(new Date(), STUDIO_TIMEZONE), 'yyyy-MM-dd');
+    let ordered: string[];
+    if (sortMode === 'upcoming') {
+      const future = dayKeys.filter((k) => k >= todayKey).sort();
+      const past = dayKeys.filter((k) => k < todayKey).sort().reverse();
+      ordered = [...future, ...past];
+    } else if (sortMode === 'latest') {
+      ordered = dayKeys.slice().sort().reverse();
+    } else {
+      ordered = dayKeys.slice().sort();
+    }
+
+    return ordered.map((day) => {
+      const [yy, mm, dd] = day.split('-').map(Number);
+      const headerLabel = format(new Date(yy, (mm || 1) - 1, dd || 1), 'EEE, MMM d');
+      const items = map
+        .get(day)!
+        .slice()
+        .sort(
+          (a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime()
+        );
+      return { day, headerLabel, items };
+    });
+  }, [classes, sortMode]);
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
