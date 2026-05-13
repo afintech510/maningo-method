@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 
 export default function WaiverSignPage() {
   const router = useRouter();
@@ -12,9 +11,6 @@ export default function WaiverSignPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isMinor, setIsMinor] = useState(false);
-  const [minorName, setMinorName] = useState('');
-  const [minorDob, setMinorDob] = useState('');
 
   useEffect(() => {
     if (status === 'complete') {
@@ -31,11 +27,10 @@ export default function WaiverSignPage() {
       const res = await fetch('/api/waiver/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          is_minor: isMinor,
-          minor_name: isMinor ? minorName : null,
-          minor_dob: isMinor ? minorDob : null,
-        }),
+        // Adult signer is the only supported path for now — the parent /
+        // guardian flow is deferred. The API still accepts is_minor but we
+        // always send false.
+        body: JSON.stringify({ is_minor: false, minor_name: null, minor_dob: null }),
       });
       const data = await res.json();
       if (data.already_signed) {
@@ -83,41 +78,8 @@ export default function WaiverSignPage() {
           <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-800">{error}</div>
         )}
 
-        <div className="rounded-2xl border border-[#e5e2dc] bg-white p-5">
-          <label className="flex items-start gap-3 text-sm cursor-pointer">
-            <input
-              type="checkbox"
-              checked={isMinor}
-              onChange={(e) => setIsMinor(e.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded border-[#e5e2dc] text-[#c9a96e] focus:ring-[#c9a96e]"
-            />
-            <span className="text-[#2d2d2d]">
-              The participant is under 18. I am the parent or legal guardian and will sign on their behalf.
-            </span>
-          </label>
-
-          {isMinor && (
-            <div className="mt-4 space-y-3">
-              <Input
-                label="Minor's Full Name"
-                value={minorName}
-                onChange={(e) => setMinorName(e.target.value)}
-                required
-                placeholder="Child's full name"
-              />
-              <Input
-                label="Minor's Date of Birth"
-                type="date"
-                value={minorDob}
-                onChange={(e) => setMinorDob(e.target.value)}
-                required
-              />
-            </div>
-          )}
-        </div>
-
         <Button type="submit" loading={loading} className="w-full">
-          {isMinor ? 'Continue to Sign as Parent/Guardian' : 'Continue to Sign'}
+          Continue to Sign
         </Button>
 
         <p className="text-xs text-[#6b6b6b] text-center">

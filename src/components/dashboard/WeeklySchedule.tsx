@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/feedback/Skeleton';
 import { useToast } from '@/components/feedback/Toast';
-import { formatStudioTime, formatStudioDate, formatStudioDateTime } from '@/lib/timezone';
+import { STUDIO_TIMEZONE, formatStudioTime, formatStudioDateTime } from '@/lib/timezone';
 import { addDays, format } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 
 interface ClassItem {
   id: string;
@@ -82,10 +83,12 @@ export function WeeklySchedule({ bookedClassIds, hasCredits, credits }: WeeklySc
 
   if (loading) return <Skeleton variant="card" />;
 
-  // Group by day
+  // Group by *studio-local* day so a class at 8 AM ET (12:00 UTC) lands under
+  // 'Tue Jun 2' for every visitor regardless of their browser timezone.
   const grouped: Record<string, ClassItem[]> = {};
   classes.forEach((cls) => {
-    const day = format(new Date(cls.starts_at), 'yyyy-MM-dd');
+    const z = toZonedTime(new Date(cls.starts_at), STUDIO_TIMEZONE);
+    const day = format(z, 'yyyy-MM-dd');
     if (!grouped[day]) grouped[day] = [];
     grouped[day].push(cls);
   });
@@ -99,10 +102,16 @@ export function WeeklySchedule({ bookedClassIds, hasCredits, credits }: WeeklySc
   return (
     <>
       <div className="space-y-4">
-        {days.map((day) => (
+        {days.map((day) => {
+          // `day` is already studio-local YYYY-MM-DD. Constructing the Date
+          // from its parts (rather than passing the string through another
+          // tz conversion) gives us the correct calendar day every time.
+          const [yy, mm, dd] = day.split('-').map(Number);
+          const headerLabel = format(new Date(yy, (mm || 1) - 1, dd || 1), 'EEEE, MMM d');
+          return (
           <div key={day}>
             <p className="text-sm font-semibold text-muted-foreground mb-2">
-              {formatStudioDate(day, 'EEEE, MMM d')}
+              {headerLabel}
             </p>
             <div className="space-y-2">
               {grouped[day].map((cls) => {
@@ -143,7 +152,8 @@ export function WeeklySchedule({ bookedClassIds, hasCredits, credits }: WeeklySc
               })}
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Booking Confirmation Modal */}
