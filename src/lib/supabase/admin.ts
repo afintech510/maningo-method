@@ -9,6 +9,16 @@ export function createAdminClient() {
         autoRefreshToken: false,
         persistSession: false,
       },
+      // Next.js App Router patches the global fetch to memoize responses by
+      // URL + body in its data cache. Without opting out, Supabase reads from
+      // admin pages (revenue totals, pending counts, etc.) can serve a
+      // previous request's payload — so a fresh purchase doesn't show up
+      // until something invalidates the cache. Admin reads should always be
+      // live; force every query through cache:'no-store'.
+      global: {
+        fetch: (input, init) =>
+          fetch(input as RequestInfo, { ...init, cache: 'no-store' }),
+      },
     }
   );
 }
