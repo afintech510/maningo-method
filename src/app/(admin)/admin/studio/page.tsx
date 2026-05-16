@@ -11,10 +11,10 @@ const WEEKEND_RATE_CENTS = 7500; // $75 / hour
 export default async function AdminStudioPage() {
   const supabase = createAdminClient();
 
-  // Every scheduled class consumes studio time. Cancelled rows don't bill.
+  // Every scheduled class consumes one studio hour. Cancelled rows don't bill.
   const { data: classes } = await supabase
     .from('classes')
-    .select('starts_at, duration_minutes, status')
+    .select('starts_at, status')
     .eq('status', 'scheduled');
 
   type MonthRow = {
@@ -32,13 +32,14 @@ export default async function AdminStudioPage() {
     const label = format(z, 'MMMM yyyy');
     const dow = z.getDay(); // 0 Sun, 6 Sat
     const isWeekend = dow === 0 || dow === 6;
-    const hours = (c.duration_minutes || 0) / 60;
+    // Studio billing: one class = one hour of studio rental regardless of
+    // its actual duration (50, 60, 75 min — all bill as 1h).
     if (!monthMap.has(key)) {
       monthMap.set(key, { key, label, weekdayHours: 0, weekendHours: 0, classCount: 0 });
     }
     const row = monthMap.get(key)!;
-    if (isWeekend) row.weekendHours += hours;
-    else row.weekdayHours += hours;
+    if (isWeekend) row.weekendHours += 1;
+    else row.weekdayHours += 1;
     row.classCount += 1;
   });
 
@@ -73,7 +74,8 @@ export default async function AdminStudioPage() {
         <p className="text-xs font-medium uppercase tracking-[0.25em] text-[#c9a96e] mb-1">Studio</p>
         <h1 className="text-2xl sm:text-3xl font-bold">Host Hampton rent</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Monthly tally of studio hours from scheduled classes.{' '}
+          Monthly tally of studio hours from scheduled classes. Each class counts
+          as <strong className="text-foreground">1 hour</strong>.{' '}
           <strong className="text-foreground">Weekday {formatCents(WEEKDAY_RATE_CENTS)}/hr</strong>{' '}
           &middot;{' '}
           <strong className="text-foreground">Weekend {formatCents(WEEKEND_RATE_CENTS)}/hr</strong>.
