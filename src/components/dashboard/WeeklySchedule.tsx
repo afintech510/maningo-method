@@ -10,6 +10,7 @@ import { useToast } from '@/components/feedback/Toast';
 import { STUDIO_TIMEZONE, formatStudioTime, formatStudioDateTime } from '@/lib/timezone';
 import { addDays, format } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
+import { CapacityBadge } from '@/components/ui/CapacityBadge';
 
 interface ClassItem {
   id: string;
@@ -118,17 +119,19 @@ export function WeeklySchedule({ bookedClassIds, hasCredits, credits }: WeeklySc
                 const isBooked = bookedClassIds.includes(cls.id);
                 const isFull = cls.spots_remaining <= 0;
 
+                const cap = cls.max_capacity || 20;
+                const bookedCount = cap - cls.spots_remaining;
                 return (
                   <Card key={cls.id} className="py-3 px-4">
                     <div className="flex justify-between items-center gap-3">
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm">{cls.title}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatStudioTime(cls.starts_at)} &middot; {cls.duration_minutes} min &middot;{' '}
-                          <span className={cls.spots_remaining <= 3 ? 'text-amber-600' : 'text-green-600'}>
-                            {cls.spots_remaining} spots
-                          </span>
-                        </p>
+                        <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                          <p className="text-xs text-muted-foreground">
+                            {formatStudioTime(cls.starts_at)} &middot; {cls.duration_minutes} min
+                          </p>
+                          <CapacityBadge bookedCount={bookedCount} capacity={cap} />
+                        </div>
                       </div>
                       {isBooked ? (
                         <span className="text-xs font-medium text-green-600 bg-green-50 px-2.5 py-1 rounded-full flex-shrink-0">

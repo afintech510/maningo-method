@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { addDays, format } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import { formatStudioTime, formatStudioDate, STUDIO_TIMEZONE } from '@/lib/timezone';
+import { CapacityBadge } from '@/components/ui/CapacityBadge';
 
 interface ClassItem {
   id: string;
@@ -284,34 +285,36 @@ function DayColumn({
       <div className="space-y-2">
         {visibleItems.map((cls) => {
           const isBooked = bookedClassIds.includes(cls.id);
-          const isFull = cls.spots_remaining <= 0;
           const isLocked = cls.bookable === false;
+          const cap = cls.max_capacity || 20;
+          const bookedCount = cap - cls.spots_remaining;
           const Body = (
             <>
               <div className="flex items-start justify-between gap-2">
                 <p className="text-xs font-semibold text-[#6b6b6b] mb-0.5">
                   {formatStudioTime(cls.starts_at)}
                 </p>
-                {isLocked && (
+                {isLocked ? (
                   <span className="text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded-full bg-[#e5e2dc] text-[#6b6b6b]">
                     Locked
                   </span>
+                ) : isBooked ? (
+                  <span className="text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                    Booked
+                  </span>
+                ) : (
+                  <CapacityBadge
+                    bookedCount={bookedCount}
+                    capacity={cap}
+                    className="text-[10px] px-2 py-0.5"
+                  />
                 )}
               </div>
               <p className="font-medium text-sm leading-tight truncate">{cls.title}</p>
               <p className="text-[11px] text-[#6b6b6b] mt-1">
-                {isBooked ? (
-                  <span className="text-emerald-600 font-medium">Booked</span>
-                ) : isLocked && cls.bookable_from ? (
-                  <span>Books open {formatStudioDate(cls.bookable_from, 'MMM d')}</span>
-                ) : isFull ? (
-                  <span>Full</span>
-                ) : (
-                  <span className={cls.spots_remaining <= 3 ? 'text-amber-600' : 'text-emerald-600'}>
-                    {cls.spots_remaining} {cls.spots_remaining === 1 ? 'spot' : 'spots'}
-                  </span>
-                )}
-                <span> &middot; {cls.duration_minutes}m</span>
+                {isLocked && cls.bookable_from
+                  ? `Books open ${formatStudioDate(cls.bookable_from, 'MMM d')}`
+                  : `${cls.duration_minutes}m`}
               </p>
             </>
           );

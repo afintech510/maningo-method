@@ -1,5 +1,5 @@
 import { Card } from '@/components/ui/Card';
-import { SpotsIndicator } from '@/components/schedule/SpotsIndicator';
+import { CapacityBadge } from '@/components/ui/CapacityBadge';
 import { BookingButton } from '@/components/booking/BookingButton';
 import { formatStudioTime, formatStudioDate } from '@/lib/timezone';
 
@@ -43,9 +43,9 @@ export function ClassCard({
             {formatStudioTime(classData.starts_at)}
           </span>
         </div>
-        <SpotsIndicator
-          remaining={classData.spots_remaining}
-          total={classData.max_capacity}
+        <CapacityBadge
+          bookedCount={classData.max_capacity - classData.spots_remaining}
+          capacity={classData.max_capacity}
         />
       </div>
       <p className="font-medium mb-0.5">{classData.title}</p>

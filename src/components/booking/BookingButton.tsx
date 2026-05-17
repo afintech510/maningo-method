@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/feedback/Toast';
 import { formatStudioDate, formatStudioDateTime } from '@/lib/timezone';
+import { CapacityBadge } from '@/components/ui/CapacityBadge';
 
 interface BookingButtonProps {
   classId: string;
@@ -222,14 +223,16 @@ export function BookingButton({
               {formatStudioDateTime(classStartsAt)}
             </p>
           )}
-          {(classDurationMinutes || typeof classSpotsRemaining === 'number') && (
-            <p className="text-sm text-muted-foreground">
-              {classDurationMinutes ? `${classDurationMinutes} min` : ''}
-              {classDurationMinutes && typeof classSpotsRemaining === 'number' ? ' · ' : ''}
-              {typeof classSpotsRemaining === 'number'
-                ? `${classSpotsRemaining} spot${classSpotsRemaining === 1 ? '' : 's'} left`
-                : ''}
-            </p>
+          {classDurationMinutes ? (
+            <p className="text-sm text-muted-foreground">{classDurationMinutes} min</p>
+          ) : null}
+          {typeof classSpotsRemaining === 'number' && (
+            <div className="mt-2">
+              <CapacityBadge
+                bookedCount={20 - classSpotsRemaining}
+                capacity={20}
+              />
+            </div>
           )}
           <div className="flex items-start gap-2 mt-3 text-xs text-muted-foreground">
             <svg className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
