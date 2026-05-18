@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/feedback/Skeleton';
 import { Input } from '@/components/ui/Input';
 import { formatCents } from '@/lib/pricing';
+import { BulkMemberEmailModal } from '@/components/admin/BulkMemberEmailModal';
 
 interface Student {
   id: string;
@@ -38,6 +39,20 @@ export default function AdminMembersPage() {
   const [editTarget, setEditTarget] = useState<Student | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>('created');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkEmailOpen, setBulkEmailOpen] = useState(false);
+
+  function toggleSelected(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+  function clearSelection() {
+    setSelected(new Set());
+  }
 
   async function load() {
     setLoading(true);
@@ -128,6 +143,22 @@ export default function AdminMembersPage() {
         </p>
       </div>
 
+      {selected.size > 0 && (
+        <div className="sticky top-0 z-20 -mx-4 px-4 mb-4 py-3 bg-[#c9a96e]/10 border-y border-[#c9a96e]/30 flex flex-wrap items-center gap-3">
+          <p className="text-sm font-semibold text-[#1a1a1a]">
+            {selected.size} member{selected.size === 1 ? '' : 's'} selected
+          </p>
+          <div className="ml-auto flex flex-wrap gap-2">
+            <Button size="sm" variant="ghost" onClick={clearSelection}>
+              Clear
+            </Button>
+            <Button size="sm" onClick={() => setBulkEmailOpen(true)}>
+              Email {selected.size} selected
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="mb-4 grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-2 sm:gap-3 sm:items-end">
         <Input
           label="Search"
@@ -164,11 +195,40 @@ export default function AdminMembersPage() {
       </div>
 
       {/* Mobile cards */}
-      <div className="lg:hidden space-y-2">
+      <div className="lg:hidden">
+        {filtered.length > 0 && (
+          <label className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-[#e5e2dc] text-[#c9a96e]"
+              checked={filtered.length > 0 && filtered.every((s) => selected.has(s.id))}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setSelected(new Set(filtered.map((s) => s.id)));
+                } else {
+                  clearSelection();
+                }
+              }}
+            />
+            Select all visible ({filtered.length})
+          </label>
+        )}
+        <div className="space-y-2">
         {filtered.map((s) => (
-          <div key={s.id} className="rounded-2xl border border-[#e5e2dc] bg-white p-4">
+          <div
+            key={s.id}
+            className={`rounded-2xl border bg-white p-4 ${selected.has(s.id) ? 'border-[#c9a96e]' : 'border-[#e5e2dc]'}`}
+          >
             <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
+              <div className="flex items-start gap-2 min-w-0">
+                <input
+                  type="checkbox"
+                  aria-label={`Select ${s.full_name || s.email}`}
+                  checked={selected.has(s.id)}
+                  onChange={() => toggleSelected(s.id)}
+                  className="mt-1 h-4 w-4 rounded border-[#e5e2dc] text-[#c9a96e] flex-shrink-0"
+                />
+                <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <p className="font-medium">{s.full_name || '(no name)'}</p>
                   <WaiverPill signed={!!s.waiver_signed_at} />
@@ -186,6 +246,7 @@ export default function AdminMembersPage() {
                     </a>
                   </div>
                 )}
+                </div>
               </div>
               <div className="flex flex-col items-end shrink-0">
                 <p className="text-xs text-muted-foreground">Credits</p>
@@ -209,6 +270,7 @@ export default function AdminMembersPage() {
             </div>
           </div>
         ))}
+        </div>
       </div>
 
       {/* Desktop table */}
@@ -216,6 +278,18 @@ export default function AdminMembersPage() {
         <table className="w-full text-sm">
           <thead className="bg-[#faf9f6] text-xs uppercase tracking-wider text-[#6b6b6b]">
             <tr>
+              <th className="px-3 py-3 text-left font-medium w-8">
+                <input
+                  type="checkbox"
+                  aria-label="Select all visible"
+                  className="h-4 w-4 rounded border-[#e5e2dc] text-[#c9a96e]"
+                  checked={filtered.length > 0 && filtered.every((s) => selected.has(s.id))}
+                  onChange={(e) => {
+                    if (e.target.checked) setSelected(new Set(filtered.map((s) => s.id)));
+                    else clearSelection();
+                  }}
+                />
+              </th>
               <Th label="Name" k="name" sortKey={sortKey} sortDir={sortDir} setSort={setSort} />
               <th className="px-4 py-3 text-left font-medium">Email</th>
               <th className="px-4 py-3 text-left font-medium">Phone</th>
@@ -229,7 +303,19 @@ export default function AdminMembersPage() {
           </thead>
           <tbody>
             {filtered.map((s) => (
-              <tr key={s.id} className="border-t border-[#e5e2dc] hover:bg-[#faf9f6]/50">
+              <tr
+                key={s.id}
+                className={`border-t border-[#e5e2dc] hover:bg-[#faf9f6]/50 ${selected.has(s.id) ? 'bg-[#c9a96e]/5' : ''}`}
+              >
+                <td className="px-3 py-3">
+                  <input
+                    type="checkbox"
+                    aria-label={`Select ${s.full_name || s.email}`}
+                    checked={selected.has(s.id)}
+                    onChange={() => toggleSelected(s.id)}
+                    className="h-4 w-4 rounded border-[#e5e2dc] text-[#c9a96e]"
+                  />
+                </td>
                 <td className="px-4 py-3 font-medium">{s.full_name || '(no name)'}</td>
                 <td className="px-4 py-3">
                   <a href={`mailto:${s.email}`} className="text-[#c9a96e] hover:underline">
@@ -279,7 +365,7 @@ export default function AdminMembersPage() {
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={10} className="px-4 py-8 text-center text-muted-foreground">
                   No members match.
                 </td>
               </tr>
@@ -307,6 +393,21 @@ export default function AdminMembersPage() {
             setEditTarget(null);
             await load();
           }}
+        />
+      )}
+
+      {bulkEmailOpen && (
+        <BulkMemberEmailModal
+          members={students
+            .filter((s) => selected.has(s.id))
+            .map((s) => ({
+              id: s.id,
+              full_name: s.full_name,
+              email: s.email,
+              credits: s.credits,
+              last_attended_at: s.last_attended_at,
+            }))}
+          onClose={() => setBulkEmailOpen(false)}
         />
       )}
     </div>
