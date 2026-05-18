@@ -48,7 +48,7 @@ export async function POST(
 
     const { data: bookings } = await supabase
       .from('bookings')
-      .select('id, profiles(full_name, email)')
+      .select('id, profiles!bookings_student_id_fkey(full_name, email)')
       .eq('class_id', params.id)
       .in('status', ['pending', 'confirmed']);
 

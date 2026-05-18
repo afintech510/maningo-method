@@ -28,9 +28,12 @@ export async function GET(
     );
   }
 
+  // Disambiguate the profiles join — bookings has two FKs into profiles
+  // (student_id and added_by_admin), so PostgREST refuses an unqualified
+  // `profiles(…)` and returns null silently.
   const { data: enrollments } = await supabase
     .from('bookings')
-    .select('id, payment_type, status, created_at, profiles(full_name, email, phone)')
+    .select('id, payment_type, status, created_at, profiles!bookings_student_id_fkey(full_name, email, phone)')
     .eq('class_id', params.id)
     .in('status', ['pending', 'confirmed'])
     .order('created_at', { ascending: true });

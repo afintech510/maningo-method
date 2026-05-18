@@ -54,7 +54,7 @@ export async function PATCH(
       // 3. Get all bookings for this class
       const { data: bookings } = await supabase
         .from('bookings')
-        .select('id, student_id, payment_type, stripe_payment_intent_id, amount_paid_cents, profiles(full_name, email)')
+        .select('id, student_id, payment_type, stripe_payment_intent_id, amount_paid_cents, profiles!bookings_student_id_fkey(full_name, email)')
         .eq('class_id', params.id)
         .in('status', ['pending', 'confirmed']);
 
