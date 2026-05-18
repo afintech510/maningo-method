@@ -180,6 +180,11 @@ export default function AdminClassesPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
+      <div className="mb-3">
+        <Link href="/admin/classes/manage" className="text-sm text-[#c9a96e] hover:underline">
+          Try the new manager &rarr;
+        </Link>
+      </div>
       <div className="mb-6">
         <p className="text-xs font-medium uppercase tracking-[0.25em] text-[#c9a96e] mb-1">Classes</p>
         <h1 className="text-2xl sm:text-3xl font-bold">Manage classes</h1>
