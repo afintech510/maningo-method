@@ -2,12 +2,14 @@ import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 
+export type Role = 'student' | 'admin' | 'superadmin';
+
 export type UserProfile = {
   id: string;
   full_name: string;
   email: string;
   phone: string | null;
-  role: 'student' | 'admin';
+  role: Role;
   stripe_customer_id: string | null;
 };
 
@@ -37,7 +39,12 @@ export async function getAuth(): Promise<AuthResult> {
   }
 }
 
-export async function requireAuth(role?: 'student' | 'admin') {
+/**
+ * Role gates. superadmin ⊇ admin — anyone marked superadmin satisfies every
+ * admin-required route, plus has exclusive access to superadmin-only paths
+ * (lease lock / payment).
+ */
+export async function requireAuth(role?: Role) {
   const auth = await getAuth();
 
   if (!auth) {
@@ -47,7 +54,13 @@ export async function requireAuth(role?: 'student' | 'admin') {
     );
   }
 
-  if (role === 'admin' && auth.user.role !== 'admin') {
+  if (role === 'admin' && auth.user.role !== 'admin' && auth.user.role !== 'superadmin') {
+    return NextResponse.json(
+      { error: { code: 'FORBIDDEN', message: "You don't have access to this." } },
+      { status: 403 }
+    );
+  }
+  if (role === 'superadmin' && auth.user.role !== 'superadmin') {
     return NextResponse.json(
       { error: { code: 'FORBIDDEN', message: "You don't have access to this." } },
       { status: 403 }
