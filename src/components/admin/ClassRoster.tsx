@@ -71,6 +71,12 @@ export function ClassRoster({ classId, capacity, enrollments, onChange }: Props)
   async function handleAdd(student: StudentSearchResult) {
     setError(null);
     setNotice(null);
+    if (!student.waiver_signed_at) {
+      const ok = window.confirm(
+        `${student.full_name} has NOT signed the waiver. Add them to this class anyway? (Waiver override)`,
+      );
+      if (!ok) return;
+    }
     setAdding(student.id);
     try {
       const res = await fetch(`/api/admin/classes/${classId}/bookings`, {
@@ -236,7 +242,13 @@ export function ClassRoster({ classId, capacity, enrollments, onChange }: Props)
                       disabled={disable}
                       onClick={() => handleAdd(s)}
                     >
-                      {already ? 'Booked' : tooFew ? 'Add anyway' : 'Add'}
+                      {already
+                        ? 'Booked'
+                        : !s.waiver_signed_at
+                          ? 'Add (waiver override)'
+                          : tooFew
+                            ? 'Add anyway'
+                            : 'Add'}
                     </Button>
                   </div>
                 );
