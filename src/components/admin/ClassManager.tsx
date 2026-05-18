@@ -190,8 +190,9 @@ export function ClassManager() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-        {/* Left: filters + list */}
-        <div className="lg:col-span-2 space-y-3">
+        {/* Left: filters + list. Hidden on mobile when a class is selected so
+            the editor takes the full focus. Always visible on lg+. */}
+        <div className={`${selectedId ? 'hidden lg:block' : 'block'} lg:col-span-2 space-y-3`}>
           <div className="flex flex-wrap items-center gap-3">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-[#6b6b6b]">
               {sorted.length} of {classes.length}
@@ -311,15 +312,24 @@ export function ClassManager() {
         <div ref={detailRef} className="lg:col-span-3">
           <div className="lg:sticky lg:top-4">
             {selected ? (
-              <ClassDetailPanel
-                key={selected.id}
-                classId={selected.id}
-                initialStatus={selected.status}
-                onChanged={load}
-                onDuplicate={openDuplicate}
-              />
+              <>
+                <button
+                  type="button"
+                  onClick={() => setSelectedId(null)}
+                  className="lg:hidden mb-3 inline-flex items-center gap-1 text-sm font-medium text-[#c9a96e] hover:underline min-h-[44px]"
+                >
+                  ← Back to all classes
+                </button>
+                <ClassDetailPanel
+                  key={selected.id}
+                  classId={selected.id}
+                  initialStatus={selected.status}
+                  onChanged={load}
+                  onDuplicate={openDuplicate}
+                />
+              </>
             ) : (
-              <div className="rounded-2xl border border-dashed border-[#e5e2dc] bg-[#faf9f6] p-6 text-center">
+              <div className="hidden lg:block rounded-2xl border border-dashed border-[#e5e2dc] bg-[#faf9f6] p-6 text-center">
                 <p className="text-sm text-muted-foreground">
                   Pick a class on the left to edit details, manage the roster, or email the class.
                 </p>

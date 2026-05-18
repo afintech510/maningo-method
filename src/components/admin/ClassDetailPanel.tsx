@@ -49,29 +49,38 @@ export function ClassDetailPanel({ classId, initialStatus, onChanged, onDuplicat
   // Cancel
   const [showCancel, setShowCancel] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = useMemo(() => async () => {
     setLoading(true);
-    const res = await fetch(`/api/admin/classes/${classId}/enrollments`);
-    const payload = await res.json();
-    if (res.ok) {
-      const next: ClassData = {
-        id: payload.class_id,
-        class_title: payload.class_title,
-        starts_at: payload.starts_at,
-        duration_minutes: payload.duration_minutes ?? 50,
-        max_capacity: payload.max_capacity,
-        status: initialStatus,
-      };
-      setData(next);
-      setEnrollments(payload.enrollments || []);
-      const z = toZonedTime(new Date(next.starts_at), STUDIO_TIMEZONE);
-      setEditTitle(next.class_title);
-      setEditStartsAt(format(z, "yyyy-MM-dd'T'HH:mm"));
-      setEditDuration(next.duration_minutes);
-      setEditCapacity(next.max_capacity);
+    setLoadError(null);
+    try {
+      const res = await fetch(`/api/admin/classes/${classId}/enrollments`);
+      const payload = await res.json().catch(() => null);
+      if (!res.ok) {
+        setLoadError(payload?.error?.message || `Could not load this class (HTTP ${res.status}).`);
+      } else {
+        const next: ClassData = {
+          id: payload.class_id,
+          class_title: payload.class_title,
+          starts_at: payload.starts_at,
+          duration_minutes: payload.duration_minutes ?? 50,
+          max_capacity: payload.max_capacity,
+          status: initialStatus,
+        };
+        setData(next);
+        setEnrollments(payload.enrollments || []);
+        const z = toZonedTime(new Date(next.starts_at), STUDIO_TIMEZONE);
+        setEditTitle(next.class_title);
+        setEditStartsAt(format(z, "yyyy-MM-dd'T'HH:mm"));
+        setEditDuration(next.duration_minutes);
+        setEditCapacity(next.max_capacity);
+      }
+    } catch (err) {
+      setLoadError((err as Error).message);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [classId, initialStatus]);
 
   useEffect(() => {
@@ -153,6 +162,14 @@ export function ClassDetailPanel({ classId, initialStatus, onChanged, onDuplicat
       starts_on: startsOn,
       horizon_weeks: 4,
     });
+  }
+
+  if (loadError) {
+    return (
+      <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+        {loadError}
+      </div>
+    );
   }
 
   if (loading || !data) {
