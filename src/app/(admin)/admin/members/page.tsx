@@ -15,9 +15,10 @@ interface Student {
   credits: number;
   lifetime_spend_cents: number;
   waiver_signed_at: string | null;
+  last_attended_at: string | null;
 }
 
-type SortKey = 'name' | 'credits' | 'spend' | 'created' | 'waiver';
+type SortKey = 'name' | 'credits' | 'spend' | 'created' | 'waiver' | 'last_attended';
 type SortDir = 'asc' | 'desc';
 
 const SORT_OPTIONS: Array<{ value: SortKey; label: string }> = [
@@ -26,6 +27,7 @@ const SORT_OPTIONS: Array<{ value: SortKey; label: string }> = [
   { value: 'credits', label: 'Credits' },
   { value: 'spend', label: 'Lifetime spend' },
   { value: 'waiver', label: 'Waiver' },
+  { value: 'last_attended', label: 'Last class' },
 ];
 
 export default function AdminMembersPage() {
@@ -73,6 +75,12 @@ export default function AdminMembersPage() {
           const av = a.waiver_signed_at ? 1 : 0;
           const bv = b.waiver_signed_at ? 1 : 0;
           return (av - bv) * dir;
+        }
+        case 'last_attended': {
+          // Sort by most-recent attendance. Never-attended (null) sorts last.
+          const at = a.last_attended_at ? new Date(a.last_attended_at).getTime() : 0;
+          const bt = b.last_attended_at ? new Date(b.last_attended_at).getTime() : 0;
+          return (at - bt) * dir;
         }
         case 'created':
         default:
@@ -187,6 +195,8 @@ export default function AdminMembersPage() {
             <div className="flex items-center justify-between mt-3 text-xs">
               <span className="text-muted-foreground">
                 Lifetime: <strong className="text-[#2d2d2d]">{formatCents(s.lifetime_spend_cents)}</strong>
+                {' · '}
+                Last class: <strong className="text-[#2d2d2d]">{formatLastAttended(s.last_attended_at)}</strong>
               </span>
               <div className="flex gap-1">
                 <Button size="sm" variant="ghost" onClick={() => setEditTarget(s)}>
@@ -212,6 +222,7 @@ export default function AdminMembersPage() {
               <Th label="Waiver" k="waiver" sortKey={sortKey} sortDir={sortDir} setSort={setSort} />
               <Th label="Credits" k="credits" sortKey={sortKey} sortDir={sortDir} setSort={setSort} align="right" />
               <Th label="Lifetime spend" k="spend" sortKey={sortKey} sortDir={sortDir} setSort={setSort} align="right" />
+              <Th label="Last class" k="last_attended" sortKey={sortKey} sortDir={sortDir} setSort={setSort} />
               <Th label="Joined" k="created" sortKey={sortKey} sortDir={sortDir} setSort={setSort} />
               <th className="px-4 py-3 text-right font-medium">Actions</th>
             </tr>
@@ -249,6 +260,9 @@ export default function AdminMembersPage() {
                 <td className="px-4 py-3 text-right tabular-nums">{s.credits}</td>
                 <td className="px-4 py-3 text-right tabular-nums">{formatCents(s.lifetime_spend_cents)}</td>
                 <td className="px-4 py-3 text-muted-foreground">
+                  {formatLastAttended(s.last_attended_at)}
+                </td>
+                <td className="px-4 py-3 text-muted-foreground">
                   {new Date(s.created_at).toLocaleDateString()}
                 </td>
                 <td className="px-4 py-3 text-right">
@@ -265,7 +279,7 @@ export default function AdminMembersPage() {
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">
                   No members match.
                 </td>
               </tr>
@@ -297,6 +311,22 @@ export default function AdminMembersPage() {
       )}
     </div>
   );
+}
+
+function formatLastAttended(iso: string | null): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '—';
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const days = Math.floor(diffMs / (24 * 60 * 60 * 1000));
+  const datePart = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  if (days <= 0) return `Today (${datePart})`;
+  if (days === 1) return `Yesterday (${datePart})`;
+  if (days < 14) return `${days}d ago (${datePart})`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 12) return `${weeks}w ago (${datePart})`;
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function WaiverPill({ signed }: { signed: boolean }) {
@@ -479,6 +509,25 @@ function EditMemberModal({
   const [phone, setPhone] = useState(student.phone || '');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resetState, setResetState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [resetError, setResetError] = useState<string | null>(null);
+
+  async function handleSendReset() {
+    if (!window.confirm(`Send a password reset email to ${student.email}?`)) return;
+    setResetState('sending');
+    setResetError(null);
+    const res = await fetch(`/api/admin/students/${student.id}/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setResetError(body?.error?.message || 'Could not send reset email.');
+      setResetState('error');
+      return;
+    }
+    setResetState('sent');
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -574,6 +623,35 @@ function EditMemberModal({
             Changing email updates their login. They can still use their existing password.
           </p>
         </form>
+
+        {/* Account access — send a password reset link */}
+        <div className="mt-6 pt-5 border-t border-[#e5e2dc]">
+          <p className="text-xs uppercase tracking-wider text-[#6b6b6b] font-medium mb-1">
+            Account access
+          </p>
+          <p className="text-sm text-muted-foreground mb-3">
+            Send a password reset email to <strong className="text-[#2d2d2d] break-all">{student.email}</strong>.
+            They&rsquo;ll click the link to set a new password.
+          </p>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={handleSendReset}
+            loading={resetState === 'sending'}
+            disabled={resetState === 'sending'}
+            className="w-full"
+          >
+            {resetState === 'sent' ? 'Sent ✓' : 'Send reset link'}
+          </Button>
+          {resetState === 'sent' && (
+            <p className="text-xs text-emerald-700 mt-2">
+              Sent — link expires in 1 hour. They can request another anytime.
+            </p>
+          )}
+          {resetState === 'error' && resetError && (
+            <p className="text-xs text-red-700 mt-2">{resetError}</p>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -31,9 +31,30 @@ export async function GET() {
   const spendMap = new Map<string, number>();
   (spends as SpendRow[] | null)?.forEach((s) => spendMap.set(s.id, s.total_cents || 0));
 
+  // Last attended class per student — pulls confirmed bookings whose class
+  // start is in the past, then keeps the most recent per student.
+  const nowIso = new Date().toISOString();
+  const { data: attended } = await supabase
+    .from('bookings')
+    .select('student_id, classes!inner(starts_at)')
+    .eq('status', 'confirmed')
+    .lt('classes.starts_at', nowIso)
+    .order('classes(starts_at)', { ascending: false });
+
+  const lastAttendedMap = new Map<string, string>();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (attended as any[] | null)?.forEach((r) => {
+    const studentId = r.student_id as string | undefined;
+    const startsAt = (r.classes?.starts_at as string | undefined) || undefined;
+    if (!studentId || !startsAt) return;
+    const prev = lastAttendedMap.get(studentId);
+    if (!prev || startsAt > prev) lastAttendedMap.set(studentId, startsAt);
+  });
+
   const result = (students || []).map((s) => ({
     ...s,
     lifetime_spend_cents: spendMap.get(s.id) || 0,
+    last_attended_at: lastAttendedMap.get(s.id) || null,
   }));
 
   return NextResponse.json({ students: result });
