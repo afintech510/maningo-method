@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, isAuthError } from '@/lib/auth';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 export async function GET(
   _request: NextRequest,
@@ -9,7 +9,11 @@ export async function GET(
   const auth = await requireAuth('admin');
   if (isAuthError(auth)) return auth;
 
-  const supabase = createClient();
+  // Service-role client — the route is already auth-gated, and RLS
+  // (or its surrounding profile-join behaviour) was returning empty
+  // enrollment lists for some sessions even when the booking count
+  // pulled from the same table was non-zero.
+  const supabase = createAdminClient();
 
   const { data: classData } = await supabase
     .from('classes')
