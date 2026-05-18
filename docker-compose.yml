@@ -22,7 +22,13 @@ services:
           memory: 512M
     networks:
       - maningo_net
+      - hampton_nginx
 
 networks:
   maningo_net:
     driver: bridge
+  # Shared network with hampton_nginx so the reverse proxy can resolve
+  # maningo_app by name. Created by the hosthampton compose project.
+  hampton_nginx:
+    external: true
+    name: hosthampton_hampton_net
