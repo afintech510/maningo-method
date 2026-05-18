@@ -221,10 +221,8 @@ export function RentLedger({ isSuperadmin }: { isSuperadmin: boolean }) {
         {feed.locked.length === 0 ? (
           <Card>
             <p className="text-sm text-muted-foreground">
-              No locked months yet.{' '}
-              {isSuperadmin
-                ? 'Click the Lock button above to snapshot the next month.'
-                : "Once Adam locks a month, it'll show up here."}
+              No locked months yet.
+              {isSuperadmin && ' Click the Lock button above to snapshot the next month.'}
             </p>
           </Card>
         ) : (
