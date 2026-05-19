@@ -21,10 +21,10 @@ export default async function DashboardPage() {
 
   const supabase = createAdminClient();
 
-  // Fetch profile with credits, referral code, and signup timestamp
+  // Fetch profile with credits, referral code, signup timestamp, and waiver status
   const { data: profile } = await supabase
     .from('profiles')
-    .select('credits, gift_balance_cents, referral_code, created_at')
+    .select('credits, gift_balance_cents, referral_code, created_at, waiver_signed_at')
     .eq('id', auth.user.id)
     .single();
 
@@ -121,6 +121,25 @@ export default async function DashboardPage() {
           </div>
         </div>
       </section>
+
+      {/* Waiver banner — non-dismissable nudge for members who haven't signed yet */}
+      {!profile?.waiver_signed_at && (
+        <a
+          href="/waiver/sign"
+          className="block rounded-2xl border-2 border-[#c9a96e] bg-[#c9a96e]/10 hover:bg-[#c9a96e]/15 transition-colors p-4 sm:p-5 mb-4"
+        >
+          <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#c9a96e] mb-1">
+            Action needed
+          </p>
+          <p className="text-base sm:text-lg font-semibold text-[#2d2d2d]">
+            Sign your liability waiver →
+          </p>
+          <p className="text-sm text-[#6b6b6b] mt-1">
+            Quick, one-time, two-minute step. Required before your first class — Chelsea will
+            ask at the door if it&rsquo;s still pending.
+          </p>
+        </a>
+      )}
 
       {/* Next Class card */}
       <NextClassCard next={nextClass} />

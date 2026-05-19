@@ -27,25 +27,14 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check credits + waiver
+    // Waiver is no longer a blocker; the dashboard nudges unsigned members
+    // to complete it but they can still book.
     const adminClient = createAdminClient();
     const { data: profile } = await adminClient
       .from('profiles')
-      .select('credits, gift_balance_cents, waiver_signed_at')
+      .select('credits, gift_balance_cents')
       .eq('id', auth.user.id)
       .single();
-
-    if (!profile?.waiver_signed_at) {
-      return NextResponse.json(
-        {
-          error: {
-            code: 'WAIVER_REQUIRED',
-            message: 'Please sign the liability waiver before booking your first class.',
-          },
-        },
-        { status: 412 }
-      );
-    }
 
     // If they don't have a regular credit but have at least $25 of gift
     // balance, silently convert $25 of balance → 1 credit so the booking can
