@@ -4,6 +4,7 @@ import { getStripe, getOrCreateStripeCustomer } from '@/lib/stripe';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getBaseUrl } from '@/lib/utils';
 import { logger, generateCorrelationId } from '@/lib/logger';
+import { validateDiscountCode } from '@/lib/marketing/discountCode';
 
 const PACKS: Record<string, { priceEnv: string; credits: number; label: string }> = {
   intro: { priceEnv: 'STRIPE_INTRO_PRICE_ID', credits: 1, label: 'Intro Class' },
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest) {
   if (isAuthError(auth)) return auth;
 
   try {
-    const { pack_type, referral_code } = await request.json();
+    const { pack_type, referral_code, discount_code } = await request.json();
     const pack = PACKS[pack_type];
 
     if (!pack) {
@@ -70,10 +71,43 @@ export async function POST(request: NextRequest) {
       metadata.referral_code = referral_code;
     }
 
+    // Discount code (optional). We mint a single-use Stripe coupon on the
+    // fly so the checkout session shows the discount as a line item, then
+    // mark the underlying discount_codes row redeemed in the webhook.
+    let discountCouponId: string | null = null;
+    if (discount_code) {
+      const supabase = createAdminClient();
+      const result = await validateDiscountCode(supabase, discount_code, auth.user.id);
+      if (!result.valid) {
+        return NextResponse.json(
+          { error: { code: 'INVALID_DISCOUNT', message: result.message || 'Invalid discount code.' } },
+          { status: 400 }
+        );
+      }
+      const row = result.discount!;
+      if (row.discount_type !== 'percentage') {
+        return NextResponse.json(
+          { error: { code: 'UNSUPPORTED_DISCOUNT', message: 'This code is not supported here.' } },
+          { status: 400 }
+        );
+      }
+      const coupon = await stripe.coupons.create({
+        percent_off: Number(row.discount_value),
+        duration: 'once',
+        max_redemptions: 1,
+        name: `Maningo Method 15% off (${row.code})`,
+        metadata: { discount_code: row.code, discount_code_id: row.id },
+      });
+      discountCouponId = coupon.id;
+      metadata.discount_code = row.code;
+      metadata.discount_code_id = row.id;
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
+      ...(discountCouponId ? { discounts: [{ coupon: discountCouponId }] } : {}),
       success_url: `${baseUrl}/booking-success?type=pack&pack=${pack_type}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/dashboard?cancelled=true`,
       metadata,

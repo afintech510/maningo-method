@@ -113,6 +113,7 @@ export async function POST(request: NextRequest) {
             log,
           });
           await rewardReferrerOnce(studentId, paymentIntent || session.id, log);
+          await markDiscountCodeRedeemed(supabase, md.discount_code_id, 'credit_pack', log);
         } else if (bookingId) {
           const { error } = await supabase
             .from('bookings')
@@ -323,6 +324,10 @@ export async function POST(request: NextRequest) {
             log,
           });
           await rewardReferrerOnce(studentId, intent.id, log);
+          await markDiscountCodeRedeemed(supabase, md.discount_code_id, 'credit_pack', log);
+        } else if (!isGift && md.discount_code_id) {
+          // Drop-in inline path or any other discounted non-pack PI.
+          await markDiscountCodeRedeemed(supabase, md.discount_code_id, 'drop_in', log);
         }
         break;
       }
@@ -336,6 +341,26 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     log.error({ err }, 'Webhook processing failed');
     return NextResponse.json({ error: 'Processing failed' }, { status: 500 });
+  }
+}
+
+async function markDiscountCodeRedeemed(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  codeId: string | undefined,
+  context: 'credit_pack' | 'drop_in' | 'gift_card',
+  log: { info: (...a: unknown[]) => void; error: (...a: unknown[]) => void },
+): Promise<void> {
+  if (!codeId) return;
+  const { error } = await supabase
+    .from('discount_codes')
+    .update({ redeemed_at: new Date().toISOString(), is_active: false, redemption_context: context })
+    .eq('id', codeId)
+    .is('redeemed_at', null);
+  if (error) {
+    log.error({ err: error, codeId }, 'Failed to mark discount code redeemed');
+  } else {
+    log.info({ codeId, context }, 'Discount code redeemed');
   }
 }
 

@@ -4,6 +4,7 @@ import { getStripe, getOrCreateStripeCustomer } from '@/lib/stripe';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logger, generateCorrelationId } from '@/lib/logger';
 import { withServiceFee } from '@/lib/pricing';
+import { validateDiscountCode, applyDiscount } from '@/lib/marketing/discountCode';
 
 const PACKS: Record<string, { credits: number; amount_cents: number; label: string }> = {
   single: { credits: 1, amount_cents: 2500, label: 'Drop-In Class' },
@@ -78,6 +79,25 @@ export async function POST(request: NextRequest) {
 
     const stripe = getStripe();
     const customerId = await getOrCreateStripeCustomer(auth.user.id, auth.user.email);
+
+    // Optional discount code (review-request 15%, etc.) — apply to the
+    // base before the service fee so the percentage hits the studio price.
+    const discountCode: string | undefined = body.discount_code;
+    if (discountCode) {
+      const supabase = createAdminClient();
+      const result = await validateDiscountCode(supabase, discountCode, auth.user.id);
+      if (!result.valid) {
+        return NextResponse.json(
+          { error: { code: 'INVALID_DISCOUNT', message: result.message || 'Invalid discount code.' } },
+          { status: 400 }
+        );
+      }
+      const before = amountCents;
+      amountCents = applyDiscount(amountCents, result.discount!);
+      metadata.discount_code = result.discount!.code;
+      metadata.discount_code_id = result.discount!.id;
+      metadata.discount_amount_cents = String(before - amountCents);
+    }
 
     const fee = withServiceFee(amountCents);
     const totalCents = fee.total_cents;

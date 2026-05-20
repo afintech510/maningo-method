@@ -3,6 +3,7 @@ import { Playfair_Display, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { getAuth } from "@/lib/auth";
 import { MobileNav } from "@/components/layout/MobileNav";
+import { LocalBusinessSchema } from "@/components/seo/LocalBusinessSchema";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -17,12 +18,20 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Maningo Method — Mat Pilates / Sculpt in Speonk, NY",
+  title: "Maningo Method | Pilates Studio in Speonk, NY",
   description:
-    "High-energy mat Pilates and sculpt classes in Speonk, NY. Drop-in $25, 5-pack $112, 10-pack $200. All levels welcome.",
+    "Mat & Sculpt Pilates classes in Speonk, NY — serving Westhampton, East Quogue, and the surrounding Hamptons area. Small classes, max 20 students, all levels welcome. Book online.",
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_BASE_URL || "https://www.maningomethod.com"
   ),
+  openGraph: {
+    title: "Maningo Method | Pilates Studio in Speonk, NY",
+    description:
+      "Mat & Sculpt Pilates classes in Speonk, NY — serving Westhampton, East Quogue, and the surrounding Hamptons area. Book your spot online.",
+    url: "https://www.maningomethod.com",
+    siteName: "Maningo Method",
+    type: "website",
+  },
   icons: {
     icon: [
       { url: "/favicon.ico" },
@@ -52,6 +61,9 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
+      <head>
+        <LocalBusinessSchema />
+      </head>
       <body
         className={`${playfair.variable} ${dmSans.variable} font-sans antialiased bg-background text-foreground ${
           isLoggedIn ? 'pb-16 lg:pb-0' : ''

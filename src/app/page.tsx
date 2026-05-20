@@ -59,13 +59,13 @@ export default function Home() {
               Pilates on the Edge of the Hamptons
             </span>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-[1.1] mb-5 max-w-2xl">
-              Full Body Mat Pilates <span className="text-[#c9a96e]">&#9670;</span> Sculpt Classes
+              Pilates Classes in <span className="text-[#c9a96e]">Speonk, NY</span>
             </h1>
             <span className="inline-block bg-[#1a1a1a]/70 backdrop-blur-sm text-[#c9a96e] text-[11px] sm:text-sm font-medium tracking-[0.2em] sm:tracking-[0.25em] uppercase mb-4 px-3 py-1.5 rounded-full">
-              Strength &times; Control &times; Mindful Movement &times; Music
+              Mat Pilates &times; Sculpt &times; All Levels
             </span>
             <p className="text-white/80 text-lg mb-8 max-w-xl leading-relaxed">
-              A high-energy mat pilates experience designed for all levels. Challenge your body, clear your mind, and leave feeling stronger and empowered.
+              Maningo Method offers Mat &amp; Sculpt Pilates in Speonk, NY &mdash; serving Westhampton, East Quogue, Remsenburg, and the surrounding Hamptons area. Small classes, max 20 students, all levels welcome.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <Link
@@ -370,6 +370,19 @@ export default function Home() {
               </div>
               <p className="text-xs text-[#6b6b6b] mt-4">295 Montauk Highway, Suite 7 &middot; Speonk, NY 11972</p>
             </div>
+          </div>
+
+          {/* Studio map */}
+          <div className="mt-6 rounded-2xl overflow-hidden border border-[#e5e2dc] bg-white">
+            <iframe
+              src="https://www.google.com/maps?q=295+Montauk+Highway+Suite+7+Speonk+NY+11972&output=embed"
+              width="100%"
+              height="320"
+              style={{ border: 0 }}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title="Maningo Method Pilates Studio location — 295 Montauk Highway, Speonk NY"
+            />
           </div>
         </div>
       </section>
