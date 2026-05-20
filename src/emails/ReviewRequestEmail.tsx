@@ -1,19 +1,17 @@
-import { Text } from '@react-email/components';
-import { EmailLayout, EmailCard, EmailButton, EmailParagraph, EMAIL_BRAND } from './components/EmailLayout';
+import { EmailLayout, EmailButton, EmailParagraph } from './components/EmailLayout';
 
 interface Props {
   firstName: string;
-  discountCode: string;
   reviewUrl: string;
   bookingUrl: string;
 }
 
-export function ReviewRequestEmail({ firstName, discountCode, reviewUrl, bookingUrl }: Props) {
+export function ReviewRequestEmail({ firstName, reviewUrl, bookingUrl }: Props) {
   return (
     <EmailLayout
       kicker="Thank you"
       heading="Thanks for your first class."
-      preview={`Here&rsquo;s 15% off your next booking, ${firstName}.`}
+      preview={`Hi ${firstName} — would you share a quick review?`}
     >
       <EmailParagraph>Hi {firstName},</EmailParagraph>
       <EmailParagraph>
@@ -23,17 +21,9 @@ export function ReviewRequestEmail({ firstName, discountCode, reviewUrl, booking
 
       <EmailButton href={reviewUrl}>Leave a Google review &rarr;</EmailButton>
 
-      <EmailCard tone="gold">
-        <Text style={{ margin: 0, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.15em', color: EMAIL_BRAND.muted }}>
-          Thank-you code
-        </Text>
-        <Text style={{ margin: '4px 0 0', fontFamily: 'Georgia, serif', fontSize: '22px', fontWeight: 700, color: EMAIL_BRAND.ink, letterSpacing: '0.05em' }}>
-          {discountCode}
-        </Text>
-        <Text style={{ margin: '6px 0 0', color: EMAIL_BRAND.muted, fontSize: '13px' }}>
-          15% off a credit pack or drop-in. Single use &middot; valid 30 days.
-        </Text>
-      </EmailCard>
+      <EmailParagraph>
+        And whenever you&rsquo;re ready to come back, the schedule&rsquo;s here:
+      </EmailParagraph>
 
       <EmailButton href={bookingUrl} tone="dark">Book your next class</EmailButton>
 

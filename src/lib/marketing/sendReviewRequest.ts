@@ -2,7 +2,6 @@ import { createElement } from 'react';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getResend, FROM_EMAIL, REPLY_TO } from '@/lib/resend';
 import { ReviewRequestEmail } from '@/emails/ReviewRequestEmail';
-import { generateDiscountCode } from './generateDiscountCode';
 import { logger } from '@/lib/logger';
 
 // TODO drop the real Google Place ID in once the studio is verified.
@@ -20,7 +19,6 @@ interface Result {
   sent: boolean;
   skipped?: 'already_sent' | 'no_email' | 'no_member';
   error?: string;
-  code?: string;
 }
 
 /**
@@ -28,11 +26,12 @@ interface Result {
  * marketing_emails_sent UNIQUE (member_id, email_type) dedup. Returns the
  * outcome so the caller (typically a cron) can tally results.
  *
- * Order matters:
- *  1. Insert into marketing_emails_sent FIRST so concurrent runs collide on
- *     the unique constraint and only one proceeds.
- *  2. Mint the discount code.
- *  3. Send the email.
+ * Insert into marketing_emails_sent FIRST so concurrent runs collide on the
+ * unique constraint and only one proceeds.
+ *
+ * No discount code is minted today — discount-code infrastructure remains
+ * available for future flows (the validate endpoint + checkout wiring are
+ * intact), but this email is a plain ask.
  */
 export async function sendReviewRequest(memberId: string): Promise<Result> {
   const supabase = createAdminClient();
@@ -63,21 +62,7 @@ export async function sendReviewRequest(memberId: string): Promise<Result> {
   }
   const firstName = (member.full_name || '').split(' ')[0] || 'there';
 
-  // 3. Mint the discount code.
-  const code = generateDiscountCode('REVIEW');
-  const { error: codeErr } = await supabase.from('discount_codes').insert({
-    code,
-    member_id: memberId,
-    discount_type: 'percentage',
-    discount_value: 15,
-    reason: 'review_request',
-  });
-  if (codeErr) {
-    logger.error({ err: codeErr, memberId }, 'Could not mint review-request discount code');
-    return { sent: false, error: codeErr.message };
-  }
-
-  // 4. Send.
+  // 3. Send.
   try {
     const resend = getResend();
     await resend.emails.send({
@@ -87,12 +72,11 @@ export async function sendReviewRequest(memberId: string): Promise<Result> {
       subject: `Thank you for your first class, ${firstName} 🧘`,
       react: createElement(ReviewRequestEmail, {
         firstName,
-        discountCode: code,
         reviewUrl: REVIEW_URL,
         bookingUrl: BOOKING_URL,
       }),
     });
-    return { sent: true, code };
+    return { sent: true };
   } catch (err) {
     logger.error({ err, memberId }, 'Review-request send failed');
     return { sent: false, error: (err as Error).message };
