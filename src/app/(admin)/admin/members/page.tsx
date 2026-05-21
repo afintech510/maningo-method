@@ -17,9 +17,10 @@ interface Student {
   lifetime_spend_cents: number;
   waiver_signed_at: string | null;
   last_attended_at: string | null;
+  classes_attended: number;
 }
 
-type SortKey = 'name' | 'credits' | 'spend' | 'created' | 'waiver' | 'last_attended';
+type SortKey = 'name' | 'credits' | 'spend' | 'created' | 'waiver' | 'last_attended' | 'classes_attended';
 type SortDir = 'asc' | 'desc';
 
 const SORT_OPTIONS: Array<{ value: SortKey; label: string }> = [
@@ -29,6 +30,7 @@ const SORT_OPTIONS: Array<{ value: SortKey; label: string }> = [
   { value: 'spend', label: 'Lifetime spend' },
   { value: 'waiver', label: 'Waiver' },
   { value: 'last_attended', label: 'Last class' },
+  { value: 'classes_attended', label: 'Classes attended' },
 ];
 
 export default function AdminMembersPage() {
@@ -97,6 +99,8 @@ export default function AdminMembersPage() {
           const bt = b.last_attended_at ? new Date(b.last_attended_at).getTime() : 0;
           return (at - bt) * dir;
         }
+        case 'classes_attended':
+          return ((a.classes_attended || 0) - (b.classes_attended || 0)) * dir;
         case 'created':
         default:
           return (new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) * dir;
@@ -126,7 +130,7 @@ export default function AdminMembersPage() {
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto px-4 py-6">
         <h1 className="text-2xl font-bold mb-4">Members</h1>
         <Skeleton variant="card" />
       </div>
@@ -134,7 +138,7 @@ export default function AdminMembersPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6">
+    <div className="max-w-7xl mx-auto px-4 py-6">
       <div className="mb-6">
         <p className="text-xs font-medium uppercase tracking-[0.25em] text-[#c9a96e] mb-1">Members</p>
         <h1 className="text-2xl sm:text-3xl font-bold">All members</h1>
@@ -255,6 +259,8 @@ export default function AdminMembersPage() {
             </div>
             <div className="flex items-center justify-between mt-3 text-xs">
               <span className="text-muted-foreground">
+                Classes: <strong className="text-[#2d2d2d]">{s.classes_attended}</strong>
+                {' · '}
                 Lifetime: <strong className="text-[#2d2d2d]">{formatCents(s.lifetime_spend_cents)}</strong>
                 {' · '}
                 Last class: <strong className="text-[#2d2d2d]">{formatLastAttended(s.last_attended_at)}</strong>
@@ -274,8 +280,8 @@ export default function AdminMembersPage() {
       </div>
 
       {/* Desktop table */}
-      <div className="hidden lg:block rounded-2xl border border-[#e5e2dc] bg-white overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="hidden lg:block rounded-2xl border border-[#e5e2dc] bg-white overflow-x-auto">
+        <table className="w-full text-sm min-w-[1100px]">
           <thead className="bg-[#faf9f6] text-xs uppercase tracking-wider text-[#6b6b6b]">
             <tr>
               <th className="px-3 py-3 text-left font-medium w-8">
@@ -295,6 +301,7 @@ export default function AdminMembersPage() {
               <th className="px-4 py-3 text-left font-medium">Phone</th>
               <Th label="Waiver" k="waiver" sortKey={sortKey} sortDir={sortDir} setSort={setSort} />
               <Th label="Credits" k="credits" sortKey={sortKey} sortDir={sortDir} setSort={setSort} align="right" />
+              <Th label="Classes" k="classes_attended" sortKey={sortKey} sortDir={sortDir} setSort={setSort} align="right" />
               <Th label="Lifetime spend" k="spend" sortKey={sortKey} sortDir={sortDir} setSort={setSort} align="right" />
               <Th label="Last class" k="last_attended" sortKey={sortKey} sortDir={sortDir} setSort={setSort} />
               <Th label="Joined" k="created" sortKey={sortKey} sortDir={sortDir} setSort={setSort} />
@@ -344,6 +351,7 @@ export default function AdminMembersPage() {
                   <WaiverPill signed={!!s.waiver_signed_at} />
                 </td>
                 <td className="px-4 py-3 text-right tabular-nums">{s.credits}</td>
+                <td className="px-4 py-3 text-right tabular-nums">{s.classes_attended}</td>
                 <td className="px-4 py-3 text-right tabular-nums">{formatCents(s.lifetime_spend_cents)}</td>
                 <td className="px-4 py-3 text-muted-foreground">
                   {formatLastAttended(s.last_attended_at)}
@@ -365,7 +373,7 @@ export default function AdminMembersPage() {
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={10} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={11} className="px-4 py-8 text-center text-muted-foreground">
                   No members match.
                 </td>
               </tr>

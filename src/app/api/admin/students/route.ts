@@ -66,6 +66,7 @@ export async function GET(request: NextRequest) {
     .order('classes(starts_at)', { ascending: false });
 
   const lastAttendedMap = new Map<string, string>();
+  const attendedCountMap = new Map<string, number>();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (attended as any[] | null)?.forEach((r) => {
     const studentId = r.student_id as string | undefined;
@@ -73,12 +74,14 @@ export async function GET(request: NextRequest) {
     if (!studentId || !startsAt) return;
     const prev = lastAttendedMap.get(studentId);
     if (!prev || startsAt > prev) lastAttendedMap.set(studentId, startsAt);
+    attendedCountMap.set(studentId, (attendedCountMap.get(studentId) || 0) + 1);
   });
 
   const result = (students || []).map((s) => ({
     ...s,
     lifetime_spend_cents: spendMap.get(s.id) || 0,
     last_attended_at: lastAttendedMap.get(s.id) || null,
+    classes_attended: attendedCountMap.get(s.id) || 0,
   }));
 
   return NextResponse.json({ students: result });
