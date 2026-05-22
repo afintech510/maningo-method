@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/feedback/Skeleton';
 import { Input } from '@/components/ui/Input';
 import { formatCents } from '@/lib/pricing';
 import { BulkMemberEmailModal } from '@/components/admin/BulkMemberEmailModal';
+import { MemberHistoryModal } from '@/components/admin/MemberHistoryModal';
 
 interface Student {
   id: string;
@@ -39,6 +40,7 @@ export default function AdminMembersPage() {
   const [loading, setLoading] = useState(true);
   const [adjustTarget, setAdjustTarget] = useState<Student | null>(null);
   const [editTarget, setEditTarget] = useState<Student | null>(null);
+  const [historyTarget, setHistoryTarget] = useState<Student | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>('created');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -143,7 +145,7 @@ export default function AdminMembersPage() {
         <p className="text-xs font-medium uppercase tracking-[0.25em] text-[#c9a96e] mb-1">Members</p>
         <h1 className="text-2xl sm:text-3xl font-bold">All members</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          {students.length} total &middot; tap a member to adjust credits. Phone &amp; email open your phone&rsquo;s SMS / mail app.
+          {students.length} total &middot; tap a name for full history, Adjust for credits, Edit for profile fields.
         </p>
       </div>
 
@@ -234,7 +236,13 @@ export default function AdminMembersPage() {
                 />
                 <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <p className="font-medium">{s.full_name || '(no name)'}</p>
+                  <button
+                    type="button"
+                    onClick={() => setHistoryTarget(s)}
+                    className="font-medium text-left text-[#1a1a1a] hover:text-[#c9a96e] hover:underline"
+                  >
+                    {s.full_name || '(no name)'}
+                  </button>
                   <WaiverPill signed={!!s.waiver_signed_at} />
                 </div>
                 <a href={`mailto:${s.email}`} className="text-sm text-[#c9a96e] hover:underline break-all">
@@ -323,7 +331,15 @@ export default function AdminMembersPage() {
                     className="h-4 w-4 rounded border-[#e5e2dc] text-[#c9a96e]"
                   />
                 </td>
-                <td className="px-4 py-3 font-medium">{s.full_name || '(no name)'}</td>
+                <td className="px-4 py-3 font-medium">
+                  <button
+                    type="button"
+                    onClick={() => setHistoryTarget(s)}
+                    className="text-left text-[#1a1a1a] hover:text-[#c9a96e] hover:underline"
+                  >
+                    {s.full_name || '(no name)'}
+                  </button>
+                </td>
                 <td className="px-4 py-3">
                   <a href={`mailto:${s.email}`} className="text-[#c9a96e] hover:underline">
                     {s.email}
@@ -401,6 +417,13 @@ export default function AdminMembersPage() {
             setEditTarget(null);
             await load();
           }}
+        />
+      )}
+
+      {historyTarget && (
+        <MemberHistoryModal
+          memberId={historyTarget.id}
+          onClose={() => setHistoryTarget(null)}
         />
       )}
 
