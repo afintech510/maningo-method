@@ -6,7 +6,7 @@ import { BackButton } from '@/components/layout/BackButton';
 export async function Header() {
   const auth = await getAuth();
   const isLoggedIn = !!auth;
-  const isAdmin = auth?.user?.role === 'admin';
+  const isAdmin = auth?.user?.role === 'admin' || auth?.user?.role === 'superadmin';
 
   return (
     <header className="border-b border-border bg-white">
@@ -31,7 +31,7 @@ export async function Header() {
               href="/admin"
               className="inline-flex items-center justify-center h-9 px-3 sm:px-4 rounded-full bg-[#2d2d2d] text-white text-xs sm:text-sm font-medium hover:bg-[#1a1a1a] transition-colors"
             >
-              Admin
+              Manage
             </Link>
           )}
           {!isLoggedIn && (

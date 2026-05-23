@@ -17,7 +17,7 @@ import { formatStudioDate, formatStudioTime } from '@/lib/timezone';
 export default async function DashboardPage() {
   const auth = await getAuth();
   if (!auth) redirect('/login');
-  if (auth.user.role === 'admin') redirect('/admin');
+  if (auth.user.role === 'admin' || auth.user.role === 'superadmin') redirect('/admin');
 
   const supabase = createAdminClient();
 

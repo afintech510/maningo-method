@@ -10,13 +10,13 @@ export default async function AdminLayout({
 }) {
   const auth = await getAuth();
   if (!auth) redirect('/login');
-  if (auth.user.role !== 'admin') redirect('/dashboard');
+  if (auth.user.role !== 'admin' && auth.user.role !== 'superadmin') redirect('/dashboard');
 
   return (
     <div className="min-h-screen bg-[#faf9f6] print:bg-white">
       <div className="print:hidden">
         <Header />
-        <AdminTabs />
+        <AdminTabs role={auth.user.role as 'admin' | 'superadmin'} />
       </div>
       <main className="pb-12 print:pb-0">{children}</main>
     </div>

@@ -3,22 +3,36 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-const TABS = [
+type Role = 'admin' | 'superadmin';
+
+interface Tab {
+  href: string;
+  label: string;
+  // If omitted, the tab is visible to every admin role. Otherwise visible only
+  // when the viewer's role is in this list.
+  roles?: Role[];
+}
+
+// Studio (Host Hampton rent ledger) and Projections are superadmin-only —
+// the studio operator (admin role) doesn't need to see either in the nav.
+const TABS: Tab[] = [
   { href: '/admin/sales', label: 'Sales' },
   { href: '/admin/classes', label: 'Classes' },
   { href: '/admin/members', label: 'Members' },
-  { href: '/admin/studio', label: 'Studio' },
+  { href: '/admin/studio', label: 'Studio', roles: ['superadmin'] },
   { href: '/admin/marketing', label: 'Marketing' },
-  { href: '/admin/projections', label: 'Projections' },
+  { href: '/admin/projections', label: 'Projections', roles: ['superadmin'] },
 ];
 
-export function AdminTabs() {
+export function AdminTabs({ role }: { role: Role }) {
   const pathname = usePathname() || '';
+  const visibleTabs = TABS.filter((t) => !t.roles || t.roles.includes(role));
+
   return (
     <nav className="border-b border-[#e5e2dc] bg-white">
       <div className="max-w-6xl mx-auto px-4">
         <ul className="flex items-center gap-1 sm:gap-2 overflow-x-auto -mx-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {TABS.map((t) => {
+          {visibleTabs.map((t) => {
             const active =
               pathname === t.href ||
               pathname.startsWith(`${t.href}/`) ||
