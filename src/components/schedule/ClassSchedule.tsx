@@ -41,10 +41,16 @@ export function ClassSchedule({
 }: ClassScheduleProps) {
   const searchParams = useSearchParams();
   const [view, setView] = useState<'calendar' | 'filter'>('calendar');
+  // Track whether the user has explicitly picked a day. If a ?date= came in on
+  // mount we honor it; otherwise we'll auto-advance to the next day that has
+  // classes once the fetch lands. Once the user clicks a day in the picker the
+  // flag flips and we leave their choice alone.
+  const initialDateParam = searchParams?.get('date');
+  const hadDateParam = !!(initialDateParam && /^\d{4}-\d{2}-\d{2}$/.test(initialDateParam));
+  const [userPickedDate, setUserPickedDate] = useState<boolean>(hadDateParam);
   const [selectedDate, setSelectedDate] = useState<Date>(() => {
-    const dateParam = searchParams?.get('date');
-    if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
-      const [y, m, d] = dateParam.split('-').map(Number);
+    if (hadDateParam) {
+      const [y, m, d] = initialDateParam!.split('-').map(Number);
       const dt = new Date(y, m - 1, d);
       if (!isNaN(dt.getTime())) return dt;
     }
@@ -52,6 +58,11 @@ export function ClassSchedule({
   });
   const [allClasses, setAllClasses] = useState<ClassData[]>([]);
   const [loading, setLoading] = useState(true);
+
+  function handleSelectDate(d: Date) {
+    setUserPickedDate(true);
+    setSelectedDate(d);
+  }
 
   // Filter view state
   const [monthFilter, setMonthFilter] = useState<string[]>([]);
@@ -104,6 +115,23 @@ export function ClassSchedule({
     });
     return set;
   }, [allClasses]);
+
+  // After classes load, if the user landed on /schedule with no date param and
+  // today happens to have no classes, jump to the next day that does. The
+  // request: "View Schedule / Book" should always open on the day with the next
+  // available class — sold-out classes still count.
+  useEffect(() => {
+    if (loading || userPickedDate) return;
+    const todayKey = format(toZonedTime(new Date(), STUDIO_TIMEZONE), 'yyyy-MM-dd');
+    if (datesWithClasses.has(todayKey)) return;
+    const next = Array.from(datesWithClasses)
+      .filter((k) => k >= todayKey)
+      .sort()[0];
+    if (!next) return;
+    const [y, m, d] = next.split('-').map(Number);
+    setSelectedDate(new Date(y, m - 1, d));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, datesWithClasses]);
 
   // Only surface filter chips for months that actually have classes posted.
   const months = useMemo(() => {
@@ -231,7 +259,7 @@ export function ClassSchedule({
         <>
           <DayPicker
             selectedDate={selectedDate}
-            onSelectDate={setSelectedDate}
+            onSelectDate={handleSelectDate}
             datesWithClasses={datesWithClasses}
           />
           <p className="text-[11px] text-muted-foreground mt-2">
