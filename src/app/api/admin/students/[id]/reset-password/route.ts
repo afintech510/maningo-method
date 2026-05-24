@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, isAuthError } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { sendPasswordReset } from '@/lib/password-reset';
 import { logger, generateCorrelationId } from '@/lib/logger';
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.maningomethod.com';
 
 export async function POST(
   _request: NextRequest,
@@ -16,7 +15,6 @@ export async function POST(
   if (isAuthError(auth)) return auth;
 
   const supabase = createAdminClient();
-
   const { data: profile, error: profileErr } = await supabase
     .from('profiles')
     .select('id, email')
@@ -30,16 +28,11 @@ export async function POST(
     );
   }
 
-  // Triggers the same Supabase recovery flow the user-facing /forgot-password
-  // page uses. The recipient lands on /reset-password after clicking the link.
-  const { error: resetErr } = await supabase.auth.resetPasswordForEmail(profile.email, {
-    redirectTo: `${SITE_URL}/reset-password`,
-  });
-
-  if (resetErr) {
-    log.error({ err: resetErr, adminId: auth.user.id, targetId: params.id }, 'Admin reset-password failed');
+  const result = await sendPasswordReset(profile.email);
+  if (!result.sent) {
+    log.error({ targetId: params.id, email: profile.email, ...result }, 'Admin password reset failed');
     return NextResponse.json(
-      { error: { code: 'RESET_FAILED', message: resetErr.message || 'Could not send reset email.' } },
+      { error: { code: 'RESET_FAILED', message: result.error || 'Could not send reset email.' } },
       { status: 500 }
     );
   }
