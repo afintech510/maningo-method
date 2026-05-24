@@ -51,12 +51,19 @@ export async function sendPasswordReset(email: string): Promise<Result> {
     options: { redirectTo: `${SITE_URL}/reset-password` },
   });
 
-  if (linkErr || !linkData?.properties?.action_link) {
+  // hashed_token is the token we pass to verifyOtp. Using our own domain as
+  // the landing page (instead of Supabase's auto-verify URL) avoids the
+  // single-use token getting burned by inbox prefetchers (AOL, Gmail previews,
+  // Outlook Safe Links) — the page loads cleanly and we only spend the token
+  // when the user actually submits the new-password form.
+  const hashedToken: string | undefined = linkData?.properties?.hashed_token;
+  if (linkErr || !hashedToken) {
     logger.error({ err: linkErr, email }, 'generateLink for password reset failed');
     return { sent: false, error: linkErr?.message || 'Could not mint reset link.' };
   }
 
-  const resetUrl: string = linkData.properties.action_link;
+  const resetUrl =
+    `${SITE_URL}/reset-password?token_hash=${encodeURIComponent(hashedToken)}&type=recovery`;
 
   try {
     const resend = getResend();

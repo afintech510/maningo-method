@@ -13,35 +13,45 @@ function ResetPasswordInner() {
   const router = useRouter();
   const params = useSearchParams();
 
-  // Recovery flows arrive with either a `code` (PKCE) or a token in the URL
-  // hash. The Supabase client picks up the hash automatically; for the code
-  // path we exchange explicitly. Until a recovery session is established,
-  // submit is disabled.
-  const [ready, setReady] = useState(false);
+  // Recovery flows arrive in one of two shapes:
+  //   1. token_hash + type=recovery   — preferred (since inbox prefetchers
+  //      hit the page without consuming the token; we verify on submit).
+  //   2. code                          — old PKCE flow, exchanged on mount.
+  // Old-style ?code= links remain in flight from earlier sends; both work.
+  const tokenHash = params?.get('token_hash') || null;
+  const tokenType = params?.get('type') || null;
+  const code = params?.get('code') || null;
+
+  const [pkceReady, setPkceReady] = useState(!code);
   const [linkError, setLinkError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [errors, setErrors] = useState<{ password?: string; confirmPassword?: string; root?: string }>({});
 
+  // For the legacy code-only flow we still pre-exchange on mount. For the
+  // token_hash flow we DO NOT verify here — that would let inbox prefetchers
+  // burn the token before the human clicks Submit.
   useEffect(() => {
+    if (!code) return;
     const supabase = createClient();
     let cancelled = false;
 
     async function init() {
-      const code = params?.get('code');
       try {
-        if (code) {
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
-          if (error) throw error;
+        const { error } = await supabase.auth.exchangeCodeForSession(code!);
+        if (cancelled) return;
+        if (error) {
+          setLinkError(
+            'This reset link is invalid or has expired. Request a new one to continue.'
+          );
+          return;
         }
         const { data } = await supabase.auth.getSession();
         if (cancelled) return;
         if (data.session) {
-          setReady(true);
+          setPkceReady(true);
         } else {
-          setLinkError(
-            'This reset link is invalid or has expired. Request a new one to continue.'
-          );
+          setLinkError('This reset link is invalid or has expired. Request a new one to continue.');
         }
       } catch (err) {
         if (cancelled) return;
@@ -52,7 +62,11 @@ function ResetPasswordInner() {
     return () => {
       cancelled = true;
     };
-  }, [params]);
+  }, [code]);
+
+  // The form is interactable as soon as the page loads when we have a
+  // token_hash; for PKCE we wait for the exchange to land.
+  const ready = !!tokenHash || pkceReady;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -78,6 +92,25 @@ function ResetPasswordInner() {
     }
 
     const supabase = createClient();
+
+    // For the token_hash flow, consume the token now (creates a recovery
+    // session). PKCE links already exchanged on mount.
+    if (tokenHash) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: verifyErr } = await (supabase.auth as any).verifyOtp({
+        token_hash: tokenHash,
+        type: (tokenType as 'recovery') || 'recovery',
+      });
+      if (verifyErr) {
+        setErrors({
+          root:
+            'This reset link is invalid or has expired. Request a new one to continue.',
+        });
+        setLoading(false);
+        return;
+      }
+    }
+
     const { error } = await supabase.auth.updateUser({ password: data.password });
     if (error) {
       setErrors({ root: error.message });
@@ -132,6 +165,15 @@ function ResetPasswordInner() {
         {errors.root && (
           <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-800">
             {errors.root}
+            {/^this reset link/i.test(errors.root) && (
+              <>
+                {' '}
+                <Link href="/forgot-password" className="font-medium underline">
+                  Request a new one
+                </Link>
+                .
+              </>
+            )}
           </div>
         )}
 
