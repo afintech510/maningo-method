@@ -46,10 +46,17 @@ export function RegisterForm() {
       return;
     }
 
+    const referrerEmailField = (formData.get('referrer_email') as string | null)?.trim();
+    const referralCodeField = (formData.get('referral_code') as string | null)?.trim();
     const res = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...result.data, referral_code: refParam || undefined }),
+      body: JSON.stringify({
+        ...result.data,
+        // ?ref=CODE from a share-link still wins; explicit form input is the fallback.
+        referral_code: refParam || referralCodeField || undefined,
+        referrer_email: referrerEmailField || undefined,
+      }),
     });
     const json = await res.json();
     if (!res.ok) {
@@ -85,6 +92,35 @@ export function RegisterForm() {
       <Input label="Phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="(631) 555-1234" error={errors.phone} required />
       <Input label="Password" name="password" type="password" autoComplete="new-password" placeholder="At least 8 characters" error={errors.password} required />
       <Input label="Confirm Password" name="confirmPassword" type="password" autoComplete="new-password" placeholder="Confirm your password" error={errors.confirmPassword} required />
+
+      {/* Referral — both optional. Either field is enough; ?ref=CODE in the URL
+          still pre-fills the code so share-links keep working. */}
+      <div className="pt-1">
+        <p className="text-xs uppercase tracking-wider text-[#6b6b6b] font-medium mb-1.5">
+          Referred by a friend? (optional)
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Input
+            label="Their email"
+            name="referrer_email"
+            type="email"
+            inputMode="email"
+            autoComplete="off"
+            placeholder="friend@example.com"
+          />
+          <Input
+            label="Or their referral code"
+            name="referral_code"
+            type="text"
+            autoComplete="off"
+            placeholder={refParam ? '' : '8 characters'}
+            defaultValue={refParam || ''}
+          />
+        </div>
+        <p className="text-[11px] text-[#6b6b6b] mt-1">
+          They&rsquo;ll earn a free class credit when you buy your first pack.
+        </p>
+      </div>
 
       <div className="space-y-3 pt-2">
         <label className="flex items-start gap-3 text-sm cursor-pointer">

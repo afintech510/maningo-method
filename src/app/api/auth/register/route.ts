@@ -28,6 +28,7 @@ export async function POST(request: NextRequest) {
     }
     const { full_name, email, phone, password, sms_consent, sms_marketing_consent, email_marketing_consent } = result.data;
     const referralCode: string | undefined = typeof body.referral_code === 'string' ? body.referral_code.trim() : undefined;
+    const referrerEmail: string | undefined = typeof body.referrer_email === 'string' ? body.referrer_email.trim() : undefined;
 
     const ip =
       request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
@@ -51,7 +52,10 @@ export async function POST(request: NextRequest) {
     const userId = created.user.id;
     const now = new Date().toISOString();
 
-    // Resolve referral code → referrer profile id
+    // Resolve referrer → profile id. Try the code first (canonical, share-link
+    // path), then fall back to email lookup so members who only know their
+    // friend's email don't need to chase down a code. Typos / unknown values
+    // silently leave referred_by = null — we don't want to block signup.
     let referredBy: string | null = null;
     if (referralCode) {
       const { data: referrer } = await admin
@@ -61,6 +65,18 @@ export async function POST(request: NextRequest) {
         .maybeSingle();
       if (referrer && referrer.id !== userId) {
         referredBy = referrer.id;
+      }
+    }
+    if (!referredBy && referrerEmail) {
+      const { data: referrer } = await admin
+        .from('profiles')
+        .select('id')
+        .ilike('email', referrerEmail)
+        .maybeSingle();
+      if (referrer && referrer.id !== userId) {
+        referredBy = referrer.id;
+      } else {
+        log.info({ referrerEmail }, 'Signup referrer_email did not resolve to an existing member');
       }
     }
 
