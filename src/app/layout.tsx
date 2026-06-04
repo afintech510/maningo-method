@@ -35,10 +35,10 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/group-class-maningo.jpg",
+        url: "/og-logo.png",
         width: 1200,
         height: 630,
-        alt: "Maningo Method Mat & Sculpt Pilates group class in Speonk, NY",
+        alt: "Maningo Method",
       },
     ],
   },
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
     title: "Maningo Method | Pilates Studio in Speonk, NY",
     description:
       "Mat & Sculpt Pilates classes in Speonk, NY — serving Westhampton, East Quogue, and the surrounding Hamptons area. Book your spot online.",
-    images: ["/group-class-maningo.jpg"],
+    images: ["/og-logo.png"],
   },
   verification: process.env.NEXT_PUBLIC_GSC_VERIFICATION
     ? { google: process.env.NEXT_PUBLIC_GSC_VERIFICATION }
