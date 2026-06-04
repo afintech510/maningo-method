@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { Playfair_Display, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { getAuth } from "@/lib/auth";
@@ -24,6 +25,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_BASE_URL || "https://www.maningomethod.com"
   ),
+  alternates: { canonical: "/" },
   openGraph: {
     title: "Maningo Method | Pilates Studio in Speonk, NY",
     description:
@@ -31,7 +33,25 @@ export const metadata: Metadata = {
     url: "https://www.maningomethod.com",
     siteName: "Maningo Method",
     type: "website",
+    images: [
+      {
+        url: "/group-class-maningo.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Maningo Method Mat & Sculpt Pilates group class in Speonk, NY",
+      },
+    ],
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Maningo Method | Pilates Studio in Speonk, NY",
+    description:
+      "Mat & Sculpt Pilates classes in Speonk, NY — serving Westhampton, East Quogue, and the surrounding Hamptons area. Book your spot online.",
+    images: ["/group-class-maningo.jpg"],
+  },
+  verification: process.env.NEXT_PUBLIC_GSC_VERIFICATION
+    ? { google: process.env.NEXT_PUBLIC_GSC_VERIFICATION }
+    : undefined,
   icons: {
     icon: [
       { url: "/favicon.ico" },
@@ -58,11 +78,26 @@ export default async function RootLayout({
 }>) {
   const auth = await getAuth();
   const isLoggedIn = !!auth;
+  const gaId = process.env.NEXT_PUBLIC_GA_ID;
 
   return (
     <html lang="en">
       <head>
         <LocalBusinessSchema />
+        {gaId && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
+              strategy="afterInteractive"
+            />
+            <Script id="ga4-init" strategy="afterInteractive">
+              {`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '${gaId}');`}
+            </Script>
+          </>
+        )}
       </head>
       <body
         className={`${playfair.variable} ${dmSans.variable} font-sans antialiased bg-background text-foreground ${

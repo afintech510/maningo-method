@@ -6,6 +6,13 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { Header } from '@/components/layout/Header';
 import { MobileNav } from '@/components/layout/MobileNav';
 
+export const metadata = {
+  title: 'Class Schedule | Mat & Sculpt Pilates in Speonk, NY',
+  description:
+    'See upcoming Mat & Sculpt Pilates classes at Maningo Method in Speonk, NY and book your spot online. Small all-levels group classes, max 20 students.',
+  alternates: { canonical: '/schedule' },
+};
+
 export default async function SchedulePage() {
   const auth = await getAuth();
 

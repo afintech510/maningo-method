@@ -98,8 +98,8 @@ export function LocalBusinessSchema() {
       },
     ],
     sameAs: [
-      // TODO drop Instagram / GBP / Yelp public URLs in here when handy.
-      // 'https://www.instagram.com/maningomethod',
+      'https://maps.app.goo.gl/un4qjy5Sm8ENXuwp7',
+      'https://www.instagram.com/themaningomethod/',
     ].filter(Boolean),
   };
 

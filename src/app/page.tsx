@@ -414,7 +414,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="bg-[#2d2d2d] text-white px-5 py-10">
         <div className="max-w-6xl mx-auto">
-          <div className="grid sm:grid-cols-3 gap-8 mb-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
             <div>
               <p className="font-serif font-bold text-lg mb-3">Maningo Method</p>
               <p className="text-white/60 text-sm leading-relaxed">
@@ -430,6 +430,14 @@ export default function Home() {
                 <Link href="#contact" className="hover:text-white transition-colors">Private Sessions</Link>
                 <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
                 <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
+              </div>
+            </div>
+            <div>
+              <p className="font-semibold text-sm mb-3">Areas We Serve</p>
+              <div className="flex flex-col gap-2 text-sm text-white/60">
+                <Link href="/pilates-in-westhampton" className="hover:text-white transition-colors">Pilates near Westhampton</Link>
+                <Link href="/pilates-in-east-quogue" className="hover:text-white transition-colors">Pilates near East Quogue</Link>
+                <Link href="/pilates-in-remsenburg" className="hover:text-white transition-colors">Pilates near Remsenburg</Link>
               </div>
             </div>
             <div>
