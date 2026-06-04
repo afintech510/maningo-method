@@ -8,6 +8,8 @@ services:
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
         NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL:-https://maningo.hosthampton.com}
         NEXT_PUBLIC_STRIPE_ENABLED: ${NEXT_PUBLIC_STRIPE_ENABLED:-true}
+        NEXT_PUBLIC_GA_ID: ${NEXT_PUBLIC_GA_ID:-}
+        NEXT_PUBLIC_GSC_VERIFICATION: ${NEXT_PUBLIC_GSC_VERIFICATION:-}
     container_name: maningo_app
     restart: unless-stopped
     ports:
