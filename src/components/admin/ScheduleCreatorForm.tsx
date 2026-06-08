@@ -75,7 +75,7 @@ export function ScheduleCreatorForm({ seed, onSuccess }: Props) {
 
   function done() {
     if (onSuccess) onSuccess();
-    else router.push('/admin/classes');
+    else router.push('/admin/classes/manage');
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {

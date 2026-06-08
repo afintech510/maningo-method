@@ -65,7 +65,7 @@ export default function AdminClassDetailPage() {
     });
 
     if (res.ok) {
-      router.push('/admin/classes');
+      router.push('/admin/classes/manage');
     } else {
       setCancelling(false);
       setShowCancel(false);

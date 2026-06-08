@@ -17,7 +17,7 @@ interface Tab {
 // the studio operator (admin role) doesn't need to see either in the nav.
 const TABS: Tab[] = [
   { href: '/admin/sales', label: 'Sales' },
-  { href: '/admin/classes', label: 'Classes' },
+  { href: '/admin/classes/manage', label: 'Classes' },
   { href: '/admin/members', label: 'Members' },
   { href: '/admin/studio', label: 'Studio', roles: ['superadmin'] },
   { href: '/admin/marketing', label: 'Marketing' },
@@ -36,8 +36,11 @@ export function AdminTabs({ role }: { role: Role }) {
             const active =
               pathname === t.href ||
               pathname.startsWith(`${t.href}/`) ||
-              // /admin/schedule + /admin/manual-payments live under their parent tabs
-              (t.href === '/admin/classes' && pathname.startsWith('/admin/schedule')) ||
+              // /admin/schedule + /admin/manual-payments live under their parent tabs.
+              // The Classes tab now points at the unified manager, so keep it
+              // active across every /admin/classes/* route and /admin/schedule.
+              (t.href === '/admin/classes/manage' &&
+                (pathname.startsWith('/admin/classes') || pathname.startsWith('/admin/schedule'))) ||
               (t.href === '/admin/sales' && pathname.startsWith('/admin/manual-payments')) ||
               (t.href === '/admin/members' && pathname.startsWith('/admin/students'));
             return (

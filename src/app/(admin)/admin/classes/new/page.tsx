@@ -31,7 +31,7 @@ export default function NewClassPage() {
     });
 
     if (res.ok) {
-      router.push('/admin/classes');
+      router.push('/admin/classes/manage');
     } else {
       const data = await res.json();
       setError(data.error?.message || 'Failed to create class');
