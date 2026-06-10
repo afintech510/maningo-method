@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { IntegratedCheckout, type CheckoutSummary } from '@/components/checkout/IntegratedCheckout';
 import { ManualPayInline } from '@/components/checkout/ManualPayInline';
 import { RedeemGiftInline } from '@/components/checkout/RedeemGiftInline';
+import { DiscountField, discountCentsFor, discountLabel, useDiscountCode } from '@/components/checkout/DiscountField';
 import { formatCents } from '@/lib/pricing';
 import { STRIPE_ENABLED } from '@/lib/feature-flags';
 
@@ -71,17 +72,22 @@ function PackCheckoutWithToggle({
   summary: CheckoutSummary;
 }) {
   const [method, setMethod] = useState<'card' | 'manual'>('card');
+  // One discount state shared across card + cash/Venmo, so an applied code
+  // carries over when the buyer switches payment method.
+  const discount = useDiscountCode();
 
   if (method === 'card') {
     return (
       <div>
         <PaymentMethodToggle method={method} setMethod={setMethod} />
-        <IntegratedCheckout kind="pack" pack={pack} summary={summary} />
+        <IntegratedCheckout kind="pack" pack={pack} summary={summary} discountState={discount} />
       </div>
     );
   }
 
   // Manual mode: show our own summary (no fee) + ManualPayInline
+  const discountCents = discountCentsFor(discount.applied, summary.amount_cents);
+  const owedCents = summary.amount_cents - discountCents;
   return (
     <div>
       <PaymentMethodToggle method={method} setMethod={setMethod} />
@@ -105,20 +111,43 @@ function PackCheckoutWithToggle({
               <span className="text-[#6b6b6b]">Subtotal</span>
               <span>{formatCents(summary.amount_cents)}</span>
             </div>
+            {discount.applied && (
+              <div className="flex items-center justify-between pt-2 text-sm">
+                <span className="text-emerald-700">Discount ({discount.applied.code} &middot; {discountLabel(discount.applied)})</span>
+                <span className="text-emerald-700">−{formatCents(discountCents)}</span>
+              </div>
+            )}
             <div className="flex items-center justify-between pt-2 text-sm">
               <span className="text-[#6b6b6b]">Service fee</span>
               <span className="text-emerald-600 font-medium">$0.00</span>
             </div>
             <div className="flex items-center justify-between pt-3 mt-3 border-t border-[#e5e2dc] font-semibold text-base">
               <span>Total</span>
-              <span>{formatCents(summary.amount_cents)}</span>
+              <span>{formatCents(owedCents)}</span>
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-[#e5e2dc]">
+              <DiscountField
+                value={discount.input}
+                onChange={discount.setInput}
+                onApply={discount.applyCode}
+                onClear={discount.clearCode}
+                applying={discount.applying}
+                applied={discount.applied}
+                error={discount.error}
+              />
             </div>
           </div>
           <p className="mt-3 text-xs text-emerald-700">You&rsquo;re saving the 3% service fee by paying outside of card.</p>
         </div>
 
         <div className="lg:order-1 order-2 bg-white rounded-2xl border border-[#e5e2dc] p-6 sm:p-8 shadow-sm h-fit">
-          <ManualPayInline packType={pack} amountCents={summary.amount_cents} packLabel={summary.label} />
+          <ManualPayInline
+            packType={pack}
+            amountCents={owedCents}
+            packLabel={summary.label}
+            discountCode={discount.applied?.code}
+          />
         </div>
       </div>
     </div>

@@ -10,8 +10,9 @@ import {
   DiscountField,
   discountCentsFor,
   discountLabel,
-  toAppliedDiscount,
+  useDiscountCode,
   type AppliedDiscount,
+  type DiscountState,
 } from '@/components/checkout/DiscountField';
 
 type Kind = 'pack' | 'gift_pack' | 'gift_custom';
@@ -32,6 +33,10 @@ interface Props {
   // Allow callers (e.g. gift checkout) to override the intent endpoint
   intentEndpoint?: string;
   intentBody?: Record<string, unknown>;
+  // Optional shared discount state. When provided (e.g. by the card/cash
+  // toggle), the same applied code is reused across payment methods. When
+  // omitted, the component owns its own discount state.
+  discountState?: DiscountState;
 }
 
 export function IntegratedCheckout({
@@ -41,16 +46,17 @@ export function IntegratedCheckout({
   summary,
   intentEndpoint,
   intentBody,
+  discountState,
 }: Props) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Discount code (review-request 15%, etc.). When applied, we refire the
-  // intent fetch so Stripe charges the new amount.
-  const [discountInput, setDiscountInput] = useState('');
-  const [applying, setApplying] = useState(false);
-  const [applied, setApplied] = useState<AppliedDiscount | null>(null);
-  const [discountError, setDiscountError] = useState<string | null>(null);
+  // intent fetch so Stripe charges the new amount. Use a shared state when the
+  // caller provides one; otherwise fall back to a self-owned one.
+  const ownDiscount = useDiscountCode();
+  const discount = discountState ?? ownDiscount;
+  const applied = discount.applied;
 
   // Pack flows go through Stripe Checkout (separate endpoint that supports
   // dynamic Stripe coupons). Inline payment-element flows here apply the
@@ -97,36 +103,6 @@ export function IntegratedCheckout({
     };
   }, [kind, pack, amountCents, intentEndpoint, intentBody, applied]);
 
-  async function applyCode() {
-    setDiscountError(null);
-    const code = discountInput.trim().toUpperCase();
-    if (!code) return;
-    setApplying(true);
-    try {
-      const res = await fetch('/api/discount-codes/validate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code }),
-      });
-      const data = await res.json();
-      if (!data.valid) {
-        setDiscountError(data.error || 'Invalid code.');
-        return;
-      }
-      setApplied(toAppliedDiscount(data));
-    } catch {
-      setDiscountError('Could not check that code. Try again.');
-    } finally {
-      setApplying(false);
-    }
-  }
-
-  function clearCode() {
-    setApplied(null);
-    setDiscountInput('');
-    setDiscountError(null);
-  }
-
   return (
     <div className="grid lg:grid-cols-[1fr_440px] gap-8 max-w-5xl mx-auto">
       <CheckoutSummaryPane
@@ -135,12 +111,12 @@ export function IntegratedCheckout({
         discount={
           supportsDiscount
             ? {
-                value: discountInput,
-                onChange: setDiscountInput,
-                onApply: applyCode,
-                onClear: clearCode,
-                applying,
-                error: discountError,
+                value: discount.input,
+                onChange: discount.setInput,
+                onApply: discount.applyCode,
+                onClear: discount.clearCode,
+                applying: discount.applying,
+                error: discount.error,
               }
             : undefined
         }

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { formatCents } from '@/lib/pricing';
 
@@ -7,6 +8,57 @@ export interface AppliedDiscount {
   code: string;
   discountType: 'percentage' | 'fixed_cents';
   value: number; // percent (0-100) or cents off
+}
+
+export interface DiscountState {
+  input: string;
+  setInput: (s: string) => void;
+  applying: boolean;
+  applied: AppliedDiscount | null;
+  error: string | null;
+  applyCode: () => Promise<void>;
+  clearCode: () => void;
+}
+
+// Shared discount-code state + validation, so a single applied code can be
+// reused across payment methods (card and cash/Venmo) on the same checkout.
+export function useDiscountCode(): DiscountState {
+  const [input, setInput] = useState('');
+  const [applying, setApplying] = useState(false);
+  const [applied, setApplied] = useState<AppliedDiscount | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function applyCode() {
+    setError(null);
+    const code = input.trim().toUpperCase();
+    if (!code) return;
+    setApplying(true);
+    try {
+      const res = await fetch('/api/discount-codes/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      });
+      const data = await res.json();
+      if (!data.valid) {
+        setError(data.error || 'Invalid code.');
+        return;
+      }
+      setApplied(toAppliedDiscount(data));
+    } catch {
+      setError('Could not check that code. Try again.');
+    } finally {
+      setApplying(false);
+    }
+  }
+
+  function clearCode() {
+    setApplied(null);
+    setInput('');
+    setError(null);
+  }
+
+  return { input, setInput, applying, applied, error, applyCode, clearCode };
 }
 
 // How many cents this discount knocks off the given base amount.

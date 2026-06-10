@@ -12,9 +12,10 @@ interface Props {
   packType: 'single' | '5pack' | '10pack';
   amountCents: number;
   packLabel: string;
+  discountCode?: string;
 }
 
-export function ManualPayInline({ packType, amountCents, packLabel }: Props) {
+export function ManualPayInline({ packType, amountCents, packLabel, discountCode }: Props) {
   const [method, setMethod] = useState<'venmo' | 'cash'>('venmo');
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -26,7 +27,11 @@ export function ManualPayInline({ packType, amountCents, packLabel }: Props) {
     const res = await fetch('/api/manual-payments', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pack_type: packType, payment_method: method }),
+      body: JSON.stringify({
+        pack_type: packType,
+        payment_method: method,
+        ...(discountCode ? { discount_code: discountCode } : {}),
+      }),
     });
     const data = await res.json();
     if (!res.ok) {
