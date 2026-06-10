@@ -6,28 +6,15 @@ import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-
 import { getStripeJs } from '@/lib/stripe-client';
 import { Button } from '@/components/ui/Button';
 import { withServiceFee, formatCents } from '@/lib/pricing';
+import {
+  DiscountField,
+  discountCentsFor,
+  discountLabel,
+  toAppliedDiscount,
+  type AppliedDiscount,
+} from '@/components/checkout/DiscountField';
 
 type Kind = 'pack' | 'gift_pack' | 'gift_custom';
-
-interface AppliedDiscount {
-  code: string;
-  discountType: 'percentage' | 'fixed_cents';
-  value: number; // percent (0-100) or cents off
-}
-
-// How many cents this discount knocks off the given base amount.
-function discountCentsFor(applied: AppliedDiscount | null, baseCents: number): number {
-  if (!applied) return 0;
-  if (applied.discountType === 'fixed_cents') return Math.min(baseCents, applied.value);
-  return Math.round(baseCents * (applied.value / 100));
-}
-
-// Short label, e.g. "20% off" or "$10 off".
-function discountLabel(applied: AppliedDiscount): string {
-  return applied.discountType === 'fixed_cents'
-    ? `${formatCents(applied.value)} off`
-    : `${applied.value}% off`;
-}
 
 export interface CheckoutSummary {
   label: string;
@@ -126,11 +113,7 @@ export function IntegratedCheckout({
         setDiscountError(data.error || 'Invalid code.');
         return;
       }
-      setApplied({
-        code: data.code,
-        discountType: data.discount_type === 'fixed_cents' ? 'fixed_cents' : 'percentage',
-        value: Number(data.discount_value),
-      });
+      setApplied(toAppliedDiscount(data));
     } catch {
       setDiscountError('Could not check that code. Try again.');
     } finally {
@@ -146,22 +129,25 @@ export function IntegratedCheckout({
 
   return (
     <div className="grid lg:grid-cols-[1fr_440px] gap-8 max-w-5xl mx-auto">
-      <CheckoutSummaryPane summary={summary} applied={applied} />
+      <CheckoutSummaryPane
+        summary={summary}
+        applied={applied}
+        discount={
+          supportsDiscount
+            ? {
+                value: discountInput,
+                onChange: setDiscountInput,
+                onApply: applyCode,
+                onClear: clearCode,
+                applying,
+                error: discountError,
+              }
+            : undefined
+        }
+      />
       <div className="lg:order-1 order-2 bg-white rounded-2xl border border-[#e5e2dc] p-6 sm:p-8 shadow-sm h-fit">
         <h2 className="text-lg font-semibold mb-1">Pay securely</h2>
         <p className="text-xs text-[#6b6b6b] mb-5">Card, Apple Pay, Google Pay, Venmo &mdash; whichever&rsquo;s easiest.</p>
-
-        {supportsDiscount && (
-          <DiscountCodeRow
-            value={discountInput}
-            onChange={setDiscountInput}
-            onApply={applyCode}
-            onClear={clearCode}
-            applying={applying}
-            applied={applied}
-            error={discountError}
-          />
-        )}
 
         {error ? (
           <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-800">{error}</div>
@@ -178,67 +164,23 @@ export function IntegratedCheckout({
   );
 }
 
-function DiscountCodeRow({
-  value,
-  onChange,
-  onApply,
-  onClear,
-  applying,
-  applied,
-  error,
-}: {
+interface DiscountControls {
   value: string;
   onChange: (s: string) => void;
   onApply: () => void;
   onClear: () => void;
   applying: boolean;
-  applied: AppliedDiscount | null;
   error: string | null;
-}) {
-  if (applied) {
-    return (
-      <div className="mb-5 rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 flex items-center justify-between">
-        <p className="text-sm text-emerald-800">
-          <span className="font-semibold">{applied.code}</span> applied &middot; {discountLabel(applied)}
-        </p>
-        <button
-          type="button"
-          onClick={onClear}
-          className="text-xs text-emerald-800 underline hover:no-underline"
-        >
-          Remove
-        </button>
-      </div>
-    );
-  }
-  return (
-    <div className="mb-5">
-      <label className="block text-xs uppercase tracking-wider text-[#6b6b6b] font-medium mb-1.5">
-        Discount code
-      </label>
-      <div className="flex gap-2">
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value.toUpperCase())}
-          placeholder="REVIEW-XXXXXX"
-          className="flex-1 h-11 px-3 rounded-lg border border-[#e5e2dc] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#c9a96e]"
-        />
-        <Button size="sm" onClick={onApply} loading={applying} disabled={!value.trim()}>
-          Apply
-        </Button>
-      </div>
-      {error && <p className="mt-1 text-xs text-red-700">{error}</p>}
-    </div>
-  );
 }
 
 function CheckoutSummaryPane({
   summary,
   applied,
+  discount,
 }: {
   summary: CheckoutSummary;
   applied: AppliedDiscount | null;
+  discount?: DiscountControls;
 }) {
   const discountCents = discountCentsFor(applied, summary.amount_cents);
   const discountedBase = summary.amount_cents - discountCents;
@@ -277,6 +219,20 @@ function CheckoutSummaryPane({
           <span>Total</span>
           <span>{formatCents(fee.total_cents)}</span>
         </div>
+
+        {discount && (
+          <div className="mt-4 pt-4 border-t border-[#e5e2dc]">
+            <DiscountField
+              value={discount.value}
+              onChange={discount.onChange}
+              onApply={discount.onApply}
+              onClear={discount.onClear}
+              applying={discount.applying}
+              applied={applied}
+              error={discount.error}
+            />
+          </div>
+        )}
       </div>
       <p className="mt-3 text-xs text-[#6b6b6b]">
         Skip the 3% fee &mdash; pay with Cash, Zelle, or Venmo using the toggle above.

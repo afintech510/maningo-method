@@ -6,11 +6,18 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { RedeemGiftInline } from '@/components/checkout/RedeemGiftInline';
+import {
+  DiscountField,
+  discountCentsFor,
+  toAppliedDiscount,
+  type AppliedDiscount,
+} from '@/components/checkout/DiscountField';
+import { formatCents } from '@/lib/pricing';
 
-const PACK_INFO: Record<string, { label: string; price: string; credits: number }> = {
-  single: { label: 'Drop-In Class', price: '$25', credits: 1 },
-  '5pack': { label: '5-Class Pack', price: '$112', credits: 5 },
-  '10pack': { label: '10-Class Pack', price: '$200', credits: 10 },
+const PACK_INFO: Record<string, { label: string; amountCents: number; credits: number }> = {
+  single: { label: 'Drop-In Class', amountCents: 2500, credits: 1 },
+  '5pack': { label: '5-Class Pack', amountCents: 11200, credits: 5 },
+  '10pack': { label: '10-Class Pack', amountCents: 20000, credits: 10 },
 };
 
 const VENMO_HANDLE = '@Chelsea-Maningo';
@@ -26,13 +33,57 @@ function ManualCheckoutContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Discount code — applies to the dollar amount owed; credits are unchanged.
+  const [discountInput, setDiscountInput] = useState('');
+  const [applying, setApplying] = useState(false);
+  const [applied, setApplied] = useState<AppliedDiscount | null>(null);
+  const [discountError, setDiscountError] = useState<string | null>(null);
+
+  const discountCents = discountCentsFor(applied, pack.amountCents);
+  const owedCents = pack.amountCents - discountCents;
+  const owedDisplay = formatCents(owedCents);
+
+  async function applyCode() {
+    setDiscountError(null);
+    const code = discountInput.trim().toUpperCase();
+    if (!code) return;
+    setApplying(true);
+    try {
+      const res = await fetch('/api/discount-codes/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      });
+      const data = await res.json();
+      if (!data.valid) {
+        setDiscountError(data.error || 'Invalid code.');
+        return;
+      }
+      setApplied(toAppliedDiscount(data));
+    } catch {
+      setDiscountError('Could not check that code. Try again.');
+    } finally {
+      setApplying(false);
+    }
+  }
+
+  function clearCode() {
+    setApplied(null);
+    setDiscountInput('');
+    setDiscountError(null);
+  }
+
   async function handleSubmit() {
     setError(null);
     setLoading(true);
     const res = await fetch('/api/manual-payments', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pack_type: packType, payment_method: method }),
+      body: JSON.stringify({
+        pack_type: packType,
+        payment_method: method,
+        ...(applied ? { discount_code: applied.code } : {}),
+      }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -57,16 +108,16 @@ function ManualCheckoutContent() {
         </div>
 
         <Card className="mb-6">
-          <p className="text-sm font-semibold mb-3">How to pay {pack.price}</p>
+          <p className="text-sm font-semibold mb-3">How to pay {owedDisplay}</p>
           {method === 'venmo' && (
             <div className="space-y-2 text-sm">
-              <p>Send <strong>{pack.price}</strong> to <strong>{VENMO_HANDLE}</strong> on Venmo.</p>
+              <p>Send <strong>{owedDisplay}</strong> to <strong>{VENMO_HANDLE}</strong> on Venmo.</p>
               <p className="text-[#6b6b6b]">In the note, please put your full name + &quot;{pack.label}&quot; so Chelsea can match it up quickly.</p>
             </div>
           )}
           {method === 'cash' && (
             <div className="space-y-2 text-sm">
-              <p>Bring <strong>{pack.price}</strong> in cash to your first class.</p>
+              <p>Bring <strong>{owedDisplay}</strong> in cash to your first class.</p>
               <p className="text-[#6b6b6b]">Chelsea will mark you paid after you hand it over and your credits will land instantly.</p>
             </div>
           )}
@@ -97,7 +148,33 @@ function ManualCheckoutContent() {
             <p className="font-semibold">{pack.label}</p>
             <p className="text-xs text-[#6b6b6b]">{pack.credits} credit{pack.credits === 1 ? '' : 's'}</p>
           </div>
-          <p className="text-xl font-bold">{pack.price}</p>
+          <div className="text-right">
+            {applied ? (
+              <>
+                <p className="text-xs text-[#6b6b6b] line-through">{formatCents(pack.amountCents)}</p>
+                <p className="text-xl font-bold">{owedDisplay}</p>
+              </>
+            ) : (
+              <p className="text-xl font-bold">{owedDisplay}</p>
+            )}
+          </div>
+        </div>
+        {applied && (
+          <div className="flex items-center justify-between pt-3 mt-3 border-t border-[#e5e2dc] text-sm">
+            <span className="text-emerald-700">Discount ({applied.code})</span>
+            <span className="text-emerald-700">−{formatCents(discountCents)}</span>
+          </div>
+        )}
+        <div className="mt-4 pt-4 border-t border-[#e5e2dc]">
+          <DiscountField
+            value={discountInput}
+            onChange={setDiscountInput}
+            onApply={applyCode}
+            onClear={clearCode}
+            applying={applying}
+            applied={applied}
+            error={discountError}
+          />
         </div>
       </Card>
 

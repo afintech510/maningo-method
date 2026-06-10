@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { logger, generateCorrelationId } from '@/lib/logger';
 import { sendManualPaymentSubmitted } from '@/lib/resend';
 import { applyCreditDelta } from '@/lib/credits';
+import { validateDiscountCode, applyDiscount } from '@/lib/marketing/discountCode';
 
 const ADMIN_EMAIL = 'chelsea@maningomethod.com';
 
@@ -23,7 +24,7 @@ export async function POST(request: NextRequest) {
   if (isAuthError(auth)) return auth;
 
   try {
-    const { pack_type, payment_method } = await request.json();
+    const { pack_type, payment_method, discount_code } = await request.json();
     const pack = PACK_PRICING[pack_type];
     if (!pack || !VALID_METHODS.has(payment_method)) {
       return NextResponse.json(
@@ -33,6 +34,26 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = createAdminClient();
+
+    // Optional discount code — reduces the dollar amount owed to Chelsea; the
+    // credit grant is unchanged. Validated server-side so the client can't
+    // forge a discount.
+    let amountCents = pack.amount_cents;
+    let discountCodeId: string | null = null;
+    let discountAmountCents = 0;
+    if (discount_code) {
+      const result = await validateDiscountCode(supabase, discount_code, auth.user.id);
+      if (!result.valid) {
+        return NextResponse.json(
+          { error: { code: 'INVALID_DISCOUNT', message: result.message || 'Invalid discount code.' } },
+          { status: 400 }
+        );
+      }
+      const discounted = applyDiscount(amountCents, result.discount!);
+      discountAmountCents = amountCents - discounted;
+      amountCents = discounted;
+      discountCodeId = result.discount!.id;
+    }
 
     // Provisional grant: drop the FULL pack onto the buyer's balance right away
     // so they can book any class while we wait on the cash/Venmo to land.
@@ -46,9 +67,11 @@ export async function POST(request: NextRequest) {
         student_id: auth.user.id,
         pack_type,
         credits: pack.credits,
-        amount_cents: pack.amount_cents,
+        amount_cents: amountCents,
         payment_method,
         provisional_credits_applied: provisional,
+        discount_code_id: discountCodeId,
+        discount_amount_cents: discountAmountCents,
       })
       .select('id')
       .single();
@@ -59,6 +82,18 @@ export async function POST(request: NextRequest) {
         { error: { code: 'INTERNAL_ERROR', message: 'Could not record your payment request.' } },
         { status: 500 }
       );
+    }
+
+    // Consume the discount code now (mirrors the Stripe webhook). Cash/Venmo
+    // credits are granted provisionally at submission, so the code is spent at
+    // the same moment. If an admin later cancels, they can re-activate the code
+    // in the marketing manager.
+    if (discountCodeId) {
+      const { error: rpcErr } = await supabase.rpc('consume_discount_code', {
+        p_id: discountCodeId,
+        p_context: 'credit_pack',
+      });
+      if (rpcErr) log.error({ err: rpcErr, discountCodeId }, 'Failed to consume discount code (manual)');
     }
 
     let newBalance: number | null = null;
@@ -102,7 +137,7 @@ export async function POST(request: NextRequest) {
           studentEmail: studentProfile.email || auth.user.email,
           studentPhone: studentProfile.phone,
           packLabel: pack.label,
-          amount: `$${(pack.amount_cents / 100).toFixed(2)}`,
+          amount: `$${(amountCents / 100).toFixed(2)}`,
           method: payment_method as 'cash' | 'venmo',
           paymentId: payment.id,
         });
@@ -114,7 +149,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       payment_id: payment.id,
       label: pack.label,
-      amount_cents: pack.amount_cents,
+      amount_cents: amountCents,
+      discount_amount_cents: discountAmountCents,
       provisional_credits: provisional,
       new_balance: newBalance,
     });
