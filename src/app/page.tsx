@@ -75,6 +75,12 @@ export default function Home() {
                 View Schedule
               </Link>
               <Link
+                href="#pricing"
+                className="inline-flex items-center justify-center h-12 px-8 rounded-full bg-white text-[#2d2d2d] text-base font-medium hover:bg-white/90 transition-colors"
+              >
+                Buy Credits
+              </Link>
+              <Link
                 href="/register"
                 className="inline-flex items-center justify-center h-12 px-8 rounded-full bg-white/15 backdrop-blur-sm text-white border border-white/30 text-base font-medium hover:bg-white/25 transition-colors"
               >
