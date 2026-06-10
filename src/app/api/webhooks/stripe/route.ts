@@ -352,11 +352,14 @@ async function markDiscountCodeRedeemed(
   log: { info: (...a: unknown[]) => void; error: (...a: unknown[]) => void },
 ): Promise<void> {
   if (!codeId) return;
-  const { error } = await supabase
-    .from('discount_codes')
-    .update({ redeemed_at: new Date().toISOString(), is_active: false, redemption_context: context })
-    .eq('id', codeId)
-    .is('redeemed_at', null);
+  // Atomic increment: bumps redemption_count, stamps first-use metadata, and
+  // deactivates the code once it hits its cap. Webhook duplicate events are
+  // already filtered by the processed_stripe_events guard, so this fires once
+  // per real purchase.
+  const { error } = await supabase.rpc('consume_discount_code', {
+    p_id: codeId,
+    p_context: context,
+  });
   if (error) {
     log.error({ err: error, codeId }, 'Failed to mark discount code redeemed');
   } else {

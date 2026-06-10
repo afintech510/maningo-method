@@ -7,13 +7,16 @@ export interface DiscountCodeRow {
   discount_value: number;
   member_id: string | null;
   redeemed_at: string | null;
-  expires_at: string;
+  expires_at: string | null;
   is_active: boolean;
+  max_redemptions: number | null;
+  redemption_count: number;
+  starts_at: string | null;
 }
 
 export interface ValidationResult {
   valid: boolean;
-  reason?: 'not_found' | 'wrong_account' | 'redeemed' | 'expired' | 'inactive';
+  reason?: 'not_found' | 'wrong_account' | 'redeemed' | 'expired' | 'inactive' | 'not_started';
   message?: string;
   discount?: DiscountCodeRow;
 }
@@ -30,7 +33,9 @@ export async function validateDiscountCode(
 
   const { data } = await supabase
     .from('discount_codes')
-    .select('id, code, discount_type, discount_value, member_id, redeemed_at, expires_at, is_active')
+    .select(
+      'id, code, discount_type, discount_value, member_id, redeemed_at, expires_at, is_active, max_redemptions, redemption_count, starts_at',
+    )
     .eq('code', trimmed)
     .maybeSingle();
 
@@ -42,14 +47,21 @@ export async function validateDiscountCode(
   if (row.member_id && row.member_id !== memberId) {
     return { valid: false, reason: 'wrong_account', message: "This code isn't valid for your account." };
   }
-  if (row.redeemed_at) {
-    return { valid: false, reason: 'redeemed', message: 'Code already used.' };
-  }
   if (!row.is_active) {
     return { valid: false, reason: 'inactive', message: 'Code is no longer active.' };
   }
-  if (new Date(row.expires_at).getTime() < Date.now()) {
+  if (row.starts_at && new Date(row.starts_at).getTime() > Date.now()) {
+    return { valid: false, reason: 'not_started', message: 'This code is not active yet.' };
+  }
+  if (row.expires_at && new Date(row.expires_at).getTime() < Date.now()) {
     return { valid: false, reason: 'expired', message: 'Code expired.' };
+  }
+  // Usage cap. max_redemptions = NULL means unlimited; a capped code is spent
+  // once redemption_count reaches the cap. A single-use code (e.g. a member
+  // review reward) is simply max_redemptions = 1. redeemed_at is now only a
+  // first-use timestamp for reporting and no longer gates redemption.
+  if (row.max_redemptions !== null && row.redemption_count >= row.max_redemptions) {
+    return { valid: false, reason: 'redeemed', message: 'Code already used.' };
   }
 
   return { valid: true, discount: row };

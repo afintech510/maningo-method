@@ -9,6 +9,26 @@ import { withServiceFee, formatCents } from '@/lib/pricing';
 
 type Kind = 'pack' | 'gift_pack' | 'gift_custom';
 
+interface AppliedDiscount {
+  code: string;
+  discountType: 'percentage' | 'fixed_cents';
+  value: number; // percent (0-100) or cents off
+}
+
+// How many cents this discount knocks off the given base amount.
+function discountCentsFor(applied: AppliedDiscount | null, baseCents: number): number {
+  if (!applied) return 0;
+  if (applied.discountType === 'fixed_cents') return Math.min(baseCents, applied.value);
+  return Math.round(baseCents * (applied.value / 100));
+}
+
+// Short label, e.g. "20% off" or "$10 off".
+function discountLabel(applied: AppliedDiscount): string {
+  return applied.discountType === 'fixed_cents'
+    ? `${formatCents(applied.value)} off`
+    : `${applied.value}% off`;
+}
+
 export interface CheckoutSummary {
   label: string;
   price_display: string;
@@ -42,7 +62,7 @@ export function IntegratedCheckout({
   // intent fetch so Stripe charges the new amount.
   const [discountInput, setDiscountInput] = useState('');
   const [applying, setApplying] = useState(false);
-  const [applied, setApplied] = useState<{ code: string; percent: number } | null>(null);
+  const [applied, setApplied] = useState<AppliedDiscount | null>(null);
   const [discountError, setDiscountError] = useState<string | null>(null);
 
   // Pack flows go through Stripe Checkout (separate endpoint that supports
@@ -106,7 +126,11 @@ export function IntegratedCheckout({
         setDiscountError(data.error || 'Invalid code.');
         return;
       }
-      setApplied({ code: data.code, percent: Number(data.discount_value) });
+      setApplied({
+        code: data.code,
+        discountType: data.discount_type === 'fixed_cents' ? 'fixed_cents' : 'percentage',
+        value: Number(data.discount_value),
+      });
     } catch {
       setDiscountError('Could not check that code. Try again.');
     } finally {
@@ -168,14 +192,14 @@ function DiscountCodeRow({
   onApply: () => void;
   onClear: () => void;
   applying: boolean;
-  applied: { code: string; percent: number } | null;
+  applied: AppliedDiscount | null;
   error: string | null;
 }) {
   if (applied) {
     return (
       <div className="mb-5 rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 flex items-center justify-between">
         <p className="text-sm text-emerald-800">
-          <span className="font-semibold">{applied.code}</span> applied &middot; {applied.percent}% off
+          <span className="font-semibold">{applied.code}</span> applied &middot; {discountLabel(applied)}
         </p>
         <button
           type="button"
@@ -214,11 +238,9 @@ function CheckoutSummaryPane({
   applied,
 }: {
   summary: CheckoutSummary;
-  applied: { code: string; percent: number } | null;
+  applied: AppliedDiscount | null;
 }) {
-  const discountCents = applied
-    ? Math.round(summary.amount_cents * (applied.percent / 100))
-    : 0;
+  const discountCents = discountCentsFor(applied, summary.amount_cents);
   const discountedBase = summary.amount_cents - discountCents;
   const fee = withServiceFee(discountedBase);
   return (
@@ -243,7 +265,7 @@ function CheckoutSummaryPane({
         </div>
         {applied && (
           <div className="flex items-center justify-between pt-2 text-sm">
-            <span className="text-emerald-700">Discount ({applied.code} &middot; {applied.percent}%)</span>
+            <span className="text-emerald-700">Discount ({applied.code} &middot; {discountLabel(applied)})</span>
             <span className="text-emerald-700">−{formatCents(discountCents)}</span>
           </div>
         )}

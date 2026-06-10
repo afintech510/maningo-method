@@ -5,6 +5,7 @@ import { STUDIO_TIMEZONE } from '@/lib/timezone';
 import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 import { ScheduleExport } from '@/components/admin/ScheduleExport';
 import { MarketingStats } from '@/components/admin/MarketingStats';
+import { DiscountCodeManager } from '@/components/admin/DiscountCodeManager';
 
 export const dynamic = 'force-dynamic';
 
@@ -76,6 +77,10 @@ export default async function AdminMarketingPage() {
       </div>
 
       <ScheduleExport classes={classes || []} weekStart={startIso} weekEnd={endIso} />
+
+      <div className="mt-10">
+        <DiscountCodeManager />
+      </div>
 
       <div className="mt-10">
         <MarketingStats
