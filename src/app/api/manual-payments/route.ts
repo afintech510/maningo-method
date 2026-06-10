@@ -92,6 +92,7 @@ export async function POST(request: NextRequest) {
       const { error: rpcErr } = await supabase.rpc('consume_discount_code', {
         p_id: discountCodeId,
         p_context: 'credit_pack',
+        p_member_id: auth.user.id,
       });
       if (rpcErr) log.error({ err: rpcErr, discountCodeId }, 'Failed to consume discount code (manual)');
     }

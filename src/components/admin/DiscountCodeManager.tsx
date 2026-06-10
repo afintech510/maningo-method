@@ -18,6 +18,7 @@ interface CodeRow {
   redeemed_at: string | null;
   is_active: boolean;
   issued_at: string;
+  once_per_member: boolean;
 }
 
 const inputCls =
@@ -42,6 +43,7 @@ export function DiscountCodeManager() {
   const [startsAt, setStartsAt] = useState('');
   const [expiresAt, setExpiresAt] = useState('');
   const [campaign, setCampaign] = useState('');
+  const [oncePerMember, setOncePerMember] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -76,6 +78,7 @@ export function DiscountCodeManager() {
           starts_at: startsAt || null,
           expires_at: expiresAt || null,
           campaign: campaign || null,
+          once_per_member: oncePerMember,
         }),
       });
       const data = await res.json();
@@ -90,6 +93,7 @@ export function DiscountCodeManager() {
       setStartsAt('');
       setExpiresAt('');
       setCampaign('');
+      setOncePerMember(true);
       await load();
     } catch {
       setFormError('Network error. Try again.');
@@ -213,6 +217,16 @@ export function DiscountCodeManager() {
           />
         </div>
 
+        <label className="flex items-center gap-2 sm:col-span-2 lg:col-span-2 text-sm">
+          <input
+            type="checkbox"
+            checked={oncePerMember}
+            onChange={(e) => setOncePerMember(e.target.checked)}
+            className="h-4 w-4 accent-[#c9a96e]"
+          />
+          <span>Limit to one redemption per member</span>
+        </label>
+
         <div className="flex items-end sm:col-span-2 lg:col-span-1">
           <Button type="submit" loading={submitting} className="w-full">
             Create code
@@ -253,7 +267,12 @@ export function DiscountCodeManager() {
                 {codes.map((c) => (
                   <tr key={c.id} className="border-t border-[#f3f1ed]">
                     <td className="px-4 py-2.5 font-mono text-xs font-semibold">{c.code}</td>
-                    <td className="px-4 py-2.5">{discountDisplay(c)}</td>
+                    <td className="px-4 py-2.5">
+                      {discountDisplay(c)}
+                      {c.once_per_member && (
+                        <span className="block text-[10px] text-[#6b6b6b] font-normal">1× per member</span>
+                      )}
+                    </td>
                     <td className="px-4 py-2.5 text-xs">
                       {c.redemption_count}
                       {c.max_redemptions != null ? ` / ${c.max_redemptions}` : ' / ∞'}

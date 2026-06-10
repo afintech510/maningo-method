@@ -17,7 +17,7 @@ export async function GET() {
   const { data, error } = await supabase
     .from('discount_codes')
     .select(
-      'id, code, discount_type, discount_value, member_id, campaign, max_redemptions, redemption_count, starts_at, expires_at, redeemed_at, is_active, issued_at, profiles!discount_codes_member_id_fkey(full_name, email)',
+      'id, code, discount_type, discount_value, member_id, campaign, max_redemptions, redemption_count, starts_at, expires_at, redeemed_at, is_active, issued_at, once_per_member, profiles!discount_codes_member_id_fkey(full_name, email)',
     )
     .order('issued_at', { ascending: false });
 
@@ -75,6 +75,9 @@ export async function POST(request: NextRequest) {
 
   const campaign = body.campaign ? String(body.campaign).trim().slice(0, 64) || null : null;
 
+  // Default to once-per-member unless explicitly disabled.
+  const oncePerMember = body.once_per_member !== false;
+
   const supabase = createAdminClient();
 
   // Friendly duplicate check before relying on the unique constraint.
@@ -96,11 +99,12 @@ export async function POST(request: NextRequest) {
       max_redemptions: maxRedemptions,
       starts_at: startsAt ? startsAt.toISOString() : null,
       expires_at: expiresAt ? expiresAt.toISOString() : null,
+      once_per_member: oncePerMember,
       is_active: true,
       created_by: auth.user.id,
     })
     .select(
-      'id, code, discount_type, discount_value, member_id, campaign, max_redemptions, redemption_count, starts_at, expires_at, redeemed_at, is_active, issued_at',
+      'id, code, discount_type, discount_value, member_id, campaign, max_redemptions, redemption_count, starts_at, expires_at, redeemed_at, is_active, issued_at, once_per_member',
     )
     .single();
 

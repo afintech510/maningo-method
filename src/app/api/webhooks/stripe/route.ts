@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
             log,
           });
           await rewardReferrerOnce(studentId, paymentIntent || session.id, log);
-          await markDiscountCodeRedeemed(supabase, md.discount_code_id, 'credit_pack', log);
+          await markDiscountCodeRedeemed(supabase, md.discount_code_id, 'credit_pack', log, studentId);
         } else if (bookingId) {
           const { error } = await supabase
             .from('bookings')
@@ -324,10 +324,10 @@ export async function POST(request: NextRequest) {
             log,
           });
           await rewardReferrerOnce(studentId, intent.id, log);
-          await markDiscountCodeRedeemed(supabase, md.discount_code_id, 'credit_pack', log);
+          await markDiscountCodeRedeemed(supabase, md.discount_code_id, 'credit_pack', log, studentId);
         } else if (!isGift && md.discount_code_id) {
           // Drop-in inline path or any other discounted non-pack PI.
-          await markDiscountCodeRedeemed(supabase, md.discount_code_id, 'drop_in', log);
+          await markDiscountCodeRedeemed(supabase, md.discount_code_id, 'drop_in', log, studentId);
         }
         break;
       }
@@ -350,15 +350,17 @@ async function markDiscountCodeRedeemed(
   codeId: string | undefined,
   context: 'credit_pack' | 'drop_in' | 'gift_card',
   log: { info: (...a: unknown[]) => void; error: (...a: unknown[]) => void },
+  memberId?: string,
 ): Promise<void> {
   if (!codeId) return;
-  // Atomic increment: bumps redemption_count, stamps first-use metadata, and
-  // deactivates the code once it hits its cap. Webhook duplicate events are
-  // already filtered by the processed_stripe_events guard, so this fires once
-  // per real purchase.
+  // Atomic increment: bumps redemption_count, stamps first-use metadata,
+  // records the per-member redemption, and deactivates the code once it hits
+  // its cap. Webhook duplicate events are already filtered by the
+  // processed_stripe_events guard, so this fires once per real purchase.
   const { error } = await supabase.rpc('consume_discount_code', {
     p_id: codeId,
     p_context: context,
+    p_member_id: memberId ?? null,
   });
   if (error) {
     log.error({ err: error, codeId }, 'Failed to mark discount code redeemed');

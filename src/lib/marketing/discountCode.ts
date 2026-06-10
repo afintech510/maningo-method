@@ -12,6 +12,7 @@ export interface DiscountCodeRow {
   max_redemptions: number | null;
   redemption_count: number;
   starts_at: string | null;
+  once_per_member: boolean;
 }
 
 export interface ValidationResult {
@@ -34,7 +35,7 @@ export async function validateDiscountCode(
   const { data } = await supabase
     .from('discount_codes')
     .select(
-      'id, code, discount_type, discount_value, member_id, redeemed_at, expires_at, is_active, max_redemptions, redemption_count, starts_at',
+      'id, code, discount_type, discount_value, member_id, redeemed_at, expires_at, is_active, max_redemptions, redemption_count, starts_at, once_per_member',
     )
     .eq('code', trimmed)
     .maybeSingle();
@@ -62,6 +63,21 @@ export async function validateDiscountCode(
   // first-use timestamp for reporting and no longer gates redemption.
   if (row.max_redemptions !== null && row.redemption_count >= row.max_redemptions) {
     return { valid: false, reason: 'redeemed', message: 'Code already used.' };
+  }
+
+  // Once-per-member: reject if this member already has a redemption on record
+  // for this code. The unique constraint on discount_code_redemptions is the
+  // hard backstop; this is the friendly pre-check at apply time.
+  if (row.once_per_member) {
+    const { data: prior } = await supabase
+      .from('discount_code_redemptions')
+      .select('id')
+      .eq('discount_code_id', row.id)
+      .eq('member_id', memberId)
+      .maybeSingle();
+    if (prior) {
+      return { valid: false, reason: 'redeemed', message: "You've already used this code." };
+    }
   }
 
   return { valid: true, discount: row };
