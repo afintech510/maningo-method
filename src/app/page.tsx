@@ -198,8 +198,8 @@ export default function Home() {
           </p>
           <p className="text-center text-xs text-[#6b6b6b] mt-2">
             {STRIPE_ENABLED
-              ? 'Card payments include a 3% service fee. Pay with Cash or Venmo to skip it — credits apply once Chelsea confirms.'
-              : 'Pay with Cash or Venmo. Credits apply once Chelsea confirms your payment — usually within a day.'}
+              ? 'Card payments include a 3% service fee. Pay with Cash to skip it — credits apply once Chelsea confirms.'
+              : 'Pay with Cash. Credits apply once Chelsea confirms your payment — usually within a day.'}
           </p>
 
           <div className="mt-12 max-w-3xl mx-auto">

@@ -1,6 +1,6 @@
 // Read at module-load so server and client agree per-build.
 // NEXT_PUBLIC_STRIPE_ENABLED=false hides every card-checkout surface;
-// users see only Cash/Venmo flows. Default: enabled.
+// users see only the Cash flow. Default: enabled.
 
 /** Parsed independently so tests can exercise it without re-importing the module. */
 export function parseStripeEnabled(raw: string | undefined): boolean {

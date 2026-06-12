@@ -28,7 +28,7 @@ const manualSchema = z.object({
   recipient_email: z.string().email().optional().nullable(),
   sender_message: z.string().max(280).optional().nullable(),
   delivery_mode: z.enum(['email', 'share']),
-  payment_method: z.enum(['cash', 'venmo']),
+  payment_method: z.literal('cash'),
   // Guest fields (used only when no auth)
   purchaser_name: z.string().max(120).optional().nullable(),
   purchaser_email: z.string().email().optional().nullable(),

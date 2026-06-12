@@ -20,15 +20,12 @@ const PACK_INFO: Record<string, { label: string; amountCents: number; credits: n
   '10pack': { label: '10-Class Pack', amountCents: 20000, credits: 10 },
 };
 
-const VENMO_HANDLE = '@Chelsea-Maningo';
-
 function ManualCheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const packType = searchParams?.get('pack') || '5pack';
   const pack = PACK_INFO[packType] || PACK_INFO['5pack'];
 
-  const [method, setMethod] = useState<'cash' | 'venmo'>('venmo');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,7 +78,7 @@ function ManualCheckoutContent() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         pack_type: packType,
-        payment_method: method,
+        payment_method: 'cash',
         ...(applied ? { discount_code: applied.code } : {}),
       }),
     });
@@ -103,24 +100,16 @@ function ManualCheckoutContent() {
           <h1 className="text-2xl font-bold mb-2">You&rsquo;re set</h1>
           <p className="text-[#6b6b6b] text-sm">
             Your full pack is on your dashboard now — book any class right away. Chelsea will
-            reconcile your cash or Venmo payment on her side.
+            reconcile your cash payment on her side.
           </p>
         </div>
 
         <Card className="mb-6">
           <p className="text-sm font-semibold mb-3">How to pay {owedDisplay}</p>
-          {method === 'venmo' && (
-            <div className="space-y-2 text-sm">
-              <p>Send <strong>{owedDisplay}</strong> to <strong>{VENMO_HANDLE}</strong> on Venmo.</p>
-              <p className="text-[#6b6b6b]">In the note, please put your full name + &quot;{pack.label}&quot; so Chelsea can match it up quickly.</p>
-            </div>
-          )}
-          {method === 'cash' && (
-            <div className="space-y-2 text-sm">
-              <p>Bring <strong>{owedDisplay}</strong> in cash to your first class.</p>
-              <p className="text-[#6b6b6b]">Chelsea will mark you paid after you hand it over and your credits will land instantly.</p>
-            </div>
-          )}
+          <div className="space-y-2 text-sm">
+            <p>Bring <strong>{owedDisplay}</strong> in cash to your first class.</p>
+            <p className="text-[#6b6b6b]">Chelsea will mark you paid after you hand it over and your credits will land instantly.</p>
+          </div>
         </Card>
 
         <div className="flex gap-3">
@@ -136,10 +125,10 @@ function ManualCheckoutContent() {
     <div className="max-w-lg mx-auto px-5 py-12">
       <button onClick={() => router.back()} className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] mb-6">&larr; Back</button>
 
-      <h1 className="text-2xl font-bold mb-2">Pay another way</h1>
+      <h1 className="text-2xl font-bold mb-2">Pay with cash</h1>
       <p className="text-sm text-[#6b6b6b] mb-6">
-        Your full pack lands on your account right away — book any class immediately and settle
-        up with Chelsea on her end.
+        Your full pack lands on your account right away — book any class immediately and pay
+        Chelsea in cash at your first class.
       </p>
 
       <Card className="mb-4">
@@ -182,24 +171,9 @@ function ManualCheckoutContent() {
 
       {error && <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-800 mb-4">{error}</div>}
 
-      <div className="space-y-2 mb-6">
-        {(['venmo', 'cash'] as const).map((m) => (
-          <label
-            key={m}
-            className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${
-              method === m ? 'border-[#c9a96e] bg-[#faf9f6]' : 'border-[#e5e2dc] bg-white hover:border-[#c9a96e]/50'
-            }`}
-          >
-            <input type="radio" name="method" value={m} checked={method === m} onChange={() => setMethod(m)} className="h-4 w-4 text-[#c9a96e]" />
-            <div className="flex-1">
-              <p className="font-medium capitalize">{m === 'venmo' ? 'Venmo (direct)' : m}</p>
-              <p className="text-xs text-[#6b6b6b]">
-                {m === 'venmo' && `Send to ${VENMO_HANDLE}`}
-                {m === 'cash' && 'Pay at your first class'}
-              </p>
-            </div>
-          </label>
-        ))}
+      <div className="mb-6 p-4 rounded-xl border-2 border-[#c9a96e] bg-[#faf9f6]">
+        <p className="font-medium">Cash</p>
+        <p className="text-xs text-[#6b6b6b]">Pay at your first class</p>
       </div>
 
       <Button onClick={handleSubmit} loading={loading} className="w-full">

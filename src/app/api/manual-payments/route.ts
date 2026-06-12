@@ -14,7 +14,7 @@ const PACK_PRICING: Record<string, { credits: number; amount_cents: number; labe
   '10pack': { credits: 10, amount_cents: 20000, label: '10-Class Pack' },
 };
 
-const VALID_METHODS = new Set(['cash', 'venmo']);
+const VALID_METHODS = new Set(['cash']);
 
 export async function POST(request: NextRequest) {
   const correlationId = generateCorrelationId();

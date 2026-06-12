@@ -28,8 +28,8 @@ export function GiftNewClient() {
   const [recipientEmail, setRecipientEmail] = useState('');
   const [senderMessage, setSenderMessage] = useState('');
   const [deliveryMode, setDeliveryMode] = useState<'email' | 'share'>('share');
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'venmo' | 'cash'>(
-    STRIPE_ENABLED ? 'card' : 'venmo'
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'cash'>(
+    STRIPE_ENABLED ? 'card' : 'cash'
   );
   const [showCheckout, setShowCheckout] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +40,6 @@ export function GiftNewClient() {
     amount_display: string;
     label: string;
     payment_method: 'cash' | 'venmo';
-    venmo_handle: string;
   } | null>(null);
 
   const customCents = Math.round(Number(customAmt) * 100);
@@ -157,7 +156,6 @@ export function GiftNewClient() {
           amount_display: data.amount_display,
           label: data.label,
           payment_method: data.payment_method,
-          venmo_handle: data.venmo_handle,
         });
       }
     } catch {
@@ -186,18 +184,10 @@ export function GiftNewClient() {
 
         <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 mb-4 text-sm text-amber-900">
           <p className="font-semibold mb-1">How to pay</p>
-          {manualResult.payment_method === 'venmo' ? (
-            <p>
-              Send <strong>{manualResult.amount_display}</strong> to{' '}
-              <strong>{manualResult.venmo_handle}</strong> on Venmo. In the note, include your name
-              and the word &ldquo;gift.&rdquo;
-            </p>
-          ) : (
-            <p>
-              Bring <strong>{manualResult.amount_display}</strong> in cash to the studio (295
-              Montauk Hwy, Speonk). Hand it to Chelsea and the code activates immediately.
-            </p>
-          )}
+          <p>
+            Bring <strong>{manualResult.amount_display}</strong> in cash to the studio (295
+            Montauk Hwy, Speonk). Hand it to Chelsea and the code activates immediately.
+          </p>
         </div>
 
         <p className="text-xs text-[#6b6b6b] mb-4">
@@ -392,13 +382,6 @@ export function GiftNewClient() {
                 hint={`Card, Apple Pay, Google Pay via Stripe · instant activation · +3% service fee`}
               />
             )}
-            <PaymentOption
-              on={paymentMethod === 'venmo'}
-              onClick={() => setPaymentMethod('venmo')}
-              title="Venmo"
-              hint="Send to @Chelsea-Maningo. Code activates after Chelsea confirms."
-              badge={STRIPE_ENABLED ? 'Save 3%' : undefined}
-            />
             <PaymentOption
               on={paymentMethod === 'cash'}
               onClick={() => setPaymentMethod('cash')}

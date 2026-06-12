@@ -40,8 +40,8 @@ export function BuyPacks() {
       <p className="text-xs text-muted-foreground mt-2">
         {STRIPE_ENABLED ? (
           <>
-            Prefer Venmo or cash?{' '}
-            <Link href="/checkout/manual?pack=5pack" className="text-[#c9a96e] hover:underline">Pay another way</Link>
+            Prefer cash?{' '}
+            <Link href="/checkout/manual?pack=5pack" className="text-[#c9a96e] hover:underline">Pay with cash</Link>
             {' '}&middot;{' '}
           </>
         ) : null}

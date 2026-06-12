@@ -6,17 +6,13 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { formatCents } from '@/lib/pricing';
 
-const VENMO_HANDLE = '@Chelsea-Maningo';
-
 interface Props {
   packType: 'single' | '5pack' | '10pack';
   amountCents: number;
-  packLabel: string;
   discountCode?: string;
 }
 
-export function ManualPayInline({ packType, amountCents, packLabel, discountCode }: Props) {
-  const [method, setMethod] = useState<'venmo' | 'cash'>('venmo');
+export function ManualPayInline({ packType, amountCents, discountCode }: Props) {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +25,7 @@ export function ManualPayInline({ packType, amountCents, packLabel, discountCode
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         pack_type: packType,
-        payment_method: method,
+        payment_method: 'cash',
         ...(discountCode ? { discount_code: discountCode } : {}),
       }),
     });
@@ -57,18 +53,10 @@ export function ManualPayInline({ packType, amountCents, packLabel, discountCode
 
         <Card>
           <p className="text-sm font-semibold mb-3">How to pay {formatCents(amountCents)}</p>
-          {method === 'venmo' && (
-            <div className="space-y-2 text-sm">
-              <p>Send <strong>{formatCents(amountCents)}</strong> to <strong>{VENMO_HANDLE}</strong> on Venmo.</p>
-              <p className="text-[#6b6b6b]">In the note, please put your full name + &quot;{packLabel}&quot;.</p>
-            </div>
-          )}
-          {method === 'cash' && (
-            <div className="space-y-2 text-sm">
-              <p>Bring <strong>{formatCents(amountCents)}</strong> in cash to your first class.</p>
-              <p className="text-[#6b6b6b]">Chelsea will mark you paid after you hand it over.</p>
-            </div>
-          )}
+          <div className="space-y-2 text-sm">
+            <p>Bring <strong>{formatCents(amountCents)}</strong> in cash to your first class.</p>
+            <p className="text-[#6b6b6b]">Chelsea will mark you paid after you hand it over.</p>
+          </div>
         </Card>
 
         <Link href="/dashboard" className="block mt-4">
@@ -80,30 +68,15 @@ export function ManualPayInline({ packType, amountCents, packLabel, discountCode
 
   return (
     <div>
-      <h2 className="text-lg font-semibold mb-1">Pay another way</h2>
+      <h2 className="text-lg font-semibold mb-1">Pay with cash</h2>
       <p className="text-xs text-[#6b6b6b] mb-5">
         No service fee. Your full pack lands on your account immediately — book any class right
-        away and settle up with Chelsea when you come in.
+        away and pay Chelsea in cash at your first class.
       </p>
 
-      <div className="space-y-2 mb-5">
-        {(['venmo', 'cash'] as const).map((m) => (
-          <label
-            key={m}
-            className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-colors ${
-              method === m ? 'border-[#c9a96e] bg-[#faf9f6]' : 'border-[#e5e2dc] bg-white hover:border-[#c9a96e]/50'
-            }`}
-          >
-            <input type="radio" name="manual_method" value={m} checked={method === m} onChange={() => setMethod(m)} className="h-4 w-4 text-[#c9a96e]" />
-            <div className="flex-1">
-              <p className="font-medium capitalize">{m === 'venmo' ? 'Venmo (direct)' : m}</p>
-              <p className="text-xs text-[#6b6b6b]">
-                {m === 'venmo' && `Send to ${VENMO_HANDLE}`}
-                {m === 'cash' && 'Pay at your first class'}
-              </p>
-            </div>
-          </label>
-        ))}
+      <div className="mb-5 p-3 rounded-xl border-2 border-[#c9a96e] bg-[#faf9f6]">
+        <p className="font-medium">Cash</p>
+        <p className="text-xs text-[#6b6b6b]">Pay at your first class</p>
       </div>
 
       {error && <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-800 mb-3">{error}</div>}

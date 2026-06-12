@@ -123,7 +123,7 @@ export function IntegratedCheckout({
       />
       <div className="lg:order-1 order-2 bg-white rounded-2xl border border-[#e5e2dc] p-6 sm:p-8 shadow-sm h-fit">
         <h2 className="text-lg font-semibold mb-1">Pay securely</h2>
-        <p className="text-xs text-[#6b6b6b] mb-5">Card, Apple Pay, Google Pay, Venmo &mdash; whichever&rsquo;s easiest.</p>
+        <p className="text-xs text-[#6b6b6b] mb-5">Card, Apple Pay, Google Pay &mdash; whichever&rsquo;s easiest.</p>
 
         {error ? (
           <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-800">{error}</div>
@@ -211,7 +211,7 @@ function CheckoutSummaryPane({
         )}
       </div>
       <p className="mt-3 text-xs text-[#6b6b6b]">
-        Skip the 3% fee &mdash; pay with Cash, Zelle, or Venmo using the toggle above.
+        Skip the 3% fee &mdash; pay with Cash using the toggle above.
       </p>
       <ul className="mt-5 space-y-2 text-xs text-[#6b6b6b]">
         <li className="flex items-start gap-2"><span className="text-[#c9a96e]">&#10003;</span> Credits never expire</li>

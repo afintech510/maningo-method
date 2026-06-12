@@ -23,7 +23,7 @@ export function CheckoutPayClient() {
 
   if (!STRIPE_ENABLED) {
     return (
-      <ErrorPanel message="Card checkout is temporarily unavailable. Please use the Cash or Venmo option from the home page or your dashboard." />
+      <ErrorPanel message="Card checkout is temporarily unavailable. Please use the Cash option from the home page or your dashboard." />
     );
   }
 
@@ -53,7 +53,7 @@ export function CheckoutPayClient() {
     return <IntegratedCheckout kind="gift_pack" pack={pack} summary={summary} />;
   }
 
-  // kind === 'pack' — show payment-method toggle (Card vs Cash/Zelle/Venmo)
+  // kind === 'pack' — show payment-method toggle (Card vs Cash)
   return (
     <>
       <div className="max-w-5xl mx-auto mb-4">
@@ -72,7 +72,7 @@ function PackCheckoutWithToggle({
   summary: CheckoutSummary;
 }) {
   const [method, setMethod] = useState<'card' | 'manual'>('card');
-  // One discount state shared across card + cash/Venmo, so an applied code
+  // One discount state shared across card + cash, so an applied code
   // carries over when the buyer switches payment method.
   const discount = useDiscountCode();
 
@@ -145,7 +145,6 @@ function PackCheckoutWithToggle({
           <ManualPayInline
             packType={pack}
             amountCents={owedCents}
-            packLabel={summary.label}
             discountCode={discount.applied?.code}
           />
         </div>
@@ -185,7 +184,7 @@ function PaymentMethodToggle({
           <span className="absolute -top-2 right-3 bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wider uppercase">
             Save 3%
           </span>
-          <p className="font-semibold">Cash or Venmo</p>
+          <p className="font-semibold">Cash</p>
           <p className="text-xs text-[#6b6b6b]">No service fee &middot; credits apply after Chelsea confirms</p>
         </button>
       </div>
