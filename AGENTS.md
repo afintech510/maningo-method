@@ -78,7 +78,7 @@ The container has a 512M memory limit and `restart: unless-stopped`.
 
 ## Database
 
-- **Supabase project ref:** `aigpsrpfluvajdxyyore` (URL `https://aigpsrpfluvajdxyyore.supabase.co`)
+- **Supabase project ref:** `nyznqcnpykmtqvhgbsao` (URL `https://nyznqcnpykmtqvhgbsao.supabase.co`)
 - **Local Supabase config:** `supabase/config.toml` (api port `54321`, db port `54322`, auth `site_url = https://maningo.hosthampton.com`)
 - **Migrations:** 34 sequential SQL files in `supabase/migrations/` (`001_create_profiles.sql` … `034_discount_once_per_member.sql`). They are also concatenated into `supabase/all_migrations.sql` for convenient one-shot application.
 

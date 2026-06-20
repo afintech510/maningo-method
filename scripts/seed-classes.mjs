@@ -1,9 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  'https://aigpsrpfluvajdxyyore.supabase.co',
-  'REDACTED_SERVICE_ROLE_JWT'
-);
+// Credentials come from the environment — never hardcode them here.
+//   node --env-file=.env scripts/seed-classes.mjs
+const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!url || !serviceKey) {
+  console.error('Missing SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY in env.');
+  process.exit(1);
+}
+const supabase = createClient(url, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } });
 
 // Get admin user ID
 const { data: admin } = await supabase

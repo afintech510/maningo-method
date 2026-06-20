@@ -1,8 +1,14 @@
 import fs from 'fs';
 import path from 'path';
 
-const SUPABASE_URL = 'https://aigpsrpfluvajdxyyore.supabase.co';
-const SERVICE_ROLE_KEY = 'REDACTED_SERVICE_ROLE_JWT';
+// Credentials come from the environment — never hardcode them here.
+//   node --env-file=.env scripts/run-migrations.mjs
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+  console.error('Missing SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY in env.');
+  process.exit(1);
+}
 
 const migrations = [
   '001_create_profiles.sql',
