@@ -20,6 +20,8 @@ interface ClassCardProps {
   credits?: number;
   /** Booking id when the current user has booked this class. */
   bookingId?: string;
+  /** Active waitlist entry for this class, if any. */
+  waitlistEntry?: { id: string; position: number };
 }
 
 export function ClassCard({
@@ -28,6 +30,7 @@ export function ClassCard({
   hasCredits,
   credits,
   bookingId,
+  waitlistEntry,
 }: ClassCardProps) {
   const isBooked = !!bookingId;
   const isFull = classData.spots_remaining <= 0;
@@ -76,6 +79,7 @@ export function ClassCard({
         classSpotsRemaining={classData.spots_remaining}
         bookable={classData.bookable}
         bookableFrom={classData.bookable_from}
+        waitlistEntry={waitlistEntry}
       />
     </Card>
   );

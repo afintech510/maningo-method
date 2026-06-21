@@ -25,15 +25,17 @@ interface WeeklyScheduleProps {
   bookedClassIds: string[];
   hasCredits: boolean;
   credits?: number;
+  waitlistByClassId?: Record<string, { id: string; position: number }>;
 }
 
-export function WeeklySchedule({ bookedClassIds, hasCredits, credits }: WeeklyScheduleProps) {
+export function WeeklySchedule({ bookedClassIds, hasCredits, credits, waitlistByClassId = {} }: WeeklyScheduleProps) {
   const router = useRouter();
   const { showToast } = useToast();
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [confirmClass, setConfirmClass] = useState<ClassItem | null>(null);
   const [booking, setBooking] = useState(false);
+  const [waitlistProcessing, setWaitlistProcessing] = useState(false);
 
   useEffect(() => {
     const now = new Date();
@@ -137,8 +139,70 @@ export function WeeklySchedule({ bookedClassIds, hasCredits, credits }: WeeklySc
                         <span className="text-xs font-medium text-green-600 bg-green-50 px-2.5 py-1 rounded-full flex-shrink-0">
                           Booked
                         </span>
+                      ) : isFull && waitlistByClassId[cls.id] ? (
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <span className="text-xs font-medium text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full">
+                            Waitlist #{waitlistByClassId[cls.id].position}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              setWaitlistProcessing(true);
+                              try {
+                                const res = await fetch(`/api/waitlist/${waitlistByClassId[cls.id].id}`, { method: 'DELETE' });
+                                if (res.ok) {
+                                  showToast('You left the waitlist.');
+                                  router.refresh();
+                                } else {
+                                  const data = await res.json();
+                                  showToast(data.error?.message || 'Something went wrong', 'error');
+                                }
+                              } catch {
+                                showToast('Something went wrong.', 'error');
+                              } finally {
+                                setWaitlistProcessing(false);
+                              }
+                            }}
+                            disabled={waitlistProcessing}
+                            className="text-xs text-destructive hover:underline flex-shrink-0"
+                          >
+                            Leave
+                          </button>
+                        </div>
                       ) : isFull ? (
-                        <span className="text-xs text-muted-foreground flex-shrink-0">Full</span>
+                        hasCredits ? (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="flex-shrink-0 h-8 px-4 text-xs rounded-full"
+                            onClick={async () => {
+                              setWaitlistProcessing(true);
+                              try {
+                                const res = await fetch('/api/waitlist', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ class_id: cls.id }),
+                                });
+                                const data = await res.json();
+                                if (res.ok) {
+                                  showToast(`You're #${data.waitlist?.position || 1} on the waitlist.`);
+                                  router.refresh();
+                                } else {
+                                  showToast(data.error?.message || 'Something went wrong', 'error');
+                                }
+                              } catch {
+                                showToast('Something went wrong.', 'error');
+                              } finally {
+                                setWaitlistProcessing(false);
+                              }
+                            }}
+                            disabled={waitlistProcessing}
+                          >
+                            Join Waitlist
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-muted-foreground flex-shrink-0">Full</span>
+                        )
                       ) : (
                         <Button
                           size="sm"

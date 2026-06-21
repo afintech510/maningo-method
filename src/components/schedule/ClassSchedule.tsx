@@ -28,6 +28,8 @@ interface ClassScheduleProps {
   credits?: number;
   /** class_id → booking_id for the current user's confirmed bookings. */
   bookingsByClassId?: Record<string, string>;
+  /** class_id → { id, position } for the current user's active waitlist entries. */
+  waitlistByClassId?: Record<string, { id: string; position: number }>;
 }
 
 const HORIZON_DAYS = 90;
@@ -38,6 +40,7 @@ export function ClassSchedule({
   hasCredits,
   credits,
   bookingsByClassId = {},
+  waitlistByClassId = {},
 }: ClassScheduleProps) {
   const searchParams = useSearchParams();
   const [view, setView] = useState<'calendar' | 'filter'>('calendar');
@@ -220,6 +223,7 @@ export function ClassSchedule({
       hasCredits={hasCredits}
       credits={credits}
       bookingId={bookingsByClassId[cls.id]}
+      waitlistEntry={waitlistByClassId[cls.id]}
     />
   );
 

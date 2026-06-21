@@ -27,6 +27,8 @@ interface BookingButtonProps {
   bookable?: boolean;
   /** ISO date when bookings open for this class. */
   bookableFrom?: string;
+  /** Active waitlist entry for this class, if any. */
+  waitlistEntry?: { id: string; position: number };
 }
 
 export function BookingButton({
@@ -43,6 +45,7 @@ export function BookingButton({
   classSpotsRemaining,
   bookable = true,
   bookableFrom,
+  waitlistEntry,
 }: BookingButtonProps) {
   const router = useRouter();
   const { showToast } = useToast();
@@ -53,6 +56,7 @@ export function BookingButton({
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+  const [waitlistProcessing, setWaitlistProcessing] = useState(false);
 
   function handleClick() {
     if (!isAuthenticated) {
@@ -128,8 +132,99 @@ export function BookingButton({
     }
   }
 
+  async function handleJoinWaitlist() {
+    if (!isAuthenticated) {
+      router.push('/login?return=/schedule');
+      return;
+    }
+    if (!hasCredits) {
+      router.push('/dashboard?buy=true');
+      return;
+    }
+    setWaitlistProcessing(true);
+    try {
+      const res = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ class_id: classId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showToast(data.error?.message || 'Something went wrong', 'error');
+      } else {
+        showToast(`You're #${data.waitlist?.position || 1} on the waitlist.`);
+        router.refresh();
+      }
+    } catch {
+      showToast('Something went wrong. Try again.', 'error');
+    } finally {
+      setWaitlistProcessing(false);
+    }
+  }
+
+  async function handleLeaveWaitlist() {
+    if (!waitlistEntry) return;
+    setWaitlistProcessing(true);
+    try {
+      const res = await fetch(`/api/waitlist/${waitlistEntry.id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = await res.json();
+        showToast(data.error?.message || 'Something went wrong', 'error');
+      } else {
+        showToast('You left the waitlist.');
+        router.refresh();
+      }
+    } catch {
+      showToast('Something went wrong. Try again.', 'error');
+    } finally {
+      setWaitlistProcessing(false);
+    }
+  }
+
   if (isFull && !isBooked) {
-    return <Button variant="ghost" size="lg" className="w-full" disabled>Class Full</Button>;
+    if (waitlistEntry) {
+      return (
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="secondary" size="lg" disabled>
+            Waitlist #{waitlistEntry.position}
+          </Button>
+          <Button
+            variant="ghost"
+            size="lg"
+            className="text-destructive"
+            onClick={handleLeaveWaitlist}
+            loading={waitlistProcessing}
+          >
+            Leave
+          </Button>
+        </div>
+      );
+    }
+    if (!isAuthenticated) {
+      return (
+        <Button variant="primary" size="lg" className="w-full" onClick={() => router.push('/login?return=/schedule')}>
+          Log in to Join Waitlist
+        </Button>
+      );
+    }
+    if (!hasCredits) {
+      return (
+        <Button variant="primary" size="lg" className="w-full" onClick={() => router.push('/dashboard?buy=true')}>
+          Get a Credit to Join Waitlist
+        </Button>
+      );
+    }
+    return (
+      <Button
+        variant="primary"
+        size="lg"
+        className="w-full"
+        onClick={handleJoinWaitlist}
+        loading={waitlistProcessing}
+      >
+        Join Waitlist
+      </Button>
+    );
   }
   if (!bookable && !isBooked) {
     const opensLabel = bookableFrom ? formatStudioDate(bookableFrom, 'EEE, MMM d') : 'soon';

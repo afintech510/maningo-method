@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, isAuthError } from '@/lib/auth';
 import { logger, generateCorrelationId } from '@/lib/logger';
 import { applyCreditDelta } from '@/lib/credits';
-import { sendBookingCancellation } from '@/lib/resend';
+import { sendBookingCancellation, sendWaitlistPromoted } from '@/lib/resend';
 import { formatStudioDate, formatStudioTime } from '@/lib/timezone';
 
 export async function PATCH(
@@ -29,10 +29,10 @@ export async function PATCH(
 
     const supabase = createClient();
 
-    // Verify ownership and load class start time
+    // Verify ownership and load class info
     const { data: booking, error: fetchError } = await supabase
       .from('bookings')
-      .select('id, student_id, status, classes(starts_at)')
+      .select('id, student_id, class_id, status, classes(starts_at)')
       .eq('id', params.id)
       .single();
 
@@ -103,6 +103,94 @@ export async function PATCH(
       log.error({ err, bookingId: params.id }, 'Credit refund failed; cancellation persists');
     }
 
+    // Auto-promote the next waitlisted member (fire-and-forget)
+    const classId = booking.class_id;
+    if (classId) {
+      void (async () => {
+        try {
+          const admin = createAdminClient();
+          const { data: nextEntry } = await admin
+            .from('waitlists')
+            .select('id, student_id')
+            .eq('class_id', classId)
+            .eq('status', 'waiting')
+            .order('created_at', { ascending: true })
+            .limit(1)
+            .maybeSingle();
+
+          if (!nextEntry) return;
+
+          const { data: profile } = await admin
+            .from('profiles')
+            .select('credits, email, full_name')
+            .eq('id', nextEntry.student_id)
+            .single();
+
+          if (!profile || profile.credits < 1) {
+            log.info({ waitlistId: nextEntry.id, studentId: nextEntry.student_id }, 'Auto-promote skipped: no credits');
+            return;
+          }
+
+          const { data: newBooking, error: insertErr } = await admin
+            .from('bookings')
+            .insert({
+              class_id: classId,
+              student_id: nextEntry.student_id,
+              status: 'confirmed',
+              payment_type: 'pack_credit',
+            })
+            .select('id')
+            .single();
+
+          if (insertErr || !newBooking) {
+            log.error({ err: insertErr, studentId: nextEntry.student_id }, 'Auto-promote booking insert failed');
+            return;
+          }
+
+          await admin
+            .from('waitlists')
+            .update({ status: 'promoted', promoted_at: new Date().toISOString() })
+            .eq('id', nextEntry.id);
+
+          try {
+            await applyCreditDelta({
+              studentId: nextEntry.student_id,
+              delta: -1,
+              reason: `Auto-promoted from waitlist → booking ${newBooking.id}`,
+              source: 'booking_create',
+              relatedId: newBooking.id,
+            });
+          } catch (creditErr) {
+            await admin.from('bookings').delete().eq('id', newBooking.id);
+            await admin
+              .from('waitlists')
+              .update({ status: 'waiting', promoted_at: null })
+              .eq('id', nextEntry.id);
+            log.error({ err: creditErr, studentId: nextEntry.student_id }, 'Auto-promote credit deduction failed; rolled back');
+            return;
+          }
+
+          log.info({ waitlistId: nextEntry.id, bookingId: newBooking.id, studentId: nextEntry.student_id }, 'Auto-promoted from waitlist');
+
+          const { data: cls } = await admin
+            .from('classes')
+            .select('title, starts_at')
+            .eq('id', classId)
+            .single();
+          if (cls) {
+            await sendWaitlistPromoted(profile.email, {
+              studentName: (profile.full_name || '').split(' ')[0] || 'there',
+              classTitle: cls.title,
+              classDate: formatStudioDate(cls.starts_at, 'EEEE, MMM d'),
+              classTime: formatStudioTime(cls.starts_at),
+            });
+          }
+        } catch (err) {
+          log.error({ err, classId }, 'Auto-promote from waitlist failed');
+        }
+      })();
+    }
+
     // Fire-and-forget cancellation confirmation email
     void (async () => {
       try {
@@ -110,25 +198,10 @@ export async function PATCH(
         const { data: cls } = await admin
           .from('classes')
           .select('title, starts_at')
-          .eq('id', (booking as { class_id?: string }).class_id || '')
+          .eq('id', classId || '')
           .single();
-        // booking from the SELECT above doesn't include class_id by default; load via bookings table
-        let title = '';
-        let startsAt = classStart;
-        if (!cls) {
-          const { data: b2 } = await admin
-            .from('bookings')
-            .select('classes(title, starts_at)')
-            .eq('id', params.id)
-            .single();
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const c = (b2 as any)?.classes;
-          title = c?.title || 'your class';
-          startsAt = c?.starts_at || startsAt;
-        } else {
-          title = cls.title;
-          startsAt = cls.starts_at;
-        }
+        const title = cls?.title || 'your class';
+        const startsAt = cls?.starts_at || classStart;
         if (!startsAt) return;
         await sendBookingCancellation(auth.user.email, {
           studentName: (auth.user.full_name || '').split(' ')[0] || 'there',

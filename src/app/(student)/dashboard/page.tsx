@@ -86,6 +86,32 @@ export default async function DashboardPage() {
     .eq('student_id', auth.user.id)
     .order('created_at', { ascending: false });
 
+  // Fetch waitlist entries for current user
+  const waitlistByClassId: Record<string, { id: string; position: number }> = {};
+  {
+    const { data: waitlistEntries } = await supabase
+      .from('waitlists')
+      .select('id, class_id')
+      .eq('student_id', auth.user.id)
+      .eq('status', 'waiting');
+
+    if (waitlistEntries && waitlistEntries.length > 0) {
+      const classIds = waitlistEntries.map((w) => w.class_id);
+      const { data: allWaiting } = await supabase
+        .from('waitlists')
+        .select('id, class_id, created_at')
+        .in('class_id', classIds)
+        .eq('status', 'waiting')
+        .order('created_at', { ascending: true });
+
+      for (const entry of waitlistEntries) {
+        const queue = (allWaiting || []).filter((w) => w.class_id === entry.class_id);
+        const pos = queue.findIndex((w) => w.id === entry.id) + 1;
+        waitlistByClassId[entry.class_id] = { id: entry.id, position: pos || 1 };
+      }
+    }
+  }
+
   const nextClass = upcoming[0] || null;
 
   return (
@@ -178,6 +204,7 @@ export default async function DashboardPage() {
             bookedClassIds={upcoming.map((b) => b.class_id)}
             hasCredits={hasBookingCurrency}
             credits={credits}
+            waitlistByClassId={waitlistByClassId}
           />
         </div>
 

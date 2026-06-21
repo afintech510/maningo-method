@@ -14,6 +14,8 @@ import { ManualPaymentSubmitted } from '@/emails/ManualPaymentSubmitted';
 import { ClassReminder } from '@/emails/ClassReminder';
 import { AdminNewMember } from '@/emails/AdminNewMember';
 import { AdminPurchase, type AdminPurchaseChannel } from '@/emails/AdminPurchase';
+import { WaitlistJoined } from '@/emails/WaitlistJoined';
+import { WaitlistPromoted } from '@/emails/WaitlistPromoted';
 import { createElement } from 'react';
 
 let resendInstance: Resend | null = null;
@@ -467,5 +469,52 @@ export async function sendManualPaymentSubmitted(
     });
   } catch (err) {
     logger.error({ err, to }, 'Failed to send manual payment notification');
+  }
+}
+
+export async function sendWaitlistJoined(
+  to: string,
+  data: {
+    studentName: string;
+    classTitle: string;
+    classDate: string;
+    classTime: string;
+    position: number;
+  }
+) {
+  try {
+    const resend = getResend();
+    await resend.emails.send({
+      from: `Maningo Method <${FROM_EMAIL}>`,
+      replyTo: REPLY_TO,
+      to,
+      subject: `Waitlist: ${data.classTitle}`,
+      react: createElement(WaitlistJoined, data),
+    });
+  } catch (err) {
+    logger.error({ err, to }, 'Failed to send waitlist joined email');
+  }
+}
+
+export async function sendWaitlistPromoted(
+  to: string,
+  data: {
+    studentName: string;
+    classTitle: string;
+    classDate: string;
+    classTime: string;
+  }
+) {
+  try {
+    const resend = getResend();
+    await resend.emails.send({
+      from: `Maningo Method <${FROM_EMAIL}>`,
+      replyTo: REPLY_TO,
+      to,
+      subject: `You're in: ${data.classTitle}`,
+      react: createElement(WaitlistPromoted, data),
+    });
+  } catch (err) {
+    logger.error({ err, to }, 'Failed to send waitlist promoted email');
   }
 }

@@ -22,6 +22,16 @@ interface Enrollment {
   booked_at: string;
 }
 
+interface WaitlistEntry {
+  id: string;
+  position: number;
+  student_id: string;
+  student_name: string;
+  student_email: string;
+  credits: number;
+  created_at: string;
+}
+
 interface ClassData {
   class_title: string;
   starts_at: string;
@@ -39,6 +49,19 @@ export default function AdminClassDetailPage() {
   const [cancelling, setCancelling] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [showNotify, setShowNotify] = useState(false);
+  const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
+  const [waitlistLoading, setWaitlistLoading] = useState(true);
+
+  function fetchWaitlist() {
+    setWaitlistLoading(true);
+    fetch(`/api/admin/classes/${id}/waitlist`)
+      .then((res) => res.json())
+      .then((data) => {
+        setWaitlist(data.waitlist || []);
+        setWaitlistLoading(false);
+      })
+      .catch(() => setWaitlistLoading(false));
+  }
 
   useEffect(() => {
     fetch(`/api/admin/classes/${id}/enrollments`)
@@ -54,6 +77,8 @@ export default function AdminClassDetailPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+    fetchWaitlist();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   async function handleCancel() {
@@ -134,6 +159,20 @@ export default function AdminClassDetailPage() {
           ))}
         </div>
       )}
+
+      <WaitlistPanel
+        waitlist={waitlist}
+        loading={waitlistLoading}
+        onRefresh={() => {
+          fetchWaitlist();
+          // Re-fetch enrollments too since a promote creates a booking
+          fetch(`/api/admin/classes/${id}/enrollments`)
+            .then((res) => res.json())
+            .then((data) => {
+              setEnrollments(data.enrollments || []);
+            });
+        }}
+      />
 
       <Modal open={showCancel} onClose={() => setShowCancel(false)} title="Cancel Class">
         <p className="text-sm text-muted-foreground mb-4">
@@ -439,5 +478,117 @@ function NotifyClassModal({
         </div>
       )}
     </Modal>
+  );
+}
+
+function WaitlistPanel({
+  waitlist,
+  loading,
+  onRefresh,
+}: {
+  waitlist: WaitlistEntry[];
+  loading: boolean;
+  onRefresh: () => void;
+}) {
+  const [promoting, setPromoting] = useState<string | null>(null);
+  const [removing, setRemoving] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handlePromote(entryId: string) {
+    setPromoting(entryId);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/waitlist/${entryId}/promote`, { method: 'POST' });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error?.message || 'Promotion failed.');
+      } else {
+        onRefresh();
+      }
+    } catch {
+      setError('Something went wrong.');
+    } finally {
+      setPromoting(null);
+    }
+  }
+
+  async function handleRemove(entryId: string) {
+    setRemoving(entryId);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/waitlist/${entryId}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error?.message || 'Remove failed.');
+      } else {
+        onRefresh();
+      }
+    } catch {
+      setError('Something went wrong.');
+    } finally {
+      setRemoving(null);
+    }
+  }
+
+  return (
+    <div className="mt-8">
+      <h2 className="text-lg font-semibold mb-3">Waitlist ({waitlist.length})</h2>
+
+      {error && (
+        <div className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 flex items-start justify-between gap-3">
+          <p className="text-sm text-red-800">{error}</p>
+          <button type="button" onClick={() => setError(null)} className="text-red-700 hover:text-red-900 text-lg leading-none">&times;</button>
+        </div>
+      )}
+
+      {loading ? (
+        <Skeleton variant="card" />
+      ) : waitlist.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No one is on the waitlist.</p>
+      ) : (
+        <div className="space-y-2">
+          {waitlist.map((entry) => (
+            <Card key={entry.id}>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="neutral">#{entry.position}</Badge>
+                    <p className="font-medium truncate">{entry.student_name}</p>
+                  </div>
+                  <p className="text-sm text-muted-foreground break-all">{entry.student_email}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {entry.credits} credit{entry.credits !== 1 ? 's' : ''}
+                    {entry.credits < 1 && (
+                      <span className="text-amber-600 font-medium"> — no credit to promote</span>
+                    )}
+                  </p>
+                </div>
+                <div className="flex gap-2 flex-shrink-0">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => handlePromote(entry.id)}
+                    loading={promoting === entry.id}
+                    disabled={entry.credits < 1 || !!promoting || !!removing}
+                  >
+                    Promote
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive"
+                    onClick={() => handleRemove(entry.id)}
+                    loading={removing === entry.id}
+                    disabled={!!promoting || !!removing}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
