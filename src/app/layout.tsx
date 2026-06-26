@@ -4,6 +4,7 @@ import { Playfair_Display, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { getAuth } from "@/lib/auth";
 import { MobileNav } from "@/components/layout/MobileNav";
+import { BenchworksAttribution } from "@/components/layout/BenchworksAttribution";
 import { LocalBusinessSchema } from "@/components/seo/LocalBusinessSchema";
 
 const playfair = Playfair_Display({
@@ -105,6 +106,7 @@ gtag('config', '${gaId}');`}
         }`}
       >
         {children}
+        <BenchworksAttribution />
         {isLoggedIn && <MobileNav />}
       </body>
     </html>
