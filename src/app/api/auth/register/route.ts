@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    const { full_name, email, phone, password, sms_consent, sms_marketing_consent, email_marketing_consent } = result.data;
+    const { full_name, email, phone, date_of_birth, password, sms_consent, sms_marketing_consent, email_marketing_consent } = result.data;
     const referralCode: string | undefined = typeof body.referral_code === 'string' ? body.referral_code.trim() : undefined;
     const referrerEmail: string | undefined = typeof body.referrer_email === 'string' ? body.referrer_email.trim() : undefined;
 
@@ -98,6 +98,7 @@ export async function POST(request: NextRequest) {
           full_name,
           email,
           phone,
+          date_of_birth: date_of_birth || null,
           role: 'student',
           referral_code: referralCodeForUser,
           sms_consent,

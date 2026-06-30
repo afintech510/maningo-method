@@ -26,6 +26,7 @@ export function RegisterForm() {
       full_name: formData.get('full_name') as string,
       email: formData.get('email') as string,
       phone: formData.get('phone') as string,
+      date_of_birth: formData.get('date_of_birth') as string,
       password: formData.get('password') as string,
       confirmPassword: formData.get('confirmPassword') as string,
       tos_accepted: formData.get('tos_accepted') === 'on',
@@ -90,6 +91,16 @@ export function RegisterForm() {
       <Input label="Full Name" name="full_name" type="text" autoComplete="name" placeholder="Your full name" error={errors.full_name} required />
       <Input label="Email" name="email" type="email" inputMode="email" autoComplete="email" placeholder="you@example.com" error={errors.email} required />
       <Input label="Phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="(631) 555-1234" error={errors.phone} required />
+      <Input
+        label="Date of Birth"
+        name="date_of_birth"
+        type="date"
+        autoComplete="bday"
+        min="1900-01-01"
+        max={new Date().toISOString().split('T')[0]}
+        error={errors.date_of_birth}
+        required
+      />
       <Input label="Password" name="password" type="password" autoComplete="new-password" placeholder="At least 8 characters" error={errors.password} required />
       <Input label="Confirm Password" name="confirmPassword" type="password" autoComplete="new-password" placeholder="Confirm your password" error={errors.confirmPassword} required />
 
