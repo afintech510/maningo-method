@@ -10,6 +10,7 @@ import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 import { format } from 'date-fns';
 import { ClassRoster, type Enrollment } from './ClassRoster';
 import { ClassEmailForm } from './ClassEmailForm';
+import { WaitlistPanel, type WaitlistEntry } from './WaitlistPanel';
 import type { ScheduleCreatorSeed } from './ScheduleCreatorForm';
 
 interface ClassData {
@@ -29,12 +30,14 @@ interface Props {
   onDuplicate: (seed: ScheduleCreatorSeed) => void;
 }
 
-type Section = 'details' | 'roster' | 'email' | 'actions';
+type Section = 'details' | 'roster' | 'waitlist' | 'email' | 'actions';
 
 export function ClassDetailPanel({ classId, initialStatus, onChanged, onDuplicate }: Props) {
   const [data, setData] = useState<ClassData | null>(null);
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
+  const [waitlistLoading, setWaitlistLoading] = useState(true);
   const [openSection, setOpenSection] = useState<Section>('roster');
 
   // Editing
@@ -83,8 +86,19 @@ export function ClassDetailPanel({ classId, initialStatus, onChanged, onDuplicat
     }
   }, [classId, initialStatus]);
 
+  function fetchWaitlist() {
+    setWaitlistLoading(true);
+    fetch(`/api/admin/classes/${classId}/waitlist`)
+      .then((res) => res.json())
+      .then((d) => setWaitlist(d.waitlist || []))
+      .catch(() => {})
+      .finally(() => setWaitlistLoading(false));
+  }
+
   useEffect(() => {
     load();
+    fetchWaitlist();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [load]);
 
   async function handleSave() {
@@ -297,6 +311,27 @@ export function ClassDetailPanel({ classId, initialStatus, onChanged, onDuplicat
             capacity={data.max_capacity}
             enrollments={enrollments}
             onChange={() => {
+              load();
+              onChanged();
+            }}
+          />
+        )}
+      </Section>
+
+      <Section
+        title={`Waitlist (${waitlist.length})`}
+        open={openSection === 'waitlist'}
+        onToggle={() => setOpenSection((s) => (s === 'waitlist' ? 'actions' : 'waitlist'))}
+      >
+        {isCancelled ? (
+          <p className="text-sm text-muted-foreground">This class is cancelled — waitlist is frozen.</p>
+        ) : (
+          <WaitlistPanel
+            waitlist={waitlist}
+            loading={waitlistLoading}
+            compact
+            onRefresh={() => {
+              fetchWaitlist();
               load();
               onChanged();
             }}
