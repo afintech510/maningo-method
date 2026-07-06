@@ -4,7 +4,9 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, isAuthError } from '@/lib/auth';
 import { logger, generateCorrelationId } from '@/lib/logger';
 import { applyCreditDelta } from '@/lib/credits';
-import { sendBookingCancellation, sendWaitlistPromoted } from '@/lib/resend';
+import { sendBookingCancellation, sendWaitlistPromoted, sendAdminBookingCancellation, sendAdminWaitlistPromotion } from '@/lib/resend';
+
+const ADMIN_EMAIL = 'chelsea@maningomethod.com';
 import { formatStudioDate, formatStudioTime } from '@/lib/timezone';
 
 export async function PATCH(
@@ -184,6 +186,13 @@ export async function PATCH(
               classDate: formatStudioDate(cls.starts_at, 'EEEE, MMM d'),
               classTime: formatStudioTime(cls.starts_at),
             });
+            await sendAdminWaitlistPromotion(ADMIN_EMAIL, {
+              promotedMemberName: profile.full_name || 'Unknown member',
+              promotedMemberEmail: profile.email,
+              classTitle: cls.title,
+              classDate: formatStudioDate(cls.starts_at, 'EEEE, MMM d'),
+              classTime: formatStudioTime(cls.starts_at),
+            });
           }
         } catch (err) {
           log.error({ err, classId }, 'Auto-promote from waitlist failed');
@@ -205,6 +214,13 @@ export async function PATCH(
         if (!startsAt) return;
         await sendBookingCancellation(auth.user.email, {
           studentName: (auth.user.full_name || '').split(' ')[0] || 'there',
+          classTitle: title,
+          classDate: formatStudioDate(startsAt, 'EEEE, MMM d'),
+          classTime: formatStudioTime(startsAt),
+        });
+        await sendAdminBookingCancellation(ADMIN_EMAIL, {
+          memberName: auth.user.full_name || 'Unknown member',
+          memberEmail: auth.user.email,
           classTitle: title,
           classDate: formatStudioDate(startsAt, 'EEEE, MMM d'),
           classTime: formatStudioTime(startsAt),

@@ -16,6 +16,8 @@ import { AdminNewMember } from '@/emails/AdminNewMember';
 import { AdminPurchase, type AdminPurchaseChannel } from '@/emails/AdminPurchase';
 import { WaitlistJoined } from '@/emails/WaitlistJoined';
 import { WaitlistPromoted } from '@/emails/WaitlistPromoted';
+import { AdminBookingCancellation } from '@/emails/AdminBookingCancellation';
+import { AdminWaitlistPromotion } from '@/emails/AdminWaitlistPromotion';
 import { createElement } from 'react';
 
 let resendInstance: Resend | null = null;
@@ -516,5 +518,53 @@ export async function sendWaitlistPromoted(
     });
   } catch (err) {
     logger.error({ err, to }, 'Failed to send waitlist promoted email');
+  }
+}
+
+export async function sendAdminBookingCancellation(
+  to: string,
+  data: {
+    memberName: string;
+    memberEmail: string;
+    classTitle: string;
+    classDate: string;
+    classTime: string;
+  }
+) {
+  try {
+    const resend = getResend();
+    await resend.emails.send({
+      from: `Maningo Method <${FROM_EMAIL}>`,
+      replyTo: REPLY_TO,
+      to,
+      subject: `Cancellation: ${data.memberName} — ${data.classTitle}`,
+      react: createElement(AdminBookingCancellation, data),
+    });
+  } catch (err) {
+    logger.error({ err, to }, 'Failed to send admin booking cancellation notification');
+  }
+}
+
+export async function sendAdminWaitlistPromotion(
+  to: string,
+  data: {
+    promotedMemberName: string;
+    promotedMemberEmail: string;
+    classTitle: string;
+    classDate: string;
+    classTime: string;
+  }
+) {
+  try {
+    const resend = getResend();
+    await resend.emails.send({
+      from: `Maningo Method <${FROM_EMAIL}>`,
+      replyTo: REPLY_TO,
+      to,
+      subject: `Waitlist promotion: ${data.promotedMemberName} — ${data.classTitle}`,
+      react: createElement(AdminWaitlistPromotion, data),
+    });
+  } catch (err) {
+    logger.error({ err, to }, 'Failed to send admin waitlist promotion notification');
   }
 }
