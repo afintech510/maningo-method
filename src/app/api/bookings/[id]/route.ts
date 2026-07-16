@@ -59,24 +59,25 @@ export async function PATCH(
       );
     }
 
-    // Enforce 12-hour cancellation cutoff
+    // 12-hour cancellation cutoff — disabled per Chelsea's request (2026-07).
+    // To re-enable, uncomment the block below.
     const classesField = (booking as { classes?: { starts_at?: string } | { starts_at?: string }[] }).classes;
     const classStart = Array.isArray(classesField) ? classesField[0]?.starts_at : classesField?.starts_at;
-    if (classStart) {
-      const hoursUntilClass = (new Date(classStart).getTime() - Date.now()) / (1000 * 60 * 60);
-      if (hoursUntilClass < 12) {
-        return NextResponse.json(
-          {
-            error: {
-              code: 'CANCELLATION_WINDOW_CLOSED',
-              message:
-                'Classes can only be cancelled up to 12 hours before start time. For emergencies, please contact Chelsea directly to refund your credit.',
-            },
-          },
-          { status: 400 }
-        );
-      }
-    }
+    // if (classStart) {
+    //   const hoursUntilClass = (new Date(classStart).getTime() - Date.now()) / (1000 * 60 * 60);
+    //   if (hoursUntilClass < 12) {
+    //     return NextResponse.json(
+    //       {
+    //         error: {
+    //           code: 'CANCELLATION_WINDOW_CLOSED',
+    //           message:
+    //             'Classes can only be cancelled up to 12 hours before start time. For emergencies, please contact Chelsea directly to refund your credit.',
+    //         },
+    //       },
+    //       { status: 400 }
+    //     );
+    //   }
+    // }
 
     const { error: updateError } = await supabase
       .from('bookings')

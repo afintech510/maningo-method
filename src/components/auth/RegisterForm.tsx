@@ -14,6 +14,14 @@ export function RegisterForm() {
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof RegisterInput | 'root', string>>>({});
+  const [referrerPhone, setReferrerPhone] = useState('');
+
+  function formatPhoneInput(value: string) {
+    const digits = value.replace(/\D/g, '').slice(0, 10);
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -48,15 +56,15 @@ export function RegisterForm() {
     }
 
     const referrerEmailField = (formData.get('referrer_email') as string | null)?.trim();
-    const referralCodeField = (formData.get('referral_code') as string | null)?.trim();
+    const referrerPhoneField = referrerPhone.replace(/\D/g, '').trim();
     const res = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ...result.data,
-        // ?ref=CODE from a share-link still wins; explicit form input is the fallback.
-        referral_code: refParam || referralCodeField || undefined,
+        referral_code: refParam || undefined,
         referrer_email: referrerEmailField || undefined,
+        referrer_phone: referrerPhoneField || undefined,
       }),
     });
     const json = await res.json();
@@ -120,12 +128,14 @@ export function RegisterForm() {
             placeholder="friend@example.com"
           />
           <Input
-            label="Or their referral code"
-            name="referral_code"
-            type="text"
+            label="Or their phone number"
+            name="referrer_phone"
+            type="tel"
+            inputMode="tel"
             autoComplete="off"
-            placeholder={refParam ? '' : '8 characters'}
-            defaultValue={refParam || ''}
+            placeholder="(631) 555-1234"
+            value={referrerPhone}
+            onChange={(e) => setReferrerPhone(formatPhoneInput(e.target.value))}
           />
         </div>
         <p className="text-[11px] text-[#6b6b6b] mt-1">

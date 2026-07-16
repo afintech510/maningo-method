@@ -350,7 +350,7 @@ export function BookingButton({
           {typeof credits === 'number' && credits > 0 && (
             <> Balance after: <strong className="text-foreground">{credits - 1}</strong>.</>
           )}
-          {' '}You can cancel up to 12 hours before class start for a full credit refund.
+          {' '}You can cancel any time before class for a full credit refund.
         </p>
 
         <div className="flex gap-3">

@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
     const { full_name, email, phone, date_of_birth, password, sms_consent, sms_marketing_consent, email_marketing_consent } = result.data;
     const referralCode: string | undefined = typeof body.referral_code === 'string' ? body.referral_code.trim() : undefined;
     const referrerEmail: string | undefined = typeof body.referrer_email === 'string' ? body.referrer_email.trim() : undefined;
+    const referrerPhone: string | undefined = typeof body.referrer_phone === 'string' ? body.referrer_phone.replace(/\D/g, '').trim() : undefined;
 
     const ip =
       request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
@@ -77,6 +78,14 @@ export async function POST(request: NextRequest) {
         referredBy = referrer.id;
       } else {
         log.info({ referrerEmail }, 'Signup referrer_email did not resolve to an existing member');
+      }
+    }
+    if (!referredBy && referrerPhone && referrerPhone.length >= 10) {
+      const { data: referrerId } = await admin.rpc('lookup_profile_by_phone_digits', { p_digits: referrerPhone });
+      if (referrerId && referrerId !== userId) {
+        referredBy = referrerId;
+      } else {
+        log.info({ referrerPhone }, 'Signup referrer_phone did not resolve to an existing member');
       }
     }
 
