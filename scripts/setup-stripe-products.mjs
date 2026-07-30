@@ -1,6 +1,11 @@
 import Stripe from 'stripe';
 
-const stripe = new Stripe('REDACTED_STRIPE_KEY');
+const stripeKey = process.env.STRIPE_SECRET_KEY;
+if (!stripeKey) {
+  console.error('Missing STRIPE_SECRET_KEY in env. Export it before running this script.');
+  process.exit(1);
+}
+const stripe = new Stripe(stripeKey);
 
 async function setup() {
   console.log('Creating Stripe products and prices...\n');
