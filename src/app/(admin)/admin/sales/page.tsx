@@ -7,6 +7,12 @@ import { SendTestEmailsButton } from './send-test-emails-button';
 import { StudioSettingsCard } from './studio-settings-card';
 import { ReconcileActions } from './reconcile-actions';
 
+// This dashboard reads live data via the service-role client. Force dynamic
+// rendering so it is never prerendered at build time — otherwise the build
+// tries to reach Supabase without server env vars present and the export
+// fails (which is what broke the deploy after .env.production was untracked).
+export const dynamic = 'force-dynamic';
+
 export default async function AdminSalesPage() {
   const supabase = createAdminClient();
 
