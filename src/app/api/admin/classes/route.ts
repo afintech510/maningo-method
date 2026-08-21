@@ -21,22 +21,21 @@ export async function GET() {
     );
   }
 
-  // Get booking counts
-  const classIds = (classes || []).map((c) => c.id);
+  // Get booking counts. Uses a grouped COUNT via RPC (one row per class)
+  // rather than fetching every booking row and tallying in JS — the latter
+  // silently undercounts once total active bookings exceed PostgREST's
+  // 1000-row response cap.
   let bookingCounts: Record<string, number> = {};
 
-  if (classIds.length > 0) {
-    const { data: counts } = await supabase
-      .from('bookings')
-      .select('class_id')
-      .in('class_id', classIds)
-      .in('status', ['pending', 'confirmed']);
+  const { data: counts } = await supabase.rpc('class_booking_counts');
 
-    bookingCounts = (counts || []).reduce((acc, b) => {
-      acc[b.class_id] = (acc[b.class_id] || 0) + 1;
+  bookingCounts = (counts || []).reduce(
+    (acc: Record<string, number>, row: { class_id: string; booked_count: number }) => {
+      acc[row.class_id] = Number(row.booked_count);
       return acc;
-    }, {} as Record<string, number>);
-  }
+    },
+    {} as Record<string, number>
+  );
 
   const result = (classes || []).map((c) => ({
     ...c,
