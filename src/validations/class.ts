@@ -9,6 +9,7 @@ export const createClassSchema = z.object({
   }, 'Start time must be a valid future date'),
   duration_minutes: z.number().int().min(15).max(180),
   max_capacity: z.number().int().min(1).max(30),
+  is_free: z.boolean().optional().default(false),
 });
 
 export const updateClassSchema = createClassSchema.partial();

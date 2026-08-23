@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { BackButton } from '@/components/layout/BackButton';
 import { UpcomingClassesPanel } from '@/components/schedule/UpcomingClassesPanel';
+import { MemorialClassBanner } from '@/components/marketing/MemorialClassBanner';
 import { STRIPE_ENABLED } from '@/lib/feature-flags';
 
 export default function Home() {
@@ -89,6 +90,11 @@ export default function Home() {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* Free 9/11 memorial class promo — auto-hides after Sept 11, 2026 */}
+      <section className="px-5 pt-10 sm:pt-12 max-w-6xl mx-auto">
+        <MemorialClassBanner />
       </section>
 
       {/* Class Types */}

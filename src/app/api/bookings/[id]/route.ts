@@ -34,7 +34,7 @@ export async function PATCH(
     // Verify ownership and load class info
     const { data: booking, error: fetchError } = await supabase
       .from('bookings')
-      .select('id, student_id, class_id, status, classes(starts_at)')
+      .select('id, student_id, class_id, status, payment_type, classes(starts_at)')
       .eq('id', params.id)
       .single();
 
@@ -92,18 +92,26 @@ export async function PATCH(
       );
     }
 
-    // Refund 1 credit back to the student (atomic + audit)
-    try {
-      const { newBalance } = await applyCreditDelta({
-        studentId: auth.user.id,
-        delta: 1,
-        reason: `Cancellation refund for booking ${params.id}`,
-        source: 'booking_cancel',
-        relatedId: params.id,
-      });
-      log.info({ bookingId: params.id, new_balance: newBalance }, 'Booking cancelled, credit refunded');
-    } catch (err) {
-      log.error({ err, bookingId: params.id }, 'Credit refund failed; cancellation persists');
+    // Refund 1 credit back to the student (atomic + audit). Member self-book
+    // seats are 'drop_in' and always spent a credit; free classes book as
+    // 'comp' and never did — so refund everything except comp (same intent as
+    // shouldRefundOnCancel, which never refunds comp).
+    const refundCredit = booking.payment_type !== 'comp';
+    if (refundCredit) {
+      try {
+        const { newBalance } = await applyCreditDelta({
+          studentId: auth.user.id,
+          delta: 1,
+          reason: `Cancellation refund for booking ${params.id}`,
+          source: 'booking_cancel',
+          relatedId: params.id,
+        });
+        log.info({ bookingId: params.id, new_balance: newBalance }, 'Booking cancelled, credit refunded');
+      } catch (err) {
+        log.error({ err, bookingId: params.id }, 'Credit refund failed; cancellation persists');
+      }
+    } else {
+      log.info({ bookingId: params.id }, 'Booking cancelled, no credit refund (comp/free)');
     }
 
     // Auto-promote the next waitlisted member (fire-and-forget)
@@ -123,13 +131,25 @@ export async function PATCH(
 
           if (!nextEntry) return;
 
+          // Free classes promote without any credit requirement or debit.
+          const { data: promoteClass } = await admin
+            .from('classes')
+            .select('is_free')
+            .eq('id', classId)
+            .single();
+          const classIsFree = !!promoteClass?.is_free;
+
           const { data: profile } = await admin
             .from('profiles')
             .select('credits, email, full_name')
             .eq('id', nextEntry.student_id)
             .single();
 
-          if (!profile || profile.credits < 1) {
+          if (!profile) {
+            log.info({ waitlistId: nextEntry.id, studentId: nextEntry.student_id }, 'Auto-promote skipped: no profile');
+            return;
+          }
+          if (!classIsFree && profile.credits < 1) {
             log.info({ waitlistId: nextEntry.id, studentId: nextEntry.student_id }, 'Auto-promote skipped: no credits');
             return;
           }
@@ -140,7 +160,7 @@ export async function PATCH(
               class_id: classId,
               student_id: nextEntry.student_id,
               status: 'confirmed',
-              payment_type: 'pack_credit',
+              payment_type: classIsFree ? 'comp' : 'pack_credit',
             })
             .select('id')
             .single();
@@ -155,22 +175,24 @@ export async function PATCH(
             .update({ status: 'promoted', promoted_at: new Date().toISOString() })
             .eq('id', nextEntry.id);
 
-          try {
-            await applyCreditDelta({
-              studentId: nextEntry.student_id,
-              delta: -1,
-              reason: `Auto-promoted from waitlist → booking ${newBooking.id}`,
-              source: 'booking_create',
-              relatedId: newBooking.id,
-            });
-          } catch (creditErr) {
-            await admin.from('bookings').delete().eq('id', newBooking.id);
-            await admin
-              .from('waitlists')
-              .update({ status: 'waiting', promoted_at: null })
-              .eq('id', nextEntry.id);
-            log.error({ err: creditErr, studentId: nextEntry.student_id }, 'Auto-promote credit deduction failed; rolled back');
-            return;
+          if (!classIsFree) {
+            try {
+              await applyCreditDelta({
+                studentId: nextEntry.student_id,
+                delta: -1,
+                reason: `Auto-promoted from waitlist → booking ${newBooking.id}`,
+                source: 'booking_create',
+                relatedId: newBooking.id,
+              });
+            } catch (creditErr) {
+              await admin.from('bookings').delete().eq('id', newBooking.id);
+              await admin
+                .from('waitlists')
+                .update({ status: 'waiting', promoted_at: null })
+                .eq('id', nextEntry.id);
+              log.error({ err: creditErr, studentId: nextEntry.student_id }, 'Auto-promote credit deduction failed; rolled back');
+              return;
+            }
           }
 
           log.info({ waitlistId: nextEntry.id, bookingId: newBooking.id, studentId: nextEntry.student_id }, 'Auto-promoted from waitlist');
@@ -231,7 +253,7 @@ export async function PATCH(
       }
     })();
 
-    return NextResponse.json({ booking: { id: params.id, status: 'cancelled' }, credit_refunded: true });
+    return NextResponse.json({ booking: { id: params.id, status: 'cancelled' }, credit_refunded: refundCredit });
   } catch (err) {
     log.error({ err }, 'PATCH /api/bookings/[id] failed');
     return NextResponse.json(

@@ -30,12 +30,25 @@ export async function POST(request: Request) {
     // Waiver is no longer a blocker; the dashboard nudges unsigned members
     // to complete it but they can still book.
     const adminClient = createAdminClient();
+
+    // Load the class up front — `is_free` decides whether any credit logic
+    // runs at all, and `starts_at` drives the booking-horizon check.
+    const { data: cls } = await adminClient
+      .from('classes')
+      .select('starts_at, is_free')
+      .eq('id', class_id)
+      .single();
+    const isFree = !!cls?.is_free;
+
     const { data: profile } = await adminClient
       .from('profiles')
       .select('credits, gift_balance_cents')
       .eq('id', auth.user.id)
       .single();
 
+    // Free classes bypass the credit system entirely: no gift-balance
+    // conversion, no NO_CREDITS gate, no debit. Any logged-in member can book.
+    if (!isFree) {
     // If they don't have a regular credit but have at least $25 of gift
     // balance, silently convert $25 of balance → 1 credit so the booking can
     // proceed. Anything less than $25 stays parked on their account until
@@ -86,14 +99,10 @@ export async function POST(request: Request) {
         { status: 402 }
       );
     }
+    }
 
     // Booking horizon — reject bookings on classes too far out, mirroring the
     // client-side lock so a crafted request can't slip through.
-    const { data: cls } = await adminClient
-      .from('classes')
-      .select('starts_at')
-      .eq('id', class_id)
-      .single();
     if (cls?.starts_at) {
       const { booking_horizon_days } = await getStudioSettings();
       const bookableFromMs = new Date(cls.starts_at).getTime() - booking_horizon_days * 86400000;
@@ -114,7 +123,7 @@ export async function POST(request: Request) {
     const supabase = createClient();
     const { data: bookingId, error: rpcError } = await supabase.rpc('create_booking', {
       p_class_id: class_id,
-      p_payment_type: 'drop_in',
+      p_payment_type: isFree ? 'comp' : 'drop_in',
       p_status: 'confirmed',
     });
 
@@ -143,16 +152,21 @@ export async function POST(request: Request) {
       );
     }
 
-    // Deduct 1 credit (atomic + audit logged)
-    const { newBalance } = await applyCreditDelta({
-      studentId: auth.user.id,
-      delta: -1,
-      reason: `Booking ${bookingId}`,
-      source: 'booking_create',
-      relatedId: String(bookingId),
-    });
-
-    log.info({ bookingId, credits_remaining: newBalance }, 'Booking created, credit deducted');
+    // Deduct 1 credit (atomic + audit logged) — free classes never touch
+    // credits, so the balance is left unchanged.
+    let newBalance = profile?.credits ?? 0;
+    if (!isFree) {
+      ({ newBalance } = await applyCreditDelta({
+        studentId: auth.user.id,
+        delta: -1,
+        reason: `Booking ${bookingId}`,
+        source: 'booking_create',
+        relatedId: String(bookingId),
+      }));
+      log.info({ bookingId, credits_remaining: newBalance }, 'Booking created, credit deducted');
+    } else {
+      log.info({ bookingId }, 'Free class booked, no credit deducted');
+    }
 
     // Send booking confirmation email (don't block the response on this)
     void (async () => {
@@ -186,7 +200,7 @@ export async function POST(request: Request) {
     })();
 
     return NextResponse.json({
-      booking: { id: bookingId, class_id, status: 'confirmed', payment_type: 'drop_in' },
+      booking: { id: bookingId, class_id, status: 'confirmed', payment_type: isFree ? 'comp' : 'drop_in' },
       credits_remaining: newBalance,
     });
   } catch (err) {

@@ -17,6 +17,7 @@ interface ClassData {
   starts_at: string;
   duration_minutes: number;
   max_capacity: number;
+  is_free?: boolean;
   spots_remaining: number;
   bookable?: boolean;
   bookable_from?: string;

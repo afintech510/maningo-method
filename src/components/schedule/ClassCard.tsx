@@ -11,6 +11,7 @@ interface ClassCardProps {
     starts_at: string;
     duration_minutes: number;
     max_capacity: number;
+    is_free?: boolean;
     spots_remaining: number;
     bookable?: boolean;
     bookable_from?: string;
@@ -34,6 +35,7 @@ export function ClassCard({
 }: ClassCardProps) {
   const isBooked = !!bookingId;
   const isFull = classData.spots_remaining <= 0;
+  const isFree = !!classData.is_free;
 
   return (
     <Card>
@@ -51,7 +53,14 @@ export function ClassCard({
           capacity={classData.max_capacity}
         />
       </div>
-      <p className="font-medium mb-0.5">{classData.title}</p>
+      <div className="flex items-center gap-2 flex-wrap mb-0.5">
+        <p className="font-medium">{classData.title}</p>
+        {isFree && (
+          <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#c9a96e] bg-[#c9a96e]/10 border border-[#c9a96e]/30 rounded-full px-2 py-0.5">
+            Free · suggested $20 donation
+          </span>
+        )}
+      </div>
       <p className="text-sm text-muted-foreground mb-2">
         {classData.duration_minutes} min
       </p>
@@ -60,10 +69,14 @@ export function ClassCard({
           <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
           <circle cx="12" cy="10" r="3" />
         </svg>
-        <span>
-          <span className="font-medium text-foreground">Maningo Method</span>
-          <br />295 Montauk Hwy, Suite 7, Speonk, NY
-        </span>
+        {isFree ? (
+          <span>{classData.description || 'Location details to follow'}</span>
+        ) : (
+          <span>
+            <span className="font-medium text-foreground">Maningo Method</span>
+            <br />295 Montauk Hwy, Suite 7, Speonk, NY
+          </span>
+        )}
       </div>
       <BookingButton
         classId={classData.id}
@@ -71,6 +84,8 @@ export function ClassCard({
         isBooked={isBooked}
         isAuthenticated={isAuthenticated}
         hasCredits={hasCredits}
+        isFree={isFree}
+        location={classData.description}
         credits={credits}
         bookingId={bookingId}
         classTitle={classData.title}

@@ -14,6 +14,10 @@ interface BookingButtonProps {
   isBooked: boolean;
   isAuthenticated: boolean;
   hasCredits: boolean;
+  /** Free class — bypasses the credit gate/debit; books with a suggested donation. */
+  isFree?: boolean;
+  /** Location shown in the confirm modal for free classes (from class description). */
+  location?: string;
   /** Available credit balance (when known) — surfaced in the confirm modal. */
   credits?: number;
   /** Booking id when isBooked=true — required to cancel. */
@@ -37,6 +41,8 @@ export function BookingButton({
   isBooked,
   isAuthenticated,
   hasCredits,
+  isFree = false,
+  location,
   credits,
   bookingId,
   classTitle,
@@ -63,7 +69,8 @@ export function BookingButton({
       router.push('/login?return=/schedule');
       return;
     }
-    if (!hasCredits) {
+    // Free classes skip the credit gate — any logged-in member can book.
+    if (!isFree && !hasCredits) {
       router.push('/dashboard?buy=true');
       return;
     }
@@ -121,7 +128,11 @@ export function BookingButton({
         setCancelError(data.error?.message || 'Could not cancel.');
         return;
       }
-      showToast('Booking cancelled. Credit refunded.');
+      showToast(
+        data?.credit_refunded === false
+          ? 'Booking cancelled. Your spot has been released.'
+          : 'Booking cancelled. Credit refunded.'
+      );
       setCancelOpen(false);
       setCancelling(false);
       router.refresh();
@@ -137,7 +148,8 @@ export function BookingButton({
       router.push('/login?return=/schedule');
       return;
     }
-    if (!hasCredits) {
+    // Free classes skip the credit gate on the waitlist too.
+    if (!isFree && !hasCredits) {
       router.push('/dashboard?buy=true');
       return;
     }
@@ -207,7 +219,7 @@ export function BookingButton({
         </Button>
       );
     }
-    if (!hasCredits) {
+    if (!isFree && !hasCredits) {
       return (
         <Button variant="primary" size="lg" className="w-full" onClick={() => router.push('/dashboard?buy=true')}>
           Get a Credit to Join Waitlist
@@ -267,8 +279,12 @@ export function BookingButton({
             )}
           </div>
           <p className="text-sm text-muted-foreground mb-4">
-            We&rsquo;ll refund <strong className="text-foreground">1 class credit</strong> back to your account.
-            Cancellations within 12 hours of class start aren&rsquo;t self-service &mdash; contact Chelsea directly.
+            {isFree ? (
+              <>Your spot will be released so someone else can grab it. No credit was used, so there&rsquo;s nothing to refund.</>
+            ) : (
+              <>We&rsquo;ll refund <strong className="text-foreground">1 class credit</strong> back to your account.
+              Cancellations within 12 hours of class start aren&rsquo;t self-service &mdash; contact Chelsea directly.</>
+            )}
           </p>
           <div className="flex gap-3">
             <Button variant="destructive" className="flex-1" onClick={handleCancelConfirm} loading={cancelling}>
@@ -289,7 +305,7 @@ export function BookingButton({
       </Button>
     );
   }
-  if (!hasCredits) {
+  if (!isFree && !hasCredits) {
     return (
       <Button variant="primary" size="lg" className="w-full" onClick={handleClick}>
         Buy Credits to Book
@@ -334,24 +350,34 @@ export function BookingButton({
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
               <circle cx="12" cy="10" r="3" />
             </svg>
-            <span>Maningo Method · 295 Montauk Hwy, Speonk</span>
+            <span>{isFree ? (location || 'Location details in the class description') : 'Maningo Method · 295 Montauk Hwy, Speonk'}</span>
           </div>
         </div>
 
-        {typeof credits === 'number' && (
+        {!isFree && typeof credits === 'number' && (
           <div className="flex items-center justify-between rounded-lg bg-[#faf9f6] border border-border px-3 py-2 mb-3 text-sm">
             <span className="text-muted-foreground">Available credits</span>
             <span className="font-semibold">{credits}</span>
           </div>
         )}
 
-        <p className="text-sm text-muted-foreground mb-4">
-          This will use <strong className="text-foreground">1 class credit</strong> from your balance.
-          {typeof credits === 'number' && credits > 0 && (
-            <> Balance after: <strong className="text-foreground">{credits - 1}</strong>.</>
-          )}
-          {' '}You can cancel any time before class for a full credit refund.
-        </p>
+        {isFree ? (
+          <p className="text-sm text-muted-foreground mb-4">
+            <strong className="text-foreground">Free to book — no credit used.</strong>{' '}
+            Suggested <strong className="text-foreground">$20 cash donation</strong> on-site, 100% to{' '}
+            <a href="https://t2t.org/" target="_blank" rel="noopener noreferrer" className="text-[#c9a96e] hover:underline">
+              Tunnel to Towers (t2t.org)
+            </a>.
+          </p>
+        ) : (
+          <p className="text-sm text-muted-foreground mb-4">
+            This will use <strong className="text-foreground">1 class credit</strong> from your balance.
+            {typeof credits === 'number' && credits > 0 && (
+              <> Balance after: <strong className="text-foreground">{credits - 1}</strong>.</>
+            )}
+            {' '}You can cancel any time before class for a full credit refund.
+          </p>
+        )}
 
         <div className="flex gap-3">
           <Button

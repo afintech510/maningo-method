@@ -19,6 +19,8 @@ interface ClassItem {
   duration_minutes: number;
   spots_remaining: number;
   max_capacity: number;
+  is_free?: boolean;
+  description?: string;
 }
 
 interface WeeklyScheduleProps {
@@ -120,6 +122,8 @@ export function WeeklySchedule({ bookedClassIds, hasCredits, credits, waitlistBy
               {grouped[day].map((cls) => {
                 const isBooked = bookedClassIds.includes(cls.id);
                 const isFull = cls.spots_remaining <= 0;
+                const isFree = !!cls.is_free;
+                const canWaitlist = hasCredits || isFree;
 
                 const cap = cls.max_capacity || 20;
                 const bookedCount = cap - cls.spots_remaining;
@@ -127,7 +131,14 @@ export function WeeklySchedule({ bookedClassIds, hasCredits, credits, waitlistBy
                   <Card key={cls.id} className="py-3 px-4">
                     <div className="flex justify-between items-center gap-3">
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm">{cls.title}</p>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="font-medium text-sm">{cls.title}</p>
+                          {isFree && (
+                            <span className="text-[9px] font-semibold uppercase tracking-[0.08em] text-[#c9a96e] bg-[#c9a96e]/10 border border-[#c9a96e]/30 rounded-full px-1.5 py-0.5">
+                              Free
+                            </span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-2 flex-wrap mt-0.5">
                           <p className="text-xs text-muted-foreground">
                             {formatStudioTime(cls.starts_at)} &middot; {cls.duration_minutes} min
@@ -170,7 +181,7 @@ export function WeeklySchedule({ bookedClassIds, hasCredits, credits, waitlistBy
                           </button>
                         </div>
                       ) : isFull ? (
-                        hasCredits ? (
+                        canWaitlist ? (
                           <Button
                             size="sm"
                             variant="secondary"
@@ -244,28 +255,42 @@ export function WeeklySchedule({ bookedClassIds, hasCredits, credits, waitlistBy
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                   <circle cx="12" cy="10" r="3" />
                 </svg>
-                <span>Maningo Method &middot; 295 Montauk Hwy, Speonk</span>
+                <span>
+                  {confirmClass.is_free
+                    ? (confirmClass.description || 'Location details in the class description')
+                    : 'Maningo Method · 295 Montauk Hwy, Speonk'}
+                </span>
               </div>
             </div>
 
-            {typeof credits === 'number' && (
+            {!confirmClass.is_free && typeof credits === 'number' && (
               <div className="flex items-center justify-between rounded-lg bg-[#faf9f6] border border-border px-3 py-2 mb-3 text-sm">
                 <span className="text-muted-foreground">Available credits</span>
                 <span className="font-semibold">{credits}</span>
               </div>
             )}
-            {!hasCredits && (
+            {!confirmClass.is_free && !hasCredits && (
               <p className="text-sm text-amber-700 bg-amber-50 rounded-lg p-3 mb-4">
                 You don&apos;t have any class credits. Buy a pack to book.
               </p>
             )}
 
-            <p className="text-sm text-muted-foreground mb-4">
-              This will use <strong className="text-foreground">1 class credit</strong>.
-              {typeof credits === 'number' && credits > 0 && (
-                <> Balance after: <strong className="text-foreground">{credits - 1}</strong>.</>
-              )}
-            </p>
+            {confirmClass.is_free ? (
+              <p className="text-sm text-muted-foreground mb-4">
+                <strong className="text-foreground">Free to book — no credit used.</strong>{' '}
+                Suggested <strong className="text-foreground">$20 cash donation</strong> on-site, 100% to{' '}
+                <a href="https://t2t.org/" target="_blank" rel="noopener noreferrer" className="text-[#c9a96e] hover:underline">
+                  Tunnel to Towers (t2t.org)
+                </a>.
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground mb-4">
+                This will use <strong className="text-foreground">1 class credit</strong>.
+                {typeof credits === 'number' && credits > 0 && (
+                  <> Balance after: <strong className="text-foreground">{credits - 1}</strong>.</>
+                )}
+              </p>
+            )}
 
             <div className="flex gap-3">
               <Button

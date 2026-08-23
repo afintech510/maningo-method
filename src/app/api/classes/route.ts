@@ -69,6 +69,7 @@ export async function GET(request: NextRequest) {
         starts_at: c.starts_at,
         duration_minutes: c.duration_minutes,
         max_capacity: c.max_capacity,
+        is_free: c.is_free,
         spots_remaining: c.max_capacity - (bookingCounts[c.id] || 0),
         status: c.status,
         bookable,

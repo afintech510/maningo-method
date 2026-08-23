@@ -52,6 +52,7 @@ export function ScheduleCreatorForm({ seed, onSuccess }: Props) {
   const [horizonWeeks, setHorizonWeeks] = useState(seed?.horizon_weeks ?? 8);
   const [singleDate, setSingleDate] = useState(today);
   const [singleTime, setSingleTime] = useState('07:00');
+  const [isFree, setIsFree] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -103,6 +104,7 @@ export function ScheduleCreatorForm({ seed, onSuccess }: Props) {
           starts_at: utc.toISOString(),
           duration_minutes: Number(duration),
           max_capacity: Number(capacity),
+          is_free: isFree,
         }),
       });
       const data = await res.json();
@@ -319,9 +321,29 @@ export function ScheduleCreatorForm({ seed, onSuccess }: Props) {
                 />
               </div>
             </div>
+            <div className="rounded-xl border border-[#e5e2dc] bg-[#faf9f6] p-4">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isFree}
+                  onChange={(e) => setIsFree(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-[#e5e2dc] text-[#c9a96e] focus:ring-[#c9a96e]"
+                />
+                <span className="text-sm">
+                  <span className="font-medium">Free class (no credit)</span>
+                  <span className="block text-xs text-muted-foreground mt-0.5">
+                    Any logged-in member can book without spending a credit.
+                    {isFree && (
+                      <> Put the <strong>location and any donation details</strong> in the
+                      Description above &mdash; free classes show it in place of the studio address.</>
+                    )}
+                  </span>
+                </span>
+              </label>
+            </div>
             <div className="rounded-xl border border-[#e5e2dc] bg-[#faf9f6] p-4 text-sm">
               <p className="font-medium">
-                Will create 1 class on {singleDate} at {singleTime}.
+                Will create 1 {isFree ? 'free ' : ''}class on {singleDate} at {singleTime}.
               </p>
             </div>
           </>
