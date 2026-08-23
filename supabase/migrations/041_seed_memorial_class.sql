@@ -6,7 +6,7 @@
 --
 -- Details:
 --   Sept 11, 2026 · 7:30 AM studio-local (EDT/UTC-4 → 11:30 UTC)
---   Free (is_free = true) · capacity 40 · on the gazebo lawn in Westhampton
+--   Free (is_free = true) · capacity 30 · on the gazebo lawn in Westhampton
 --   Suggested $20 cash donation on-site, 100% to Tunnel to Towers.
 
 INSERT INTO public.classes
@@ -16,7 +16,7 @@ SELECT
   'On the gazebo lawn in Westhampton. A free community class honoring the memory of September 11th — all levels welcome, bring a mat. Suggested $20 cash donation on-site, 100% to the Tunnel to Towers Foundation (t2t.org).',
   '2026-09-11T11:30:00+00:00'::timestamptz,
   50,
-  40,
+  30,
   true,
   'scheduled',
   (SELECT id FROM public.profiles
