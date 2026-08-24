@@ -33,6 +33,8 @@ interface BookingButtonProps {
   bookableFrom?: string;
   /** Active waitlist entry for this class, if any. */
   waitlistEntry?: { id: string; position: number };
+  /** Path to return to after login (deep-link back to a class page). */
+  returnTo?: string;
 }
 
 export function BookingButton({
@@ -52,8 +54,10 @@ export function BookingButton({
   bookable = true,
   bookableFrom,
   waitlistEntry,
+  returnTo = '/schedule',
 }: BookingButtonProps) {
   const router = useRouter();
+  const loginHref = `/login?next=${encodeURIComponent(returnTo)}`;
   const { showToast } = useToast();
   const [state, setState] = useState<'default' | 'processing' | 'booked'>(
     isBooked ? 'booked' : 'default'
@@ -66,7 +70,7 @@ export function BookingButton({
 
   function handleClick() {
     if (!isAuthenticated) {
-      router.push('/login?return=/schedule');
+      router.push(loginHref);
       return;
     }
     // Free classes skip the credit gate — any logged-in member can book.
@@ -145,7 +149,7 @@ export function BookingButton({
 
   async function handleJoinWaitlist() {
     if (!isAuthenticated) {
-      router.push('/login?return=/schedule');
+      router.push(loginHref);
       return;
     }
     // Free classes skip the credit gate on the waitlist too.
@@ -214,7 +218,7 @@ export function BookingButton({
     }
     if (!isAuthenticated) {
       return (
-        <Button variant="primary" size="lg" className="w-full" onClick={() => router.push('/login?return=/schedule')}>
+        <Button variant="primary" size="lg" className="w-full" onClick={() => router.push(loginHref)}>
           Log in to Join Waitlist
         </Button>
       );

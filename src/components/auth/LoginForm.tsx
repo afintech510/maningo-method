@@ -60,7 +60,9 @@ export function LoginForm() {
       window.location.href = `/checkout/pay?kind=pack&pack=${packParam}`;
       return;
     }
-    if (nextParam && nextParam.startsWith('/')) {
+    // Only same-origin relative paths — reject protocol-relative ('//host')
+    // and absolute URLs to avoid an open redirect.
+    if (nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//')) {
       window.location.href = nextParam;
       return;
     }

@@ -23,6 +23,8 @@ interface ClassCardProps {
   bookingId?: string;
   /** Active waitlist entry for this class, if any. */
   waitlistEntry?: { id: string; position: number };
+  /** Path to return to after login — defaults to the schedule page. */
+  returnTo?: string;
 }
 
 export function ClassCard({
@@ -32,6 +34,7 @@ export function ClassCard({
   credits,
   bookingId,
   waitlistEntry,
+  returnTo,
 }: ClassCardProps) {
   const isBooked = !!bookingId;
   const isFull = classData.spots_remaining <= 0;
@@ -95,6 +98,7 @@ export function ClassCard({
         bookable={classData.bookable}
         bookableFrom={classData.bookable_from}
         waitlistEntry={waitlistEntry}
+        returnTo={returnTo}
       />
     </Card>
   );
