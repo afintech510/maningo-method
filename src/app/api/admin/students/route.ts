@@ -4,6 +4,12 @@ import { createAdminClient } from '@/lib/supabase/admin';
 
 interface SpendRow { id: string; total_cents: number | null }
 
+interface AttendanceStatsRow {
+  student_id: string;
+  classes_attended: number | string;
+  last_attended_at: string | null;
+}
+
 export async function GET(request: NextRequest) {
   const auth = await requireAuth('admin');
   if (isAuthError(auth)) return auth;
@@ -55,26 +61,20 @@ export async function GET(request: NextRequest) {
   const spendMap = new Map<string, number>();
   (spends as SpendRow[] | null)?.forEach((s) => spendMap.set(s.id, s.total_cents || 0));
 
-  // Last attended class per student — pulls confirmed bookings whose class
-  // start is in the past, then keeps the most recent per student.
-  const nowIso = new Date().toISOString();
-  const { data: attended } = await supabase
-    .from('bookings')
-    .select('student_id, classes!inner(starts_at)')
-    .eq('status', 'confirmed')
-    .lt('classes.starts_at', nowIso)
-    .order('classes(starts_at)', { ascending: false });
+  // Classes attended + last attended class per student. Uses a grouped
+  // aggregate via RPC (one row per student) rather than fetching every
+  // confirmed past booking and tallying in JS — the latter silently
+  // undercounts once total past bookings exceed PostgREST's 1000-row cap, and
+  // because that capped window slides forward over time, established members'
+  // counts drift *downward*. See 042_student_attendance_stats.sql.
+  const { data: attended } = await supabase.rpc('student_attendance_stats');
 
   const lastAttendedMap = new Map<string, string>();
   const attendedCountMap = new Map<string, number>();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (attended as any[] | null)?.forEach((r) => {
-    const studentId = r.student_id as string | undefined;
-    const startsAt = (r.classes?.starts_at as string | undefined) || undefined;
-    if (!studentId || !startsAt) return;
-    const prev = lastAttendedMap.get(studentId);
-    if (!prev || startsAt > prev) lastAttendedMap.set(studentId, startsAt);
-    attendedCountMap.set(studentId, (attendedCountMap.get(studentId) || 0) + 1);
+  (attended as AttendanceStatsRow[] | null)?.forEach((r) => {
+    if (!r.student_id) return;
+    attendedCountMap.set(r.student_id, Number(r.classes_attended) || 0);
+    if (r.last_attended_at) lastAttendedMap.set(r.student_id, r.last_attended_at);
   });
 
   const result = (students || []).map((s) => ({

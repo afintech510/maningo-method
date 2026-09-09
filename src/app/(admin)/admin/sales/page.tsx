@@ -13,6 +13,15 @@ import { ReconcileActions } from './reconcile-actions';
 // fails (which is what broke the deploy after .env.production was untracked).
 export const dynamic = 'force-dynamic';
 
+// Postgres SUM() returns bigint, which supabase-js surfaces as string or
+// number depending on magnitude — callers coerce with Number().
+interface RevenueTotals {
+  stripe_all_cents: number | string;
+  stripe_month_cents: number | string;
+  manual_all_cents: number | string;
+  manual_month_cents: number | string;
+}
+
 export default async function AdminSalesPage() {
   const supabase = createAdminClient();
 
@@ -20,10 +29,7 @@ export default async function AdminSalesPage() {
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
   const [
-    { data: stripeAll },
-    { data: stripeMonth },
-    { data: manualAll },
-    { data: manualMonth },
+    { data: revenue },
     { data: pendingMP },
     { data: pendingGifts },
     { data: members },
@@ -33,14 +39,11 @@ export default async function AdminSalesPage() {
     { data: recentManualSales },
     { data: recentGiftSales },
   ] = await Promise.all([
-    supabase.from('credit_purchases').select('amount_paid_cents'),
-    supabase.from('credit_purchases').select('amount_paid_cents').gte('created_at', monthStart),
-    supabase.from('manual_payments').select('amount_cents').eq('status', 'paid'),
-    supabase
-      .from('manual_payments')
-      .select('amount_cents')
-      .eq('status', 'paid')
-      .gte('paid_at', monthStart),
+    // Revenue totals are summed in Postgres. Fetching one row per purchase and
+    // reducing in JS would silently under-report once credit_purchases or
+    // manual_payments exceeds PostgREST's 1000-row cap. See
+    // 043_revenue_totals.sql.
+    supabase.rpc('revenue_totals', { p_month_start: monthStart }).single(),
     supabase
       .from('manual_payments')
       .select(
@@ -88,10 +91,11 @@ export default async function AdminSalesPage() {
       .limit(5),
   ]);
 
-  const stripeAllTotal = (stripeAll || []).reduce((s, r) => s + (r.amount_paid_cents || 0), 0);
-  const stripeMonthTotal = (stripeMonth || []).reduce((s, r) => s + (r.amount_paid_cents || 0), 0);
-  const manualAllTotal = (manualAll || []).reduce((s, r) => s + (r.amount_cents || 0), 0);
-  const manualMonthTotal = (manualMonth || []).reduce((s, r) => s + (r.amount_cents || 0), 0);
+  const rev = revenue as RevenueTotals | null;
+  const stripeAllTotal = Number(rev?.stripe_all_cents ?? 0);
+  const stripeMonthTotal = Number(rev?.stripe_month_cents ?? 0);
+  const manualAllTotal = Number(rev?.manual_all_cents ?? 0);
+  const manualMonthTotal = Number(rev?.manual_month_cents ?? 0);
 
   const revenueAll = stripeAllTotal + manualAllTotal;
   const revenueMonth = stripeMonthTotal + manualMonthTotal;

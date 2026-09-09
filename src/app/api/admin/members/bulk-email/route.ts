@@ -27,7 +27,8 @@ interface MemberProfile {
 
 interface AttendedRow {
   student_id: string;
-  classes: { starts_at: string } | null;
+  classes_attended: number | string;
+  last_attended_at: string | null;
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -59,25 +60,18 @@ export async function POST(request: NextRequest) {
   const profileById = new Map<string, MemberProfile>();
   (profiles || []).forEach((p) => profileById.set(p.id, p as MemberProfile));
 
-  // Most-recent past class per requested student in one query.
-  const nowIso = new Date().toISOString();
-  const { data: attended } = await supabase
-    .from('bookings')
-    .select('student_id, classes!inner(starts_at)')
-    .in('student_id', member_ids)
-    .eq('status', 'confirmed')
-    .lt('classes.starts_at', nowIso)
-    .order('classes(starts_at)', { ascending: false });
+  // Most-recent past class per student, via a grouped aggregate (one row per
+  // student). Fetching the raw booking rows instead would silently drop
+  // everything past PostgREST's 1000-row cap, making long-standing members
+  // look like they'd never attended. See 042_student_attendance_stats.sql.
+  const { data: attended } = await supabase.rpc('student_attendance_stats');
+  const requested = new Set(member_ids);
   const lastAttendedByStudent = new Map<string, string>();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (attended as any[] | null)?.forEach((r) => {
-    const sid = r.student_id as string | undefined;
-    const startsAt = (r.classes?.starts_at as string | undefined) || undefined;
-    if (!sid || !startsAt) return;
-    const prev = lastAttendedByStudent.get(sid);
-    if (!prev || startsAt > prev) lastAttendedByStudent.set(sid, startsAt);
+  (attended as AttendedRow[] | null)?.forEach((r) => {
+    if (!r.student_id || !r.last_attended_at) return;
+    if (!requested.has(r.student_id)) return;
+    lastAttendedByStudent.set(r.student_id, r.last_attended_at);
   });
-  void (null as unknown as AttendedRow);
 
   const resend = getResend();
   const results: Array<{ member_id: string; ok: boolean; id?: string; reason?: string }> = [];
