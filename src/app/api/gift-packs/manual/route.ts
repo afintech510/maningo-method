@@ -9,6 +9,7 @@ import {
 } from '@/lib/resend';
 import { formatCents } from '@/lib/pricing';
 import { logger, generateCorrelationId } from '@/lib/logger';
+import { purchasesClosedGuard } from '@/lib/purchases';
 
 const ADMIN_EMAIL = 'chelsea@maningomethod.com';
 const VENMO_HANDLE = '@Chelsea-Maningo';
@@ -39,6 +40,9 @@ export async function POST(request: NextRequest) {
   const log = logger.child({ correlationId });
 
   const auth = await getAuth();
+
+  const closed = await purchasesClosedGuard();
+  if (closed) return closed;
 
   try {
     const body = await request.json();

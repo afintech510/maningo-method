@@ -4,6 +4,7 @@ import { getAuth } from '@/lib/auth';
 import { getStripe, getOrCreateStripeCustomer } from '@/lib/stripe';
 import { withServiceFee } from '@/lib/pricing';
 import { logger, generateCorrelationId } from '@/lib/logger';
+import { purchasesClosedGuard } from '@/lib/purchases';
 
 const PACK: Record<string, { credits: number; amount_cents: number; label: string }> = {
   single: { credits: 1, amount_cents: 2500, label: 'Drop-In Class' },
@@ -29,6 +30,9 @@ export async function POST(request: NextRequest) {
   const log = logger.child({ correlationId });
 
   const auth = await getAuth();
+
+  const closed = await purchasesClosedGuard();
+  if (closed) return closed;
 
   try {
     const body = await request.json();

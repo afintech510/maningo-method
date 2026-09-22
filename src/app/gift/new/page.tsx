@@ -2,8 +2,11 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { GiftNewClient } from './client';
+import { arePurchasesEnabled } from '@/lib/purchases';
+import { PurchasesClosedNotice } from '@/components/marketing/PurchasesClosedNotice';
 
-export default function GiftNewPage() {
+export default async function GiftNewPage() {
+  const purchasesEnabled = await arePurchasesEnabled();
   return (
     <div className="min-h-screen flex flex-col bg-[#faf9f6]">
       <header className="border-b border-[#e5e2dc] bg-white">
@@ -28,9 +31,13 @@ export default function GiftNewPage() {
       </header>
 
       <main className="flex-1 px-5 py-8 sm:py-12">
-        <Suspense fallback={null}>
-          <GiftNewClient />
-        </Suspense>
+        {purchasesEnabled ? (
+          <Suspense fallback={null}>
+            <GiftNewClient />
+          </Suspense>
+        ) : (
+          <PurchasesClosedNotice variant="page" />
+        )}
       </main>
 
       <footer className="bg-[#2d2d2d] text-white px-5 py-6">

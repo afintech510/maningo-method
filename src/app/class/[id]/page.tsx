@@ -8,6 +8,7 @@ import { getStudioSettings } from '@/lib/studio-settings';
 import { formatStudioDate, formatStudioTime } from '@/lib/timezone';
 import { Header } from '@/components/layout/Header';
 import { MobileNav } from '@/components/layout/MobileNav';
+import { arePurchasesEnabled } from '@/lib/purchases';
 
 interface Props {
   params: { id: string };
@@ -41,7 +42,7 @@ export default async function ClassPage({ params }: Props) {
             See the full schedule
           </Link>
         </div>
-        <MobileNav />
+        <MobileNav purchasesEnabled={await arePurchasesEnabled()} />
       </>
     );
   }
@@ -141,7 +142,7 @@ export default async function ClassPage({ params }: Props) {
           </Link>
         </p>
       </div>
-      <MobileNav />
+      <MobileNav purchasesEnabled={await arePurchasesEnabled()} />
     </>
   );
 }

@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { logger, generateCorrelationId } from '@/lib/logger';
 import { withServiceFee } from '@/lib/pricing';
 import { validateDiscountCode, applyDiscount } from '@/lib/marketing/discountCode';
+import { purchasesClosedGuard } from '@/lib/purchases';
 
 const PACKS: Record<string, { credits: number; amount_cents: number; label: string }> = {
   single: { credits: 1, amount_cents: 2500, label: 'Drop-In Class' },
@@ -18,6 +19,9 @@ export async function POST(request: NextRequest) {
 
   const auth = await requireAuth();
   if (isAuthError(auth)) return auth;
+
+  const closed = await purchasesClosedGuard();
+  if (closed) return closed;
 
   try {
     const body = await request.json();

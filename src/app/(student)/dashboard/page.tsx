@@ -13,6 +13,7 @@ import { Card } from '@/components/ui/Card';
 import { LogoutButton } from '@/components/layout/LogoutButton';
 import { format } from 'date-fns';
 import { formatStudioDate, formatStudioTime } from '@/lib/timezone';
+import { arePurchasesEnabled } from '@/lib/purchases';
 
 export default async function DashboardPage() {
   const auth = await getAuth();
@@ -20,6 +21,7 @@ export default async function DashboardPage() {
   if (auth.user.role === 'admin' || auth.user.role === 'superadmin') redirect('/admin');
 
   const supabase = createAdminClient();
+  const purchasesEnabled = await arePurchasesEnabled();
 
   // Fetch profile with credits, referral code, signup timestamp, and waiver status
   const { data: profile } = await supabase
@@ -179,13 +181,15 @@ export default async function DashboardPage() {
 
         {/* Add Credits */}
         <div className="mt-8">
-          <BuyPacks />
+          <BuyPacks purchasesEnabled={purchasesEnabled} />
         </div>
 
         {/* Gift a friend */}
-        <div className="mt-6">
-          <GiftCardCard />
-        </div>
+        {purchasesEnabled && (
+          <div className="mt-6">
+            <GiftCardCard purchasesEnabled={purchasesEnabled} />
+          </div>
+        )}
 
         {/* Referral */}
         <div className="mt-4">

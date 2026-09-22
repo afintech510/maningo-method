@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { getBaseUrl } from '@/lib/utils';
 import { logger, generateCorrelationId } from '@/lib/logger';
 import { validateDiscountCode } from '@/lib/marketing/discountCode';
+import { purchasesClosedGuard } from '@/lib/purchases';
 
 const PACKS: Record<string, { priceEnv: string; credits: number; label: string }> = {
   intro: { priceEnv: 'STRIPE_INTRO_PRICE_ID', credits: 1, label: 'Intro Class' },
@@ -19,6 +20,9 @@ export async function POST(request: NextRequest) {
 
   const auth = await requireAuth();
   if (isAuthError(auth)) return auth;
+
+  const closed = await purchasesClosedGuard();
+  if (closed) return closed;
 
   try {
     const { pack_type, referral_code, discount_code } = await request.json();

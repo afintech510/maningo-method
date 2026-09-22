@@ -7,6 +7,7 @@ import { logger, generateCorrelationId } from '@/lib/logger';
 
 const patchSchema = z.object({
   booking_horizon_days: z.number().int().min(1).max(365).optional(),
+  purchases_enabled: z.boolean().optional(),
 });
 
 export async function GET() {
@@ -46,6 +47,10 @@ export async function PATCH(request: NextRequest) {
 
   if (error) {
     log.error({ err: error }, 'Failed to update studio settings');
+    if (parsed.data.purchases_enabled !== undefined) {
+      // Most likely cause: migration 044 hasn't been applied to this database.
+      log.error('purchases_enabled write failed — is migration 044 applied?');
+    }
     return NextResponse.json(
       { error: { code: 'INTERNAL_ERROR', message: 'Could not save settings.' } },
       { status: 500 }

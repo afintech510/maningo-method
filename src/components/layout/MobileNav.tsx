@@ -11,13 +11,19 @@ const NAV_ITEMS = [
   { label: 'Buy Credits', href: '/#pricing', icon: DollarIcon, match: ['/#pricing'] },
 ];
 
-export function MobileNav() {
+export function MobileNav({ purchasesEnabled = true }: { purchasesEnabled?: boolean }) {
   const pathname = usePathname() ?? '';
+
+  // Drop the Buy Credits tab while selling is off — it would land on a
+  // pricing section with nothing to click.
+  const items = purchasesEnabled
+    ? NAV_ITEMS
+    : NAV_ITEMS.filter((item) => item.href !== '/#pricing');
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-border lg:hidden safe-bottom">
       <div className="flex items-center justify-around h-14">
-        {NAV_ITEMS.map((item) => {
+        {items.map((item) => {
           const isActive = item.match.some(
             (m) => pathname === m || (m !== '/#contact' && m !== '/#pricing' && pathname.startsWith(`${m}/`))
           );

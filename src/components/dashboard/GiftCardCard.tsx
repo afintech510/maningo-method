@@ -1,7 +1,14 @@
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 
-export function GiftCardCard() {
+export function GiftCardCard({ purchasesEnabled = true }: { purchasesEnabled?: boolean }) {
+  // A gift card is prepaid credits, so it's off whenever selling is off.
+  if (!purchasesEnabled) return null;
+
+  return <GiftCardCardInner />;
+}
+
+function GiftCardCardInner() {
   return (
     <Card className="border-[#c9a96e]/30 bg-gradient-to-br from-[#c9a96e]/10 via-[#faf9f6] to-white">
       <div className="flex items-start gap-3">

@@ -1,7 +1,19 @@
 import { Suspense } from 'react';
 import { CheckoutPayClient } from './client';
+import { arePurchasesEnabled } from '@/lib/purchases';
+import { PurchasesClosedNotice } from '@/components/marketing/PurchasesClosedNotice';
 
-export default function CheckoutPayPage() {
+export default async function CheckoutPayPage() {
+  // Members reach this from bookmarks and old emails, so gate the page itself
+  // — not just the buttons that used to link here.
+  if (!(await arePurchasesEnabled())) {
+    return (
+      <div className="bg-[#faf9f6] min-h-[calc(100vh-64px)]">
+        <PurchasesClosedNotice variant="page" />
+      </div>
+    );
+  }
+
   return (
     <div className="bg-[#faf9f6] min-h-[calc(100vh-64px)]">
       <main className="px-5 py-8 sm:py-12">
