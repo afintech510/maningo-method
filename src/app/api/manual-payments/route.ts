@@ -5,7 +5,7 @@ import { logger, generateCorrelationId } from '@/lib/logger';
 import { sendManualPaymentSubmitted } from '@/lib/resend';
 import { applyCreditDelta } from '@/lib/credits';
 import { validateDiscountCode, applyDiscount } from '@/lib/marketing/discountCode';
-import { purchasesClosedGuard } from '@/lib/purchases';
+import { packClosedGuard } from '@/lib/purchases';
 
 const ADMIN_EMAIL = 'chelsea@maningomethod.com';
 
@@ -24,11 +24,13 @@ export async function POST(request: NextRequest) {
   const auth = await requireAuth();
   if (isAuthError(auth)) return auth;
 
-  const closed = await purchasesClosedGuard();
-  if (closed) return closed;
-
   try {
     const { pack_type, payment_method, discount_code } = await request.json();
+
+    // The cash path mints credits on submit, so it gets the same per-pack gate.
+    const closed = await packClosedGuard(pack_type);
+    if (closed) return closed;
+
     const pack = PACK_PRICING[pack_type];
     if (!pack || !VALID_METHODS.has(payment_method)) {
       return NextResponse.json(

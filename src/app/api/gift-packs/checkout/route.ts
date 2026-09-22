@@ -3,7 +3,7 @@ import { requireAuth, isAuthError } from '@/lib/auth';
 import { getStripe, getOrCreateStripeCustomer } from '@/lib/stripe';
 import { getBaseUrl } from '@/lib/utils';
 import { logger, generateCorrelationId } from '@/lib/logger';
-import { purchasesClosedGuard } from '@/lib/purchases';
+import { giftClosedGuard } from '@/lib/purchases';
 
 const PRESET_PRICE_ENV: Record<string, { env: string; credits: number; label: string }> = {
   single: { env: 'STRIPE_DROPIN_PRICE_ID', credits: 1, label: 'Drop-In Class' },
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
   const auth = await requireAuth();
   if (isAuthError(auth)) return auth;
 
-  const closed = await purchasesClosedGuard();
+  const closed = await giftClosedGuard();
   if (closed) return closed;
 
   try {

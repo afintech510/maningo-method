@@ -9,7 +9,7 @@ import {
 } from '@/lib/resend';
 import { formatCents } from '@/lib/pricing';
 import { logger, generateCorrelationId } from '@/lib/logger';
-import { purchasesClosedGuard } from '@/lib/purchases';
+import { giftClosedGuard } from '@/lib/purchases';
 
 const ADMIN_EMAIL = 'chelsea@maningomethod.com';
 const VENMO_HANDLE = '@Chelsea-Maningo';
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
 
   const auth = await getAuth();
 
-  const closed = await purchasesClosedGuard();
+  const closed = await giftClosedGuard();
   if (closed) return closed;
 
   try {

@@ -2,11 +2,11 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { GiftNewClient } from './client';
-import { arePurchasesEnabled } from '@/lib/purchases';
+import { areGiftsSellable } from '@/lib/purchases';
 import { PurchasesClosedNotice } from '@/components/marketing/PurchasesClosedNotice';
 
 export default async function GiftNewPage() {
-  const purchasesEnabled = await arePurchasesEnabled();
+  const giftsEnabled = await areGiftsSellable();
   return (
     <div className="min-h-screen flex flex-col bg-[#faf9f6]">
       <header className="border-b border-[#e5e2dc] bg-white">
@@ -31,7 +31,7 @@ export default async function GiftNewPage() {
       </header>
 
       <main className="flex-1 px-5 py-8 sm:py-12">
-        {purchasesEnabled ? (
+        {giftsEnabled ? (
           <Suspense fallback={null}>
             <GiftNewClient />
           </Suspense>

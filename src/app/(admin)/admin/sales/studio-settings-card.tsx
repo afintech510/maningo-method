@@ -2,12 +2,21 @@
 
 import { useEffect, useState } from 'react';
 
+const PACK_LABELS: Array<{ type: string; label: string }> = [
+  { type: 'single', label: 'Drop-In ($25)' },
+  { type: '5pack', label: '5-Pack ($112)' },
+  { type: '10pack', label: '10-Pack ($200)' },
+];
+
 export function StudioSettingsCard() {
   const [days, setDays] = useState<number>(30);
   const [purchasesEnabled, setPurchasesEnabled] = useState(true);
+  const [sellablePacks, setSellablePacks] = useState<string[]>(PACK_LABELS.map((p) => p.type));
+  const [giftsEnabled, setGiftsEnabled] = useState(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [togglingPurchases, setTogglingPurchases] = useState(false);
+  const [savingScope, setSavingScope] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,31 +30,59 @@ export function StudioSettingsCard() {
         if (typeof d?.settings?.purchases_enabled === 'boolean') {
           setPurchasesEnabled(d.settings.purchases_enabled);
         }
+        if (Array.isArray(d?.settings?.sellable_pack_types)) {
+          setSellablePacks(d.settings.sellable_pack_types);
+        }
+        if (typeof d?.settings?.gift_purchases_enabled === 'boolean') {
+          setGiftsEnabled(d.settings.gift_purchases_enabled);
+        }
       })
       .finally(() => setLoading(false));
   }, []);
 
-  async function togglePurchases() {
+  /** PATCH one field and reconcile local state from the server's echo. */
+  async function patch(body: Record<string, unknown>, okMessage: string) {
     setError(null);
     setStatus(null);
-    const next = !purchasesEnabled;
-    setTogglingPurchases(true);
     const res = await fetch('/api/admin/settings', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ purchases_enabled: next }),
+      body: JSON.stringify(body),
     });
-    setTogglingPurchases(false);
     if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      setError(body?.error?.message || 'Could not save.');
-      return;
+      const b = await res.json().catch(() => ({}));
+      setError(b?.error?.message || 'Could not save.');
+      return false;
     }
-    // Trust the server's echoed value rather than the optimistic one.
-    const body = await res.json().catch(() => ({}));
-    const saved = body?.settings?.purchases_enabled;
-    setPurchasesEnabled(typeof saved === 'boolean' ? saved : next);
-    setStatus(next ? 'Purchasing is back on.' : 'Purchasing is off.');
+    const b = await res.json().catch(() => ({}));
+    if (typeof b?.settings?.purchases_enabled === 'boolean') setPurchasesEnabled(b.settings.purchases_enabled);
+    if (Array.isArray(b?.settings?.sellable_pack_types)) setSellablePacks(b.settings.sellable_pack_types);
+    if (typeof b?.settings?.gift_purchases_enabled === 'boolean') setGiftsEnabled(b.settings.gift_purchases_enabled);
+    setStatus(okMessage);
+    return true;
+  }
+
+  async function togglePurchases() {
+    const next = !purchasesEnabled;
+    setTogglingPurchases(true);
+    await patch({ purchases_enabled: next }, next ? 'Selling is back on.' : 'Selling is off.');
+    setTogglingPurchases(false);
+  }
+
+  async function togglePack(type: string) {
+    const next = sellablePacks.includes(type)
+      ? sellablePacks.filter((p) => p !== type)
+      : [...sellablePacks, type];
+    setSavingScope(type);
+    await patch({ sellable_pack_types: next }, 'Saved.');
+    setSavingScope(null);
+  }
+
+  async function toggleGifts() {
+    const next = !giftsEnabled;
+    setSavingScope('gift');
+    await patch({ gift_purchases_enabled: next }, 'Saved.');
+    setSavingScope(null);
   }
 
   async function save() {
@@ -111,6 +148,42 @@ export function StudioSettingsCard() {
                 ? 'Turn selling off'
                 : 'Turn selling back on'}
           </button>
+        </div>
+
+        {/* What specifically is on sale. Greyed while the master switch is off,
+            since nothing sells regardless of what's ticked here. */}
+        <div className={`mt-3 pt-3 border-t border-[#e5e2dc] ${purchasesEnabled ? '' : 'opacity-50'}`}>
+          <p className="text-xs font-semibold mb-2">
+            What&rsquo;s on sale{purchasesEnabled ? '' : ' (nothing, while selling is off)'}
+          </p>
+          <div className="flex flex-wrap gap-x-4 gap-y-2">
+            {PACK_LABELS.map((pack) => (
+              <label key={pack.type} className="inline-flex items-center gap-2 text-xs">
+                <input
+                  type="checkbox"
+                  checked={sellablePacks.includes(pack.type)}
+                  onChange={() => togglePack(pack.type)}
+                  disabled={loading || !purchasesEnabled || savingScope !== null}
+                  className="h-4 w-4 rounded border-[#e5e2dc]"
+                />
+                {pack.label}
+              </label>
+            ))}
+            <label className="inline-flex items-center gap-2 text-xs">
+              <input
+                type="checkbox"
+                checked={giftsEnabled}
+                onChange={toggleGifts}
+                disabled={loading || !purchasesEnabled || savingScope !== null}
+                className="h-4 w-4 rounded border-[#e5e2dc]"
+              />
+              Gift cards
+            </label>
+          </div>
+          <p className="text-[11px] text-[#6b6b6b] mt-2">
+            Unticked items keep their price on the site but stop being buy buttons, by card and by
+            cash. Gift cards are prepaid credits with no expiry, so they switch separately.
+          </p>
         </div>
       </div>
 

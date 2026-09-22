@@ -5,7 +5,7 @@ import { getAuth } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { Header } from '@/components/layout/Header';
 import { MobileNav } from '@/components/layout/MobileNav';
-import { arePurchasesEnabled } from '@/lib/purchases';
+import { getPurchaseAvailability } from '@/lib/purchases';
 
 export const metadata = {
   title: 'Class Schedule | Mat & Sculpt Pilates in Speonk, NY',
@@ -87,7 +87,7 @@ export default async function SchedulePage() {
           </Suspense>
         </ToastProvider>
       </div>
-      <MobileNav purchasesEnabled={await arePurchasesEnabled()} />
+      <MobileNav purchasesEnabled={(await getPurchaseAvailability()).anyPackSellable} />
     </>
   );
 }

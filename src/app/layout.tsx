@@ -4,7 +4,7 @@ import { Playfair_Display, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { getAuth } from "@/lib/auth";
 import { MobileNav } from "@/components/layout/MobileNav";
-import { arePurchasesEnabled } from "@/lib/purchases";
+import { getPurchaseAvailability } from "@/lib/purchases";
 import { BenchworksAttribution } from "@/components/layout/BenchworksAttribution";
 import { LocalBusinessSchema } from "@/components/seo/LocalBusinessSchema";
 
@@ -108,7 +108,7 @@ gtag('config', '${gaId}');`}
       >
         {children}
         <BenchworksAttribution />
-        {isLoggedIn && <MobileNav purchasesEnabled={await arePurchasesEnabled()} />}
+        {isLoggedIn && <MobileNav purchasesEnabled={(await getPurchaseAvailability()).anyPackSellable} />}
       </body>
     </html>
   );

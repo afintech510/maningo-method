@@ -5,7 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { logger, generateCorrelationId } from '@/lib/logger';
 import { withServiceFee } from '@/lib/pricing';
 import { validateDiscountCode, applyDiscount } from '@/lib/marketing/discountCode';
-import { purchasesClosedGuard } from '@/lib/purchases';
+import { packClosedGuard, giftClosedGuard } from '@/lib/purchases';
 
 const PACKS: Record<string, { credits: number; amount_cents: number; label: string }> = {
   single: { credits: 1, amount_cents: 2500, label: 'Drop-In Class' },
@@ -19,9 +19,6 @@ export async function POST(request: NextRequest) {
 
   const auth = await requireAuth();
   if (isAuthError(auth)) return auth;
-
-  const closed = await purchasesClosedGuard();
-  if (closed) return closed;
 
   try {
     const body = await request.json();
@@ -37,6 +34,10 @@ export async function POST(request: NextRequest) {
     };
 
     if (kind === 'pack') {
+      // Per-pack: drop-ins can be on sale while multi-packs are not.
+      const closed = await packClosedGuard(packType);
+      if (closed) return closed;
+
       const pack = packType ? PACKS[packType] : null;
       if (!pack) {
         return NextResponse.json({ error: { code: 'VALIDATION_ERROR', message: 'Invalid pack.' } }, { status: 400 });
@@ -47,6 +48,10 @@ export async function POST(request: NextRequest) {
       metadata.pack_type = packType!;
       metadata.credits = String(credits);
     } else if (kind === 'gift_pack') {
+      // Gift cards are prepaid credits with no expiry — their own switch.
+      const closed = await giftClosedGuard();
+      if (closed) return closed;
+
       const pack = packType ? PACKS[packType] : null;
       if (!pack) {
         return NextResponse.json({ error: { code: 'VALIDATION_ERROR', message: 'Invalid gift pack.' } }, { status: 400 });
@@ -58,6 +63,9 @@ export async function POST(request: NextRequest) {
       metadata.gift_pack = packType!;
       metadata.gift_credits = String(credits);
     } else if (kind === 'gift_custom') {
+      const closed = await giftClosedGuard();
+      if (closed) return closed;
+
       const a = Number(customAmountCents);
       if (!Number.isFinite(a) || a < 1000) {
         return NextResponse.json({ error: { code: 'VALIDATION_ERROR', message: 'Minimum custom gift is $10.' } }, { status: 400 });

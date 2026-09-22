@@ -6,13 +6,20 @@ export interface StudioSettings {
   booking_horizon_days: number;
   /** Master switch for selling new credits. See src/lib/purchases.ts. */
   purchases_enabled: boolean;
+  /** Which pack types may be bought, when the master switch allows it. */
+  sellable_pack_types: string[];
+  /** Gift cards are prepaid credits with no expiry, so they switch separately. */
+  gift_purchases_enabled: boolean;
 }
 
 const DEFAULTS: StudioSettings = {
   booking_horizon_days: 30,
-  // Default true so migration 044 is a no-op until the switch is flipped, and
-  // so a settings-read failure never silently stops the studio selling.
+  // Defaults are permissive so migrations 044/045 are no-ops until the switches
+  // are set, and so a settings-read failure never silently stops the studio
+  // selling. The live values come from the DB row.
   purchases_enabled: true,
+  sellable_pack_types: ['single', '5pack', '10pack'],
+  gift_purchases_enabled: true,
 };
 
 let cached: { value: StudioSettings; at: number } | null = null;
@@ -31,8 +38,8 @@ export async function getStudioSettings(): Promise<StudioSettings> {
   let data: Record<string, unknown> | null = null;
   try {
     const supabase = createAdminClient();
-    // `select('*')` rather than naming columns: if migration 044 hasn't been
-    // applied yet, naming purchases_enabled would error the whole query and
+    // `select('*')` rather than naming columns: if migration 044/045 hasn't
+    // been applied yet, naming a new column would error the whole query and
     // silently reset booking_horizon_days to its default too.
     const res = await supabase
       .from('studio_settings')
@@ -49,6 +56,13 @@ export async function getStudioSettings(): Promise<StudioSettings> {
       (data?.booking_horizon_days as number | undefined) ?? DEFAULTS.booking_horizon_days,
     purchases_enabled:
       (data?.purchases_enabled as boolean | undefined) ?? DEFAULTS.purchases_enabled,
+    // Postgres text[] arrives as a JS array; guard anyway so a malformed value
+    // can't make every pack look unsellable.
+    sellable_pack_types: Array.isArray(data?.sellable_pack_types)
+      ? (data.sellable_pack_types as string[])
+      : DEFAULTS.sellable_pack_types,
+    gift_purchases_enabled:
+      (data?.gift_purchases_enabled as boolean | undefined) ?? DEFAULTS.gift_purchases_enabled,
   };
   cached = { value, at: now };
   return value;

@@ -1,12 +1,27 @@
 import { Suspense } from 'react';
 import { CheckoutPayClient } from './client';
-import { arePurchasesEnabled } from '@/lib/purchases';
+import { isPackSellable, areGiftsSellable } from '@/lib/purchases';
 import { PurchasesClosedNotice } from '@/components/marketing/PurchasesClosedNotice';
 
-export default async function CheckoutPayPage() {
+function first(v: string | string[] | undefined): string | undefined {
+  return Array.isArray(v) ? v[0] : v;
+}
+
+export default async function CheckoutPayPage({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
   // Members reach this from bookmarks and old emails, so gate the page itself
-  // — not just the buttons that used to link here.
-  if (!(await arePurchasesEnabled())) {
+  // — not just the buttons that used to link here. Gated per pack, since a
+  // drop-in can be on sale while the multi-packs are not.
+  const kind = first(searchParams.kind) ?? 'pack';
+  const allowed =
+    kind === 'pack'
+      ? await isPackSellable(first(searchParams.pack))
+      : await areGiftsSellable();
+
+  if (!allowed) {
     return (
       <div className="bg-[#faf9f6] min-h-[calc(100vh-64px)]">
         <PurchasesClosedNotice variant="page" />

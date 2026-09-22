@@ -9,7 +9,16 @@ import { MemorialClassBanner } from '@/components/marketing/MemorialClassBanner'
 import { STRIPE_ENABLED } from '@/lib/feature-flags';
 import { PurchasesClosedNotice } from '@/components/marketing/PurchasesClosedNotice';
 
-export function HomeClient({ purchasesEnabled }: { purchasesEnabled: boolean }) {
+export function HomeClient({
+  sellablePacks,
+  giftsEnabled,
+}: {
+  sellablePacks: string[];
+  giftsEnabled: boolean;
+}) {
+  const anyPackSellable = sellablePacks.length > 0;
+  const allPacksSellable = ['single', '5pack', '10pack'].every((p) => sellablePacks.includes(p));
+
   return (
     <div className="min-h-screen bg-[#faf9f6]">
       {/* Nav */}
@@ -78,7 +87,7 @@ export function HomeClient({ purchasesEnabled }: { purchasesEnabled: boolean }) 
               >
                 View Schedule
               </Link>
-              {purchasesEnabled && (
+              {anyPackSellable && (
                 <Link
                   href="#pricing"
                   className="inline-flex items-center justify-center h-12 px-8 rounded-full bg-white text-[#2d2d2d] text-base font-medium hover:bg-white/90 transition-colors"
@@ -197,23 +206,24 @@ export function HomeClient({ purchasesEnabled }: { purchasesEnabled: boolean }) 
             Buy a pack and book at your pace. The more you commit, the more you save.
           </p>
 
-          {/* Prices stay on the page while selling is off; the cards just stop
-              being buy buttons and the gift tile drops out of the grid. */}
+          {/* Every price stays on the page regardless; a pack that isn't on
+              sale simply stops being a buy button. The gift tile drops out of
+              the grid entirely when gifts are off. */}
           <div
             className={`grid grid-cols-2 gap-4 max-w-4xl mx-auto mb-8 ${
-              purchasesEnabled ? 'lg:grid-cols-4' : 'lg:grid-cols-3'
+              giftsEnabled ? 'lg:grid-cols-4' : 'lg:grid-cols-3'
             }`}
           >
-            <PricingCard label="Drop-In" price="$25" per="/class" note="Try a class" packType="single" highlight purchasesEnabled={purchasesEnabled} />
-            <PricingCard label="5-Pack" price="$112" per="$22.40/class" note="Save 10%" packType="5pack" purchasesEnabled={purchasesEnabled} />
-            <PricingCard label="10-Pack" price="$200" per="$20/class" note="Save 20%" packType="10pack" popular purchasesEnabled={purchasesEnabled} />
-            {purchasesEnabled && <GiftCardOption />}
+            <PricingCard label="Drop-In" price="$25" per="/class" note="Try a class" packType="single" highlight sellable={sellablePacks.includes('single')} />
+            <PricingCard label="5-Pack" price="$112" per="$22.40/class" note="Save 10%" packType="5pack" sellable={sellablePacks.includes('5pack')} />
+            <PricingCard label="10-Pack" price="$200" per="$20/class" note="Save 20%" packType="10pack" popular sellable={sellablePacks.includes('10pack')} />
+            {giftsEnabled && <GiftCardOption />}
           </div>
 
-          {purchasesEnabled ? (
+          {anyPackSellable ? (
             <>
               <p className="text-center text-sm text-[#6b6b6b]">
-                All packs never expire. <Link href="/register" className="text-[#c9a96e] font-medium hover:underline">Create an account</Link> to purchase.
+                Credits never expire. <Link href="/register" className="text-[#c9a96e] font-medium hover:underline">Create an account</Link> to purchase.
               </p>
               <p className="text-center text-xs text-[#6b6b6b] mt-2">
                 {STRIPE_ENABLED
@@ -221,9 +231,11 @@ export function HomeClient({ purchasesEnabled }: { purchasesEnabled: boolean }) 
                   : 'Pay with Cash. Credits apply once Chelsea confirms your payment — usually within a day.'}
               </p>
             </>
-          ) : (
-            <PurchasesClosedNotice className="max-w-md mx-auto" />
-          )}
+          ) : null}
+
+          {/* Shown whenever something on the grid can't be bought, so the dead
+              cards next to it are explained rather than just looking broken. */}
+          {!allPacksSellable && <PurchasesClosedNotice className="max-w-md mx-auto mt-4" />}
 
           <div className="mt-12 max-w-3xl mx-auto">
             <UpcomingClassesPanel
@@ -645,13 +657,13 @@ function InquiryForm() {
   );
 }
 
-function PricingCard({ label, price, per, note, highlight, popular, packType, purchasesEnabled = true }: {
-  label: string; price: string; per: string; note: string; highlight?: boolean; popular?: boolean; packType: string; purchasesEnabled?: boolean;
+function PricingCard({ label, price, per, note, highlight, popular, packType, sellable = true }: {
+  label: string; price: string; per: string; note: string; highlight?: boolean; popular?: boolean; packType: string; sellable?: boolean;
 }) {
   const [loading, setLoading] = useState(false);
 
   function handleClick() {
-    if (!purchasesEnabled) return;
+    if (!sellable) return;
     setLoading(true);
     window.location.href = STRIPE_ENABLED
       ? `/checkout/pay?kind=pack&pack=${packType}`
@@ -660,7 +672,7 @@ function PricingCard({ label, price, per, note, highlight, popular, packType, pu
 
   // Rendered as a plain div, not a disabled button, so it doesn't read as a
   // broken control to keyboard and screen-reader users.
-  if (!purchasesEnabled) {
+  if (!sellable) {
     return (
       <div
         className={`rounded-2xl p-5 sm:p-6 relative text-left ${
