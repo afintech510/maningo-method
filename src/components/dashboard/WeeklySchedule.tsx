@@ -259,7 +259,7 @@ export function WeeklySchedule({ bookedClassIds, hasCredits, credits, waitlistBy
                 <span>
                   {confirmClass.is_free
                     ? (confirmClass.description || 'Location details in the class description')
-                    : `Maningo Method · ${classAddressShort(confirmClass.starts_at)}`}
+                    : classAddressShort(confirmClass.starts_at)}
                 </span>
               </div>
             </div>

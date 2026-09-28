@@ -5,7 +5,7 @@ export const metadata = { title: 'Privacy Policy | Maningo Method' };
 export default function PrivacyPage() {
   return (
     <LegalLayout title="Privacy Policy" lastUpdated="October 1, 2026">
-      <p>This Privacy Policy describes how Maningo Method (&ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;) collects, uses, and shares information about you when you visit www.maningomethod.com (the &ldquo;Site&rdquo;), book classes, purchase class packs, or otherwise interact with our services (collectively, the &ldquo;Services&rdquo;). Maningo Method is operated by Chelsea Maningo, with classes held at 533 Montauk Highway, East Moriches, NY 11940.</p>
+      <p>This Privacy Policy describes how Maningo Method (&ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;) collects, uses, and shares information about you when you visit www.maningomethod.com (the &ldquo;Site&rdquo;), book classes, purchase class packs, or otherwise interact with our services (collectively, the &ldquo;Services&rdquo;). Maningo Method is operated by Chelsea Maningo, with classes held at U Gotta Dance (Classes in Rear Building), 533 Montauk Highway, East Moriches, NY 11940.</p>
 
       <p>By using the Services, you agree to the collection and use of information in accordance with this policy. If you do not agree, please do not use the Services.</p>
 

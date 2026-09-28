@@ -26,7 +26,7 @@ export function BookingConfirmation({
   creditsRemaining,
   googleCalUrl,
   icsUrl,
-  studioAddress = '533 Montauk Hwy, East Moriches, NY',
+  studioAddress = 'U Gotta Dance · Classes in Rear Building · 533 Montauk Hwy, East Moriches, NY',
 }: BookingConfirmationProps) {
   return (
     <EmailLayout

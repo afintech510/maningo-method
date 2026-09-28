@@ -46,7 +46,7 @@ export function GiftPurchaseManualPending({
           </Text>
         ) : (
           <Text style={{ margin: '6px 0 0', color: '#7c2d12', fontSize: '14px', lineHeight: 1.6 }}>
-            Bring <strong>{amountDisplay}</strong> in cash to the studio (533 Montauk Hwy, East Moriches).
+            Bring <strong>{amountDisplay}</strong> in cash to the studio (U Gotta Dance, 533 Montauk Hwy, East Moriches &mdash; classes are in the rear building).
             Hand it to Chelsea and the code activates immediately.
           </Text>
         )}

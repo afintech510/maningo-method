@@ -6,7 +6,7 @@ export const metadata = { title: 'Terms of Service | Maningo Method' };
 export default function TermsPage() {
   return (
     <LegalLayout title="Terms of Service" lastUpdated="October 1, 2026">
-      <p>These Terms of Service (&ldquo;Terms&rdquo;) govern your use of www.maningomethod.com and the services offered by Maningo Method (collectively, the &ldquo;Services&rdquo;). Maningo Method is operated by Chelsea Maningo (&ldquo;we,&rdquo; &ldquo;us,&rdquo; &ldquo;our&rdquo;), with classes held at 533 Montauk Highway, East Moriches, NY 11940.</p>
+      <p>These Terms of Service (&ldquo;Terms&rdquo;) govern your use of www.maningomethod.com and the services offered by Maningo Method (collectively, the &ldquo;Services&rdquo;). Maningo Method is operated by Chelsea Maningo (&ldquo;we,&rdquo; &ldquo;us,&rdquo; &ldquo;our&rdquo;), with classes held at U Gotta Dance (Classes in Rear Building), 533 Montauk Highway, East Moriches, NY 11940.</p>
       <p>By creating an account, purchasing a class pack, booking a class, or otherwise using the Services, you agree to these Terms, our <Link href="/privacy">Privacy Policy</Link>, and the separate Liability Waiver and Release of Claims (the &ldquo;Waiver&rdquo;) which is incorporated into these Terms by reference. If you do not agree, do not use the Services.</p>
 
       <h2>1. Eligibility; Minor Participants</h2>

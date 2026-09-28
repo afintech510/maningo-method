@@ -10,6 +10,8 @@ import { STRIPE_ENABLED } from '@/lib/feature-flags';
 import { PurchasesClosedNotice } from '@/components/marketing/PurchasesClosedNotice';
 import {
   STUDIO_ADDRESS,
+  STUDIO_ENTRANCE_NOTE,
+  STUDIO_LOCATION_LINE,
   STUDIO_MAPS_EMBED_URL,
   STUDIO_MAPS_URL,
   STUDIO_STREET,
@@ -333,7 +335,7 @@ export function HomeClient({
           />
           <FAQItem
             question="Where is the studio?"
-            answer={`Classes are held at ${STUDIO_VENUE}, ${STUDIO_ADDRESS} — right on Montauk Highway, easy in-and-out on the way to or from town.`}
+            answer={`Classes are held at ${STUDIO_VENUE}, ${STUDIO_ADDRESS} — classes are in the rear building. Right on Montauk Highway, easy in-and-out on the way to or from town.`}
           />
         </div>
       </section>
@@ -368,7 +370,7 @@ export function HomeClient({
             </span>
             <h2 className="text-3xl sm:text-4xl font-bold">Maningo Method</h2>
             <p className="text-sm text-[#6b6b6b] mt-3 max-w-xl mx-auto">
-              Classes are held at {STUDIO_STREET} in {STUDIO_TOWN_STATE}.
+              Classes are held at {STUDIO_VENUE}, {STUDIO_STREET} in {STUDIO_TOWN_STATE} &mdash; in the rear building.
             </p>
           </div>
 
@@ -393,7 +395,7 @@ export function HomeClient({
             >
               Get directions &rarr;
             </a>
-            <p className="text-xs text-[#6b6b6b]">{STUDIO_ADDRESS}</p>
+            <p className="text-xs text-[#6b6b6b] text-center">{STUDIO_LOCATION_LINE}</p>
           </div>
         </div>
       </section>
@@ -453,6 +455,8 @@ export function HomeClient({
             </div>
             <div>
               <p className="font-semibold text-sm mb-3">Studio</p>
+              <p className="text-sm text-white/60">{STUDIO_VENUE}</p>
+              <p className="text-sm text-white/60">{STUDIO_ENTRANCE_NOTE}</p>
               <p className="text-sm text-white/60">{STUDIO_STREET}</p>
               <p className="text-sm text-white/60">{STUDIO_TOWN_STATE} {STUDIO_ZIP}</p>
               <a href="tel:+16312525227" className="text-sm text-white/80 hover:text-white mt-2 block">

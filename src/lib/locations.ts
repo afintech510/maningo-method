@@ -44,7 +44,7 @@ export const LOCATIONS: Record<string, Location> = {
     intro:
       'Maningo Method is a dedicated Mat & Sculpt Pilates studio a straight shot west of Westhampton and Westhampton Beach on Montauk Highway — no traffic-clogged turns. You get small, all-levels group classes (max 20) without the Main Street parking hunt or a 40-minute drive toward Riverhead. It is an easy, in-and-out option for a Westhampton morning workout.',
     directions:
-      'From Westhampton Beach, head west on Montauk Highway (NY-27A / Main Street) through Quiogue and Westhampton, then on through Eastport. Stay on Montauk Highway into East Moriches — the studio is at 533 Montauk Highway. It is about a 15-minute drive.',
+      'From Westhampton Beach, head west on Montauk Highway (NY-27A / Main Street) through Quiogue and Westhampton, then on through Eastport. Stay on Montauk Highway into East Moriches — the studio is at U Gotta Dance, 533 Montauk Highway. Classes are in the rear building. It is about a 15-minute drive.',
     localAngle:
       'Heading west out of Westhampton in the morning means driving against the eastbound summer traffic, so a 7am class is an easy start to the day — and you are back before Main Street gets busy.',
     faq: [
@@ -68,7 +68,7 @@ export const LOCATIONS: Record<string, Location> = {
     intro:
       'For East Quogue, Maningo Method is a Mat & Sculpt Pilates option to the west — a single, mostly straight run down Montauk Highway. Classes stay small (max 20, all levels), so you get real attention instead of a packed corporate-studio room. It is a quiet, focused way to start the day before the summer crowds fill the highway.',
     directions:
-      'From East Quogue, take Montauk Highway (NY-27A) west through Quogue, Westhampton and Eastport, continuing into East Moriches. The studio is at 533 Montauk Highway. Plan on roughly a 20-minute drive.',
+      'From East Quogue, take Montauk Highway (NY-27A) west through Quogue, Westhampton and Eastport, continuing into East Moriches. The studio is at U Gotta Dance, 533 Montauk Highway. Classes are in the rear building. Plan on roughly a 20-minute drive.',
     localAngle:
       'In season, heading east toward Southampton means sitting in beach traffic; the drive west is calmer and more predictable. An early class here gets you back home before the day even starts.',
     faq: [
@@ -92,7 +92,7 @@ export const LOCATIONS: Record<string, Location> = {
     intro:
       'From Remsenburg, Maningo Method is a short hop west on Montauk Highway — under ten minutes from most of the hamlet. Small Mat & Sculpt group classes (max 20, all levels) mean you can roll out of the quiet residential streets and onto the mat without committing to a long drive or a big-box membership. It is about as local as a workout gets out here.',
     directions:
-      'From Remsenburg, head north to Montauk Highway (NY-27A) and turn west, through Eastport and into East Moriches. The studio is at 533 Montauk Highway. It is about an 8-minute drive from most of Remsenburg.',
+      'From Remsenburg, head north to Montauk Highway (NY-27A) and turn west, through Eastport and into East Moriches. The studio is at U Gotta Dance, 533 Montauk Highway. Classes are in the rear building. It is about an 8-minute drive from most of Remsenburg.',
     localAngle:
       'Because Remsenburg is so close, it is easy to make Pilates a real routine here rather than an occasional trip — a Tuesday, Thursday, and Saturday habit that fits between school drop-off and the rest of your morning.',
     faq: [

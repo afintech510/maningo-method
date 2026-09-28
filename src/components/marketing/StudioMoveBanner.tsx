@@ -8,6 +8,7 @@ import { STUDIO_TIMEZONE } from '@/lib/timezone';
 import {
   MOVE_DATE,
   STUDIO_ADDRESS,
+  STUDIO_ENTRANCE_NOTE,
   STUDIO_MAPS_URL,
   STUDIO_TOWN,
   STUDIO_VENUE,
@@ -58,7 +59,7 @@ export function StudioMoveBanner({
         <span className="text-[#c9a96e]">{STUDIO_VENUE}</span> in {STUDIO_TOWN}
       </h2>
       <p className="text-sm text-[#6b6b6b] mt-2 leading-relaxed">
-        {STUDIO_ADDRESS}.{' '}
+        {STUDIO_ADDRESS} &mdash; <strong className="text-[#2d2d2d]">{STUDIO_ENTRANCE_NOTE}</strong>.{' '}
         {moving
           ? 'Same classes, same instructor — just a new room. Classes through September 30 stay at the current studio.'
           : 'Same classes, same instructor — just a new room. See you on the mat.'}

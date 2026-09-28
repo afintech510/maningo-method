@@ -21,14 +21,18 @@ describe('per-class address across the Oct 1 move', () => {
     expect(classCalendarLocation(lastSept)).not.toContain('U Gotta Dance');
   });
 
-  it('sends the first October class to East Moriches', () => {
+  it('sends the first October class to U Gotta Dance, rear building', () => {
     const firstOct = '2026-10-01T07:00:00-04:00';
-    expect(classAddress(firstOct)).toBe(STUDIO_ADDRESS);
-    expect(classAddressShort(firstOct)).toBe('533 Montauk Hwy, East Moriches');
-    expect(classCalendarLocation(firstOct)).toContain('U Gotta Dance');
+    expect(classAddress(firstOct)).toBe(
+      'U Gotta Dance · Classes in Rear Building · 533 Montauk Highway, East Moriches, NY 11940'
+    );
+    expect(classAddressShort(firstOct)).toBe(
+      'U Gotta Dance · Classes in Rear Building · 533 Montauk Hwy, East Moriches'
+    );
+    expect(classCalendarLocation(firstOct)).toContain('Classes in Rear Building');
   });
 
   it('treats the exact move instant as the new studio', () => {
-    expect(classAddress(MOVE_DATE)).toBe(STUDIO_ADDRESS);
+    expect(classAddress(MOVE_DATE)).toContain(STUDIO_ADDRESS);
   });
 });

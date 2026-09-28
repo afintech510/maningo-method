@@ -21,7 +21,7 @@ export function ClassReminder({
   hoursUntil,
   googleCalUrl,
   icsUrl,
-  studioAddress = '533 Montauk Hwy, East Moriches, NY',
+  studioAddress = 'U Gotta Dance · Classes in Rear Building · 533 Montauk Hwy, East Moriches, NY',
 }: Props) {
   const soon = hoursUntil <= 3;
   return (

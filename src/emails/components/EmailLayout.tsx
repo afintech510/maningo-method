@@ -141,7 +141,7 @@ export function EmailLayout({ kicker, heading, children, preview }: Props) {
               </Link>
             </Text>
             <Text style={{ fontSize: '12px', color: BRAND.muted, margin: '6px 0 0' }}>
-              533 Montauk Hwy, East Moriches, NY
+              U Gotta Dance · Classes in Rear Building · 533 Montauk Hwy, East Moriches, NY
             </Text>
             <Hr style={{ borderColor: BRAND.border, margin: '16px 24px 0' }} />
             <Text style={{ fontSize: '11px', color: BRAND.muted, margin: '12px 0 0' }}>

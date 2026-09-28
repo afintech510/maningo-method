@@ -17,7 +17,7 @@ export function WaitlistJoined({
   classDate,
   classTime,
   position,
-  studioAddress = '533 Montauk Hwy, East Moriches, NY',
+  studioAddress = 'U Gotta Dance · Classes in Rear Building · 533 Montauk Hwy, East Moriches, NY',
 }: WaitlistJoinedProps) {
   return (
     <EmailLayout

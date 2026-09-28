@@ -5,6 +5,9 @@ import type { Location } from '@/lib/locations';
 import { LOCATION_LIST } from '@/lib/locations';
 import {
   STUDIO_ADDRESS,
+  STUDIO_ENTRANCE_NOTE,
+  STUDIO_LOCATION_LINE,
+  STUDIO_VENUE,
   STUDIO_MAPS_EMBED_URL,
   STUDIO_MAPS_URL,
   STUDIO_STATE,
@@ -183,7 +186,7 @@ export function LocationPage({ location: loc }: { location: Location }) {
               title={`Maningo Method Pilates Studio — ${STUDIO_ADDRESS}`}
             />
           </div>
-          <p className="text-xs text-[#6b6b6b] mt-4 text-center">{STUDIO_ADDRESS}</p>
+          <p className="text-xs text-[#6b6b6b] mt-4 text-center">{STUDIO_LOCATION_LINE}</p>
         </div>
       </section>
 
@@ -275,6 +278,8 @@ export function LocationPage({ location: loc }: { location: Location }) {
             </div>
             <div>
               <p className="font-semibold text-sm mb-3">Studio</p>
+              <p className="text-sm text-white/60">{STUDIO_VENUE}</p>
+              <p className="text-sm text-white/60">{STUDIO_ENTRANCE_NOTE}</p>
               <p className="text-sm text-white/60">{STUDIO_STREET}</p>
               <p className="text-sm text-white/60">{STUDIO_TOWN_STATE} {STUDIO_ZIP}</p>
               <a href="tel:+16312525227" className="text-sm text-white/80 hover:text-white mt-2 block">

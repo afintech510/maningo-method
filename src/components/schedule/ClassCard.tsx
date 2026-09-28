@@ -78,7 +78,7 @@ export function ClassCard({
         ) : (
           <span>
             <span className="font-medium text-foreground">Maningo Method</span>
-            <br />{classAddressShort(classData.starts_at)}, NY
+            <br />{classAddressShort(classData.starts_at)}
           </span>
         )}
       </div>

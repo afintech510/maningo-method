@@ -63,7 +63,7 @@ export function buildMemberContext(args: {
     packs_url: `${site_url}/dashboard`,
     redeem_url: `${site_url}/redeem`,
     studio_name: 'Maningo Method',
-    studio_address: '533 Montauk Hwy, East Moriches, NY',
+    studio_address: 'U Gotta Dance · Classes in Rear Building · 533 Montauk Hwy, East Moriches, NY',
   };
 }
 
