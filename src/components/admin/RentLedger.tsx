@@ -118,7 +118,7 @@ export function RentLedger({ isSuperadmin }: { isSuperadmin: boolean }) {
   if (loading) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-6">
-        <h1 className="text-2xl font-bold mb-4">Host Hampton rent</h1>
+        <h1 className="text-2xl font-bold mb-4">Studio rent</h1>
         <Skeleton variant="card" />
       </div>
     );
@@ -143,7 +143,7 @@ export function RentLedger({ isSuperadmin }: { isSuperadmin: boolean }) {
     <div className="max-w-6xl mx-auto px-4 py-6">
       <div className="mb-6">
         <p className="text-xs font-medium uppercase tracking-[0.25em] text-[#c9a96e] mb-1">Studio</p>
-        <h1 className="text-2xl sm:text-3xl font-bold">Host Hampton rent</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold">Studio rent</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Each scheduled class is 1 studio hour.{' '}
           <strong className="text-foreground">Weekday {formatCents(feed.rates.weekday_cents)}/hr</strong>{' '}

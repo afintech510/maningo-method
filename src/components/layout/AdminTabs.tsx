@@ -13,7 +13,7 @@ interface Tab {
   roles?: Role[];
 }
 
-// Studio (Host Hampton rent ledger) and Projections are superadmin-only —
+// Studio (rent ledger) and Projections are superadmin-only —
 // the studio operator (admin role) doesn't need to see either in the nav.
 const TABS: Tab[] = [
   { href: '/admin/sales', label: 'Sales' },

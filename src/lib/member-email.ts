@@ -63,7 +63,7 @@ export function buildMemberContext(args: {
     packs_url: `${site_url}/dashboard`,
     redeem_url: `${site_url}/redeem`,
     studio_name: 'Maningo Method',
-    studio_address: '295 Montauk Hwy, Suite 7, Speonk, NY',
+    studio_address: '533 Montauk Hwy, East Moriches, NY',
   };
 }
 

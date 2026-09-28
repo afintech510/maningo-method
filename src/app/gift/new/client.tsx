@@ -185,8 +185,8 @@ export function GiftNewClient() {
         <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 mb-4 text-sm text-amber-900">
           <p className="font-semibold mb-1">How to pay</p>
           <p>
-            Bring <strong>{manualResult.amount_display}</strong> in cash to the studio (295
-            Montauk Hwy, Speonk). Hand it to Chelsea and the code activates immediately.
+            Bring <strong>{manualResult.amount_display}</strong> in cash to the studio (533
+            Montauk Hwy, East Moriches). Hand it to Chelsea and the code activates immediately.
           </p>
         </div>
 
@@ -386,7 +386,7 @@ export function GiftNewClient() {
               on={paymentMethod === 'cash'}
               onClick={() => setPaymentMethod('cash')}
               title="Cash at the studio"
-              hint="Hand $ to Chelsea at 295 Montauk Hwy, Speonk."
+              hint="Hand $ to Chelsea at 533 Montauk Hwy, East Moriches."
               badge={STRIPE_ENABLED ? 'Save 3%' : undefined}
             />
           </div>

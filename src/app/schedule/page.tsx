@@ -8,9 +8,9 @@ import { MobileNav } from '@/components/layout/MobileNav';
 import { getPurchaseAvailability } from '@/lib/purchases';
 
 export const metadata = {
-  title: 'Class Schedule | Mat & Sculpt Pilates in Speonk, NY',
+  title: 'Class Schedule | Mat & Sculpt Pilates in East Moriches, NY',
   description:
-    'See upcoming Mat & Sculpt Pilates classes at Maningo Method in Speonk, NY and book your spot online. Small all-levels group classes, max 20 students.',
+    'See upcoming Mat & Sculpt Pilates classes at Maningo Method in East Moriches, NY and book your spot online. Small all-levels group classes, max 20 students.',
   alternates: { canonical: '/schedule' },
 };
 

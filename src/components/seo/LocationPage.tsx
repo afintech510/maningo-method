@@ -3,15 +3,23 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { Location } from '@/lib/locations';
 import { LOCATION_LIST } from '@/lib/locations';
+import {
+  STUDIO_ADDRESS,
+  STUDIO_MAPS_EMBED_URL,
+  STUDIO_MAPS_URL,
+  STUDIO_STATE,
+  STUDIO_STREET,
+  STUDIO_TOWN,
+  STUDIO_TOWN_STATE,
+  STUDIO_ZIP,
+} from '@/lib/studio-location';
 
 const CANONICAL_BASE = 'https://www.maningomethod.com';
-const STUDIO_ADDRESS = '295 Montauk Highway, Suite 7, Speonk, NY 11972';
-const MAPS_QUERY = '295+Montauk+Highway+Suite+7+Speonk+NY+11972';
 
 /** Build the Next.js metadata for a town page. Used by each route file. */
 export function locationMetadata(loc: Location): Metadata {
   const title = `Pilates Classes near ${loc.town}, NY | Maningo Method`;
-  const description = `Mat & Sculpt Pilates for ${loc.town}, NY — small all-levels group classes (max 20) at Maningo Method in Speonk, about ${loc.driveMinutes} minutes from ${loc.town}. Book online.`;
+  const description = `Mat & Sculpt Pilates for ${loc.town}, NY — small all-levels group classes (max 20) at Maningo Method in ${STUDIO_TOWN}, about ${loc.driveMinutes} minutes from ${loc.town}. Book online.`;
   const path = `/pilates-in-${loc.slug}`;
   return {
     title,
@@ -57,10 +65,10 @@ function LocationSchema({ loc }: { loc: Location }) {
       url: CANONICAL_BASE,
       address: {
         '@type': 'PostalAddress',
-        streetAddress: '295 Montauk Highway, Suite 7',
-        addressLocality: 'Speonk',
-        addressRegion: 'NY',
-        postalCode: '11972',
+        streetAddress: STUDIO_STREET,
+        addressLocality: STUDIO_TOWN,
+        addressRegion: STUDIO_STATE,
+        postalCode: STUDIO_ZIP,
         addressCountry: 'US',
       },
     },
@@ -145,7 +153,7 @@ export function LocationPage({ location: loc }: { location: Location }) {
               <span className="text-[#c9a96e] font-semibold">~{loc.distanceMi} mi</span> away
             </span>
             <span className="inline-flex items-center gap-2 rounded-full bg-[#faf9f6] border border-[#e5e2dc] px-4 py-2 text-sm text-[#2d2d2d]">
-              Free parking at the door
+              Right on Montauk Highway
             </span>
           </div>
           <p className="text-[#4b4b4b] leading-relaxed max-w-2xl mx-auto text-center mb-3">
@@ -156,7 +164,7 @@ export function LocationPage({ location: loc }: { location: Location }) {
           </p>
           <div className="flex justify-center mb-8">
             <a
-              href={`https://maps.google.com/?q=${MAPS_QUERY}`}
+              href={STUDIO_MAPS_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center h-10 px-5 rounded-full bg-[#2d2d2d] text-white text-sm font-medium hover:bg-[#1a1a1a] transition-colors"
@@ -166,7 +174,7 @@ export function LocationPage({ location: loc }: { location: Location }) {
           </div>
           <div className="rounded-2xl overflow-hidden border border-[#e5e2dc] bg-white">
             <iframe
-              src={`https://www.google.com/maps?q=${MAPS_QUERY}&output=embed`}
+              src={STUDIO_MAPS_EMBED_URL}
               width="100%"
               height="320"
               style={{ border: 0 }}
@@ -254,7 +262,7 @@ export function LocationPage({ location: loc }: { location: Location }) {
             <div>
               <p className="font-serif font-bold text-lg mb-3">Maningo Method</p>
               <p className="text-white/60 text-sm leading-relaxed">
-                Mat &amp; Sculpt Pilates in Speonk, NY — serving {loc.town} and the surrounding Hamptons area.
+                Mat &amp; Sculpt Pilates in {STUDIO_TOWN_STATE} — serving {loc.town} and the surrounding Hamptons area.
               </p>
             </div>
             <div>
@@ -267,8 +275,8 @@ export function LocationPage({ location: loc }: { location: Location }) {
             </div>
             <div>
               <p className="font-semibold text-sm mb-3">Studio</p>
-              <p className="text-sm text-white/60">295 Montauk Highway, Suite 7</p>
-              <p className="text-sm text-white/60">Speonk, NY 11972</p>
+              <p className="text-sm text-white/60">{STUDIO_STREET}</p>
+              <p className="text-sm text-white/60">{STUDIO_TOWN_STATE} {STUDIO_ZIP}</p>
               <a href="tel:+16312525227" className="text-sm text-white/80 hover:text-white mt-2 block">
                 (631) 252-5227
               </a>

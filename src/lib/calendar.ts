@@ -1,5 +1,7 @@
 // Calendar export helpers — Google Calendar URL + ICS file generation.
 
+import { STUDIO_ADDRESS, STUDIO_VENUE } from '@/lib/studio-location';
+
 interface CalendarEvent {
   id: string;            // unique id (booking id)
   title: string;         // class title
@@ -9,7 +11,7 @@ interface CalendarEvent {
   description?: string;
 }
 
-const STUDIO_LOCATION = 'Maningo Method · Host Hampton, 295 Montauk Highway, Suite 7, Speonk, NY 11972';
+const STUDIO_LOCATION = `Maningo Method · ${STUDIO_VENUE}, ${STUDIO_ADDRESS}`;
 const STUDIO_DESCRIPTION = 'Maningo Method Pilates class. See dashboard at https://www.maningomethod.com/dashboard';
 
 function toGoogleDateUtc(d: Date): string {

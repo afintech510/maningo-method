@@ -1,4 +1,4 @@
-// JSON-LD LocalBusiness markup for the Speonk studio. Placed in the
+// JSON-LD LocalBusiness markup for the East Moriches studio. Placed in the
 // document <head> via the root layout so Google + Bing + Apple Maps
 // can ingest the structured data on every page.
 //
@@ -7,16 +7,18 @@
 //   - Instagram / GBP / Yelp public URLs for `sameAs`
 //   - Photo CDN URLs for `image` if we want richer rich-result imagery
 
+import {
+  STUDIO_GEO,
+  STUDIO_MAPS_URL,
+  STUDIO_STATE,
+  STUDIO_STREET,
+  STUDIO_TOWN,
+  STUDIO_TOWN_STATE,
+  STUDIO_ZIP,
+} from '@/lib/studio-location';
+
 const STUDIO_PHONE = '+1-631-252-5227';
 const STUDIO_EMAIL = 'chelsea@maningomethod.com';
-const STUDIO_ADDRESS = {
-  street: '295 Montauk Highway, Suite 7',
-  city: 'Speonk',
-  state: 'NY',
-  zip: '11972',
-};
-// Approximate coordinates of 295 Montauk Hwy, Speonk NY 11972.
-const STUDIO_GEO = { latitude: 40.8262, longitude: -72.6817 };
 
 export function LocalBusinessSchema() {
   const schema = {
@@ -24,17 +26,17 @@ export function LocalBusinessSchema() {
     '@type': ['LocalBusiness', 'SportsActivityLocation'],
     name: 'Maningo Method',
     description:
-      'Mat & Sculpt Pilates studio in Speonk, NY — serving Westhampton, East Quogue, Remsenburg, and the surrounding Hamptons area. Small classes, max 20 students, all levels welcome.',
+      `Mat & Sculpt Pilates studio in ${STUDIO_TOWN_STATE} — serving the Moriches, Eastport, Westhampton, and the surrounding Hamptons area. Small classes, max 20 students, all levels welcome.`,
     url: 'https://www.maningomethod.com',
     telephone: STUDIO_PHONE,
     email: STUDIO_EMAIL,
     image: 'https://www.maningomethod.com/group-class-maningo.jpg',
     address: {
       '@type': 'PostalAddress',
-      streetAddress: STUDIO_ADDRESS.street,
-      addressLocality: STUDIO_ADDRESS.city,
-      addressRegion: STUDIO_ADDRESS.state,
-      postalCode: STUDIO_ADDRESS.zip,
+      streetAddress: STUDIO_STREET,
+      addressLocality: STUDIO_TOWN,
+      addressRegion: STUDIO_STATE,
+      postalCode: STUDIO_ZIP,
       addressCountry: 'US',
     },
     geo: {
@@ -43,11 +45,12 @@ export function LocalBusinessSchema() {
       longitude: STUDIO_GEO.longitude,
     },
     areaServed: [
-      { '@type': 'City', name: 'Speonk, NY' },
+      { '@type': 'City', name: 'East Moriches, NY' },
+      { '@type': 'City', name: 'Center Moriches, NY' },
+      { '@type': 'City', name: 'Eastport, NY' },
+      { '@type': 'City', name: 'Remsenburg, NY' },
       { '@type': 'City', name: 'Westhampton, NY' },
       { '@type': 'City', name: 'East Quogue, NY' },
-      { '@type': 'City', name: 'Remsenburg, NY' },
-      { '@type': 'City', name: 'Eastport, NY' },
     ],
     // Representative weekly cadence; ground truth is /schedule. Update via
     // the admin Marketing tab if the standing schedule changes.
@@ -68,7 +71,7 @@ export function LocalBusinessSchema() {
     priceRange: '$$',
     currenciesAccepted: 'USD',
     paymentAccepted: 'Credit Card',
-    hasMap: 'https://maps.google.com/?q=295+Montauk+Highway+Suite+7+Speonk+NY+11972',
+    hasMap: STUDIO_MAPS_URL,
     potentialAction: {
       '@type': 'ReserveAction',
       target: 'https://www.maningomethod.com/schedule',

@@ -5,9 +5,18 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { BackButton } from '@/components/layout/BackButton';
 import { UpcomingClassesPanel } from '@/components/schedule/UpcomingClassesPanel';
-import { MemorialClassBanner } from '@/components/marketing/MemorialClassBanner';
+import { StudioMoveBanner } from '@/components/marketing/StudioMoveBanner';
 import { STRIPE_ENABLED } from '@/lib/feature-flags';
 import { PurchasesClosedNotice } from '@/components/marketing/PurchasesClosedNotice';
+import {
+  STUDIO_ADDRESS,
+  STUDIO_MAPS_EMBED_URL,
+  STUDIO_MAPS_URL,
+  STUDIO_STREET,
+  STUDIO_TOWN_STATE,
+  STUDIO_VENUE,
+  STUDIO_ZIP,
+} from '@/lib/studio-location';
 
 export function HomeClient({
   sellablePacks,
@@ -72,13 +81,13 @@ export function HomeClient({
               Pilates on the Edge of the Hamptons
             </span>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-[1.1] mb-5 max-w-2xl">
-              Pilates Classes in <span className="text-[#c9a96e]">Speonk, NY</span>
+              Pilates Classes in <span className="text-[#c9a96e]">{STUDIO_TOWN_STATE}</span>
             </h1>
             <span className="inline-block bg-[#1a1a1a]/70 backdrop-blur-sm text-[#c9a96e] text-[11px] sm:text-sm font-medium tracking-[0.2em] sm:tracking-[0.25em] uppercase mb-4 px-3 py-1.5 rounded-full">
               Mat Pilates &times; Sculpt &times; All Levels
             </span>
             <p className="text-white/80 text-lg mb-8 max-w-xl leading-relaxed">
-              Maningo Method offers Mat &amp; Sculpt Pilates in Speonk, NY &mdash; serving Westhampton, East Quogue, Remsenburg, and the surrounding Hamptons area. Small classes, max 20 students, all levels welcome.
+              Maningo Method offers Mat &amp; Sculpt Pilates in {STUDIO_TOWN_STATE} &mdash; serving the Moriches, Eastport, Westhampton, and the surrounding Hamptons area. Small classes, max 20 students, all levels welcome.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <Link
@@ -106,9 +115,10 @@ export function HomeClient({
         </div>
       </section>
 
-      {/* Free 9/11 memorial class promo — auto-hides after Sept 11, 2026 */}
+      {/* Studio move announcement — "moving" until Oct 1, "moved" through
+          October, then hides itself. Replaces the expired 9/11 banner slot. */}
       <section className="px-5 pt-10 sm:pt-12 max-w-6xl mx-auto">
-        <MemorialClassBanner />
+        <StudioMoveBanner />
       </section>
 
       {/* Class Types */}
@@ -323,7 +333,7 @@ export function HomeClient({
           />
           <FAQItem
             question="Where is the studio?"
-            answer="Inside Host Hampton at 295 Montauk Highway, Suite 7, Speonk — easy parking, easy in-and-out, right on the way to or from town."
+            answer={`Classes are held at ${STUDIO_VENUE}, ${STUDIO_ADDRESS} — right on Montauk Highway, easy in-and-out on the way to or from town.`}
           />
         </div>
       </section>
@@ -354,76 +364,36 @@ export function HomeClient({
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-10">
             <span className="inline-block bg-[#1a1a1a]/20 text-[#1a1a1a] text-xs sm:text-sm font-semibold tracking-[0.2em] uppercase px-3 py-1.5 rounded-full mb-3">
-              Find Classes By
+              Find the Studio
             </span>
             <h2 className="text-3xl sm:text-4xl font-bold">Maningo Method</h2>
             <p className="text-sm text-[#6b6b6b] mt-3 max-w-xl mx-auto">
-              Classes are held inside Host Hampton, a beautiful multi-use studio in Speonk, NY.
+              Classes are held at {STUDIO_STREET} in {STUDIO_TOWN_STATE}.
             </p>
           </div>
 
-          <div className="rounded-2xl border border-[#e5e2dc] bg-[#faf9f6] overflow-hidden grid md:grid-cols-[260px_1fr]">
-            <div className="relative bg-white aspect-square md:aspect-auto md:min-h-[260px] flex items-center justify-center p-6">
-              <Image
-                src="/hh-logo-1200-sq.png"
-                alt="Host Hampton"
-                width={400}
-                height={400}
-                className="w-full h-auto max-w-[220px] object-contain"
-              />
-            </div>
-            <div className="p-6 sm:p-8">
-              <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#c9a96e] mb-2">Studio Partner</p>
-              <h3 className="text-xl sm:text-2xl font-bold mb-2">Host Hampton</h3>
-              <p className="text-sm text-[#6b6b6b] leading-relaxed mb-4">
-                Beyond Pilates, Host Hampton offers a full slate of community-focused services.
-              </p>
-              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-5">
-                {[
-                  'Kids theme parties',
-                  'Mobile party services',
-                  'Private studio rental',
-                  'DIY parties',
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-2 text-sm text-[#2d2d2d]">
-                    <span className="text-[#c9a96e] mt-0.5">&#10003;</span>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <a
-                  href="https://hosthampton.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center h-10 px-5 rounded-full bg-[#2d2d2d] text-white text-sm font-medium hover:bg-[#1a1a1a] transition-colors"
-                >
-                  Visit hosthampton.com &rarr;
-                </a>
-                <a
-                  href="https://maps.google.com/?q=295+Montauk+Highway+Suite+7+Speonk+NY+11972"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center h-10 px-5 rounded-full border border-[#e5e2dc] bg-white text-[#2d2d2d] text-sm font-medium hover:border-[#c9a96e] transition-colors"
-                >
-                  Get directions
-                </a>
-              </div>
-              <p className="text-xs text-[#6b6b6b] mt-4">295 Montauk Highway, Suite 7 &middot; Speonk, NY 11972</p>
-            </div>
-          </div>
-
           {/* Studio map */}
-          <div className="mt-6 rounded-2xl overflow-hidden border border-[#e5e2dc] bg-white">
+          <div className="rounded-2xl overflow-hidden border border-[#e5e2dc] bg-white">
             <iframe
-              src="https://www.google.com/maps?q=295+Montauk+Highway+Suite+7+Speonk+NY+11972&output=embed"
+              src={STUDIO_MAPS_EMBED_URL}
               width="100%"
               height="320"
               style={{ border: 0 }}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              title="Maningo Method Pilates Studio location — 295 Montauk Highway, Speonk NY"
+              title={`Maningo Method Pilates Studio location — ${STUDIO_ADDRESS}`}
             />
+          </div>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-5">
+            <a
+              href={STUDIO_MAPS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center h-10 px-5 rounded-full bg-[#2d2d2d] text-white text-sm font-medium hover:bg-[#1a1a1a] transition-colors"
+            >
+              Get directions &rarr;
+            </a>
+            <p className="text-xs text-[#6b6b6b]">{STUDIO_ADDRESS}</p>
           </div>
         </div>
       </section>
@@ -459,7 +429,7 @@ export function HomeClient({
             <div>
               <p className="font-serif font-bold text-lg mb-3">Maningo Method</p>
               <p className="text-white/60 text-sm leading-relaxed">
-                Mat Pilates/Sculpt all levels class in Speonk, NY.
+                Mat Pilates/Sculpt all levels class in {STUDIO_TOWN_STATE}.
               </p>
             </div>
             <div>
@@ -483,8 +453,8 @@ export function HomeClient({
             </div>
             <div>
               <p className="font-semibold text-sm mb-3">Studio</p>
-              <p className="text-sm text-white/60">295 Montauk Highway, Suite 7</p>
-              <p className="text-sm text-white/60">Speonk, NY 11972</p>
+              <p className="text-sm text-white/60">{STUDIO_STREET}</p>
+              <p className="text-sm text-white/60">{STUDIO_TOWN_STATE} {STUDIO_ZIP}</p>
               <a href="tel:+16312525227" className="text-sm text-white/80 hover:text-white mt-2 block">
                 (631) 252-5227
               </a>

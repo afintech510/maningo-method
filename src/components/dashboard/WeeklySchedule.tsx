@@ -258,7 +258,7 @@ export function WeeklySchedule({ bookedClassIds, hasCredits, credits, waitlistBy
                 <span>
                   {confirmClass.is_free
                     ? (confirmClass.description || 'Location details in the class description')
-                    : 'Maningo Method · 295 Montauk Hwy, Speonk'}
+                    : 'Maningo Method · 533 Montauk Hwy, East Moriches'}
                 </span>
               </div>
             </div>

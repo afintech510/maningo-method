@@ -6,8 +6,8 @@ import { ClassHistory } from '@/components/dashboard/ClassHistory';
 import { BuyPacks } from '@/components/dashboard/BuyPacks';
 import { GiftCardCard } from '@/components/dashboard/GiftCardCard';
 import { ReferralCard } from '@/components/dashboard/ReferralCard';
-import { HostHamptonPromo } from '@/components/dashboard/HostHamptonPromo';
 import { WeeklySchedule } from '@/components/dashboard/WeeklySchedule';
+import { StudioMoveBanner } from '@/components/marketing/StudioMoveBanner';
 import { ToastProvider } from '@/components/feedback/Toast';
 import { Card } from '@/components/ui/Card';
 import { LogoutButton } from '@/components/layout/LogoutButton';
@@ -169,6 +169,9 @@ export default async function DashboardPage() {
         </a>
       )}
 
+      {/* Studio move announcement — hides itself after October */}
+      <StudioMoveBanner variant="compact" className="mb-4" />
+
       {/* Next Class card */}
       <NextClassCard next={nextClass} />
 
@@ -194,11 +197,6 @@ export default async function DashboardPage() {
         {/* Referral */}
         <div className="mt-4">
           <ReferralCard referralCode={referralCode} />
-        </div>
-
-        {/* Host Hampton promo: party booking earns free classes */}
-        <div className="mt-4">
-          <HostHamptonPromo />
         </div>
 
         {/* Upcoming Classes (full schedule, future-only) */}
@@ -302,7 +300,7 @@ function NextClassCard({
           <p className="text-sm text-white/80 mt-0.5">
             {time} &middot; {next.class_duration_minutes} min
           </p>
-          <p className="text-xs text-white/60 mt-1">295 Montauk Hwy, Speonk</p>
+          <p className="text-xs text-white/60 mt-1">533 Montauk Hwy, East Moriches</p>
         </div>
       </div>
     </section>

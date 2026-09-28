@@ -41,7 +41,7 @@ export function BookingConfirmation({
           {classDate} &middot; {classTime} &middot; {duration} min
         </Text>
         <Text style={{ margin: '4px 0 0', color: EMAIL_BRAND.muted, fontSize: '13px' }}>
-          295 Montauk Hwy, Suite 7, Speonk, NY
+          533 Montauk Hwy, East Moriches, NY
         </Text>
       </EmailCard>
 

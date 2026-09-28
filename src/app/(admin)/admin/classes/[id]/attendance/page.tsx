@@ -54,7 +54,7 @@ export default async function AttendanceSheetPage({ params }: { params: { id: st
         </div>
         <div className="text-right">
           <p className="text-xs text-gray-600">Maningo Method</p>
-          <p className="text-xs text-gray-600">295 Montauk Hwy, Speonk</p>
+          <p className="text-xs text-gray-600">533 Montauk Hwy, East Moriches</p>
         </div>
       </header>
 

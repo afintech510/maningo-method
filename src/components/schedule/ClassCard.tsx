@@ -77,7 +77,7 @@ export function ClassCard({
         ) : (
           <span>
             <span className="font-medium text-foreground">Maningo Method</span>
-            <br />295 Montauk Hwy, Suite 7, Speonk, NY
+            <br />533 Montauk Hwy, East Moriches, NY
           </span>
         )}
       </div>

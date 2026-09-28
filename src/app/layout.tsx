@@ -21,17 +21,17 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Maningo Method | Pilates Studio in Speonk, NY",
+  title: "Maningo Method | Pilates Studio in East Moriches, NY",
   description:
-    "Mat & Sculpt Pilates classes in Speonk, NY — serving Westhampton, East Quogue, and the surrounding Hamptons area. Small classes, max 20 students, all levels welcome. Book online.",
+    "Mat & Sculpt Pilates classes in East Moriches, NY — serving the Moriches, Eastport, Westhampton, and the surrounding Hamptons area. Small classes, max 20 students, all levels welcome. Book online.",
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_BASE_URL || "https://www.maningomethod.com"
   ),
   alternates: { canonical: "/" },
   openGraph: {
-    title: "Maningo Method | Pilates Studio in Speonk, NY",
+    title: "Maningo Method | Pilates Studio in East Moriches, NY",
     description:
-      "Mat & Sculpt Pilates classes in Speonk, NY — serving Westhampton, East Quogue, and the surrounding Hamptons area. Book your spot online.",
+      "Mat & Sculpt Pilates classes in East Moriches, NY — serving the Moriches, Eastport, Westhampton, and the surrounding Hamptons area. Book your spot online.",
     url: "https://www.maningomethod.com",
     siteName: "Maningo Method",
     type: "website",
@@ -46,9 +46,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Maningo Method | Pilates Studio in Speonk, NY",
+    title: "Maningo Method | Pilates Studio in East Moriches, NY",
     description:
-      "Mat & Sculpt Pilates classes in Speonk, NY — serving Westhampton, East Quogue, and the surrounding Hamptons area. Book your spot online.",
+      "Mat & Sculpt Pilates classes in East Moriches, NY — serving the Moriches, Eastport, Westhampton, and the surrounding Hamptons area. Book your spot online.",
     images: ["/og-logo.png"],
   },
   verification: process.env.NEXT_PUBLIC_GSC_VERIFICATION

@@ -4,8 +4,8 @@ export const metadata = { title: 'Privacy Policy | Maningo Method' };
 
 export default function PrivacyPage() {
   return (
-    <LegalLayout title="Privacy Policy" lastUpdated="May 5, 2026">
-      <p>This Privacy Policy describes how Maningo Method (&ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;) collects, uses, and shares information about you when you visit www.maningomethod.com (the &ldquo;Site&rdquo;), book classes, purchase class packs, or otherwise interact with our services (collectively, the &ldquo;Services&rdquo;). Maningo Method is operated by Chelsea Maningo, with classes held at Host Hampton, 295 Montauk Highway, Suite 7, Speonk, NY 11972.</p>
+    <LegalLayout title="Privacy Policy" lastUpdated="October 1, 2026">
+      <p>This Privacy Policy describes how Maningo Method (&ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;) collects, uses, and shares information about you when you visit www.maningomethod.com (the &ldquo;Site&rdquo;), book classes, purchase class packs, or otherwise interact with our services (collectively, the &ldquo;Services&rdquo;). Maningo Method is operated by Chelsea Maningo, with classes held at 533 Montauk Highway, East Moriches, NY 11940.</p>
 
       <p>By using the Services, you agree to the collection and use of information in accordance with this policy. If you do not agree, please do not use the Services.</p>
 
@@ -82,7 +82,7 @@ export default function PrivacyPage() {
 
       <h2>11. Contact</h2>
       <p>Questions about this Privacy Policy? Email <a href="mailto:chelsea@maningomethod.com">chelsea@maningomethod.com</a> or write to us at:</p>
-      <p>Maningo Method<br />c/o Host Hampton<br />295 Montauk Highway, Suite 7<br />Speonk, NY 11972</p>
+      <p>Maningo Method<br />533 Montauk Highway<br />East Moriches, NY 11940</p>
     </LegalLayout>
   );
 }

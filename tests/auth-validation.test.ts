@@ -11,6 +11,7 @@ describe('registerSchema', () => {
     full_name: 'Alex Tester',
     email: 'alex@example.com',
     phone: '6315551234',
+    date_of_birth: '1990-06-15',
     password: 'longenough',
     confirmPassword: 'longenough',
     tos_accepted: true,

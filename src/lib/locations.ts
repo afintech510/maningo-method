@@ -1,14 +1,15 @@
 // Per-town content for the neighbor-town landing pages (/pilates-in-<slug>).
 //
-// These pages exist to capture local search intent from the towns immediately
-// around the Speonk studio. To avoid thin "doorway" pages, every entry MUST
+// These pages exist to capture local search intent from the towns around the
+// East Moriches studio. To avoid thin "doorway" pages, every entry MUST
 // carry genuinely town-specific substance — a unique intro, real driving
 // directions from that town, a local landmark, and at least one FAQ that only
 // makes sense for that town. Do NOT reuse copy across towns. The homepage
-// already owns Speonk itself, so Speonk gets no page here.
+// already owns East Moriches itself, so it gets no page here.
 //
-// Studio: 295 Montauk Highway, Suite 7, Speonk NY 11972 (inside Host Hampton),
+// Studio: 533 Montauk Highway, East Moriches NY 11940 (from October 1, 2026),
 // directly on Montauk Highway (NY-27A), the road that threads every hamlet below.
+// Drive times/distances are approximate, measured along Montauk Highway.
 
 export type LocationFaq = { q: string; a: string };
 
@@ -37,23 +38,23 @@ export const LOCATIONS: Record<string, Location> = {
   westhampton: {
     slug: 'westhampton',
     town: 'Westhampton',
-    driveMinutes: 10,
-    distanceMi: 5,
+    driveMinutes: 15,
+    distanceMi: 8,
     landmark: 'Westhampton Beach Main Street and the Performing Arts Center',
     intro:
-      'Maningo Method is the closest dedicated Mat & Sculpt Pilates studio to Westhampton and Westhampton Beach — a straight shot west on Montauk Highway, no traffic-clogged turns. You get small, all-levels group classes (max 20) without the Main Street parking hunt or a 40-minute drive toward Riverhead. It is the easy, in-and-out option for a Westhampton morning workout.',
+      'Maningo Method is a dedicated Mat & Sculpt Pilates studio a straight shot west of Westhampton and Westhampton Beach on Montauk Highway — no traffic-clogged turns. You get small, all-levels group classes (max 20) without the Main Street parking hunt or a 40-minute drive toward Riverhead. It is an easy, in-and-out option for a Westhampton morning workout.',
     directions:
-      'From Westhampton Beach, head west on Montauk Highway (NY-27A / Main Street) through Quiogue and Westhampton. Stay on Montauk Highway as it crosses into Speonk — the studio is on your right at 295 Montauk Highway, Suite 7, inside the Host Hampton building. It is about a 10-minute drive.',
+      'From Westhampton Beach, head west on Montauk Highway (NY-27A / Main Street) through Quiogue and Westhampton, then on through Eastport. Stay on Montauk Highway into East Moriches — the studio is at 533 Montauk Highway. It is about a 15-minute drive.',
     localAngle:
-      'Plenty of Westhampton and Westhampton Beach regulars already pass the studio on their way to and from the village. Booking a 7am class on the way into town beats fighting for a Main Street spot, and there is always open parking right at the door.',
+      'Heading west out of Westhampton in the morning means driving against the eastbound summer traffic, so a 7am class is an easy start to the day — and you are back before Main Street gets busy.',
     faq: [
       {
         q: 'How far is Maningo Method from Westhampton Beach?',
-        a: 'About 5 miles and a 10-minute drive west on Montauk Highway — closer than driving toward Riverhead or out east toward Southampton for a class.',
+        a: 'About 8 miles and a 15-minute drive west on Montauk Highway — closer than driving toward Riverhead or out east toward Southampton for a class.',
       },
       {
-        q: 'Is there parking, unlike Westhampton Beach Main Street?',
-        a: 'Yes. The studio sits inside Host Hampton just off Montauk Highway with its own free lot — no metered village parking, no circling the block.',
+        q: 'Is the drive from Westhampton easy in summer?',
+        a: 'Yes. You are heading west, against the worst of the eastbound beach traffic, and the whole trip stays on Montauk Highway.',
       },
     ],
   },
@@ -61,23 +62,23 @@ export const LOCATIONS: Record<string, Location> = {
   'east-quogue': {
     slug: 'east-quogue',
     town: 'East Quogue',
-    driveMinutes: 15,
-    distanceMi: 8,
+    driveMinutes: 20,
+    distanceMi: 12,
     landmark: 'the East Quogue village center near Montauk Highway',
     intro:
-      'For East Quogue, Maningo Method is the nearby Mat & Sculpt Pilates option to the west — a single, mostly straight run down Montauk Highway with no need to head all the way into Southampton. Classes stay small (max 20, all levels), so you get real attention instead of a packed corporate-studio room. It is a quiet, focused way to start the day before the summer crowds fill the highway.',
+      'For East Quogue, Maningo Method is a Mat & Sculpt Pilates option to the west — a single, mostly straight run down Montauk Highway. Classes stay small (max 20, all levels), so you get real attention instead of a packed corporate-studio room. It is a quiet, focused way to start the day before the summer crowds fill the highway.',
     directions:
-      'From East Quogue, take Montauk Highway (NY-27A) west through Quogue and Westhampton, continuing into Speonk. The studio is at 295 Montauk Highway, Suite 7, inside Host Hampton, on the north side of the road. Plan on roughly a 15-minute drive.',
+      'From East Quogue, take Montauk Highway (NY-27A) west through Quogue, Westhampton and Eastport, continuing into East Moriches. The studio is at 533 Montauk Highway. Plan on roughly a 20-minute drive.',
     localAngle:
-      'East Quogue sits between Maningo Method and the bigger Southampton studios, but the drive west is shorter and far calmer — especially in season, when heading east means sitting in beach traffic. An early class here gets you back home before the day even starts.',
+      'In season, heading east toward Southampton means sitting in beach traffic; the drive west is calmer and more predictable. An early class here gets you back home before the day even starts.',
     faq: [
       {
         q: 'Which way do I drive from East Quogue?',
-        a: 'West on Montauk Highway through Quogue and Westhampton into Speonk — about 8 miles and 15 minutes, going against the worst of the summer eastbound traffic.',
+        a: 'West on Montauk Highway through Quogue, Westhampton and Eastport into East Moriches — about 12 miles and 20 minutes, going against the worst of the summer eastbound traffic.',
       },
       {
-        q: 'Is this closer than driving into Southampton for Pilates?',
-        a: 'For most of East Quogue, yes — and the westbound drive is usually lighter, particularly on summer weekends.',
+        q: 'Is it worth the drive from East Quogue?',
+        a: 'If you want a small, all-levels class with real form coaching, yes — and the westbound drive is usually lighter than heading east, particularly on summer weekends.',
       },
     ],
   },
@@ -85,23 +86,23 @@ export const LOCATIONS: Record<string, Location> = {
   remsenburg: {
     slug: 'remsenburg',
     town: 'Remsenburg',
-    driveMinutes: 5,
-    distanceMi: 2,
+    driveMinutes: 8,
+    distanceMi: 4,
     landmark: 'Remsenburg Academy and the South Country Road neighborhoods',
     intro:
-      'Remsenburg and Speonk share a school district and a border, which makes Maningo Method effectively your neighborhood Pilates studio — under five minutes from most of Remsenburg. Small Mat & Sculpt group classes (max 20, all levels) mean you can roll out of the quiet residential streets and onto the mat without committing to a long drive or a big-box membership. It is about as local as a workout gets out here.',
+      'From Remsenburg, Maningo Method is a short hop west on Montauk Highway — under ten minutes from most of the hamlet. Small Mat & Sculpt group classes (max 20, all levels) mean you can roll out of the quiet residential streets and onto the mat without committing to a long drive or a big-box membership. It is about as local as a workout gets out here.',
     directions:
-      'From Remsenburg, head north to Montauk Highway (NY-27A) and turn west toward Speonk. The studio is a short hop down at 295 Montauk Highway, Suite 7, inside the Host Hampton building on the right. It is under a 5-minute drive from most of Remsenburg.',
+      'From Remsenburg, head north to Montauk Highway (NY-27A) and turn west, through Eastport and into East Moriches. The studio is at 533 Montauk Highway. It is about an 8-minute drive from most of Remsenburg.',
     localAngle:
       'Because Remsenburg is so close, it is easy to make Pilates a real routine here rather than an occasional trip — a Tuesday, Thursday, and Saturday habit that fits between school drop-off and the rest of your morning.',
     faq: [
       {
         q: 'How close is the studio to Remsenburg?',
-        a: 'Very — about 2 miles and under 5 minutes. Remsenburg borders Speonk, so it is essentially your nearest Pilates studio.',
+        a: 'Close — about 4 miles and roughly 8 minutes west on Montauk Highway.',
       },
       {
         q: 'Is it an easy trip with a school-morning schedule?',
-        a: 'Yes. Classes run early (from 7am Tuesday through Saturday), so a session fits neatly around Remsenburg-Speonk drop-off and the rest of your day.',
+        a: 'Yes. Classes run early (from 7am Tuesday through Saturday), so a session fits neatly around school drop-off and the rest of your day.',
       },
     ],
   },

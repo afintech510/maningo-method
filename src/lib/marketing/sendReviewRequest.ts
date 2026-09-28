@@ -10,7 +10,7 @@ import { logger } from '@/lib/logger';
 const GOOGLE_PLACE_ID = process.env.GOOGLE_PLACE_ID || '';
 const REVIEW_URL_BASE = GOOGLE_PLACE_ID
   ? `https://search.google.com/local/writereview?placeid=${GOOGLE_PLACE_ID}`
-  : 'https://www.google.com/search?q=Maningo+Method+Speonk+NY+reviews';
+  : 'https://www.google.com/search?q=Maningo+Method+East+Moriches+NY+reviews';
 
 const BOOKING_URL = 'https://www.maningomethod.com/schedule?utm_source=email&utm_medium=review_request&utm_campaign=post_class';
 const REVIEW_URL = `${REVIEW_URL_BASE}${GOOGLE_PLACE_ID ? '&' : '&'}utm_source=email&utm_medium=review_request&utm_campaign=post_class`;

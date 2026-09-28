@@ -29,7 +29,7 @@ export function ClassReminder({ studentName, classTitle, classDate, classTime, h
           {classDate} &middot; {classTime}
         </Text>
         <Text style={{ margin: '4px 0 0', color: EMAIL_BRAND.muted, fontSize: '13px' }}>
-          295 Montauk Hwy, Suite 7, Speonk, NY
+          533 Montauk Hwy, East Moriches, NY
         </Text>
       </EmailCard>
 
