@@ -6,6 +6,7 @@ import { fromZonedTime } from 'date-fns-tz';
 import { Card } from '@/components/ui/Card';
 import { STUDIO_TIMEZONE } from '@/lib/timezone';
 import {
+  MOVE_DATE,
   STUDIO_ADDRESS,
   STUDIO_MAPS_URL,
   STUDIO_TOWN,
@@ -16,7 +17,6 @@ import {
 // day, "we've moved" through October, then hides itself. Studio wall-clock
 // converted to UTC instants, year hardcoded so it can't reappear — same
 // reasoning as MemorialClassBanner.tsx.
-const MOVE_DATE = fromZonedTime('2026-10-01T00:00:00', STUDIO_TIMEZONE);
 const HIDE_AFTER = fromZonedTime('2026-11-01T00:00:00', STUDIO_TIMEZONE);
 
 type Phase = 'moving' | 'moved' | 'hidden';

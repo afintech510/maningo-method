@@ -7,6 +7,7 @@ import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/feedback/Toast';
 import { formatStudioDate, formatStudioDateTime } from '@/lib/timezone';
 import { CapacityBadge } from '@/components/ui/CapacityBadge';
+import { STUDIO_ADDRESS_SHORT, classAddressShort } from '@/lib/studio-location';
 
 interface BookingButtonProps {
   classId: string;
@@ -354,7 +355,7 @@ export function BookingButton({
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
               <circle cx="12" cy="10" r="3" />
             </svg>
-            <span>{isFree ? (location || 'Location details in the class description') : 'Maningo Method · 533 Montauk Hwy, East Moriches'}</span>
+            <span>{isFree ? (location || 'Location details in the class description') : `Maningo Method · ${classStartsAt ? classAddressShort(classStartsAt) : STUDIO_ADDRESS_SHORT}`}</span>
           </div>
         </div>
 

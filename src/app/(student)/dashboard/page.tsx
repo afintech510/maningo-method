@@ -14,6 +14,7 @@ import { LogoutButton } from '@/components/layout/LogoutButton';
 import { format } from 'date-fns';
 import { formatStudioDate, formatStudioTime } from '@/lib/timezone';
 import { getPurchaseAvailability } from '@/lib/purchases';
+import { classAddressShort } from '@/lib/studio-location';
 
 export default async function DashboardPage() {
   const auth = await getAuth();
@@ -300,7 +301,7 @@ function NextClassCard({
           <p className="text-sm text-white/80 mt-0.5">
             {time} &middot; {next.class_duration_minutes} min
           </p>
-          <p className="text-xs text-white/60 mt-1">533 Montauk Hwy, East Moriches</p>
+          <p className="text-xs text-white/60 mt-1">{classAddressShort(next.class_starts_at)}</p>
         </div>
       </div>
     </section>

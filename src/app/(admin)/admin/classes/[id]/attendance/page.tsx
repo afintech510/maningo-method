@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { requireAuth, isAuthError } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { formatStudioDate, formatStudioTime } from '@/lib/timezone';
+import { classAddressShort } from '@/lib/studio-location';
 import { AutoPrint } from './auto-print';
 
 export default async function AttendanceSheetPage({ params }: { params: { id: string } }) {
@@ -54,7 +55,7 @@ export default async function AttendanceSheetPage({ params }: { params: { id: st
         </div>
         <div className="text-right">
           <p className="text-xs text-gray-600">Maningo Method</p>
-          <p className="text-xs text-gray-600">533 Montauk Hwy, East Moriches</p>
+          <p className="text-xs text-gray-600">{classAddressShort(classData.starts_at)}</p>
         </div>
       </header>
 

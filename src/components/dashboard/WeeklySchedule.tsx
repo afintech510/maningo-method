@@ -11,6 +11,7 @@ import { STUDIO_TIMEZONE, formatStudioTime, formatStudioDateTime } from '@/lib/t
 import { addDays, format } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import { CapacityBadge } from '@/components/ui/CapacityBadge';
+import { classAddressShort } from '@/lib/studio-location';
 
 interface ClassItem {
   id: string;
@@ -258,7 +259,7 @@ export function WeeklySchedule({ bookedClassIds, hasCredits, credits, waitlistBy
                 <span>
                   {confirmClass.is_free
                     ? (confirmClass.description || 'Location details in the class description')
-                    : 'Maningo Method · 533 Montauk Hwy, East Moriches'}
+                    : `Maningo Method · ${classAddressShort(confirmClass.starts_at)}`}
                 </span>
               </div>
             </div>

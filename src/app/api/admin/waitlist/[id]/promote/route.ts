@@ -6,6 +6,7 @@ import { applyCreditDelta } from '@/lib/credits';
 import { logger, generateCorrelationId } from '@/lib/logger';
 import { sendWaitlistPromoted } from '@/lib/resend';
 import { formatStudioDate, formatStudioTime } from '@/lib/timezone';
+import { classAddress } from '@/lib/studio-location';
 
 export async function POST(
   _request: NextRequest,
@@ -100,6 +101,7 @@ export async function POST(
           classTitle: cls.title,
           classDate: formatStudioDate(cls.starts_at, 'EEEE, MMM d'),
           classTime: formatStudioTime(cls.starts_at),
+          studioAddress: classAddress(cls.starts_at),
         });
       } catch (err) {
         log.error({ err, bookingId: booking_id }, 'Waitlist promotion email failed');

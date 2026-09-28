@@ -7,6 +7,8 @@ interface WaitlistJoinedProps {
   classDate: string;
   classTime: string;
   position: number;
+  /** Where this class is held — callers pass classAddress(starts_at). */
+  studioAddress?: string;
 }
 
 export function WaitlistJoined({
@@ -15,6 +17,7 @@ export function WaitlistJoined({
   classDate,
   classTime,
   position,
+  studioAddress = '533 Montauk Hwy, East Moriches, NY',
 }: WaitlistJoinedProps) {
   return (
     <EmailLayout
@@ -32,7 +35,7 @@ export function WaitlistJoined({
           {classDate} &middot; {classTime}
         </Text>
         <Text style={{ margin: '4px 0 0', color: EMAIL_BRAND.muted, fontSize: '13px' }}>
-          533 Montauk Hwy, East Moriches, NY
+          {studioAddress}
         </Text>
       </EmailCard>
 

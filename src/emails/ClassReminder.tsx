@@ -9,9 +9,20 @@ interface Props {
   hoursUntil: number;
   googleCalUrl?: string;
   icsUrl?: string;
+  /** Where this class is held — callers pass classAddress(starts_at). */
+  studioAddress?: string;
 }
 
-export function ClassReminder({ studentName, classTitle, classDate, classTime, hoursUntil, googleCalUrl, icsUrl }: Props) {
+export function ClassReminder({
+  studentName,
+  classTitle,
+  classDate,
+  classTime,
+  hoursUntil,
+  googleCalUrl,
+  icsUrl,
+  studioAddress = '533 Montauk Hwy, East Moriches, NY',
+}: Props) {
   const soon = hoursUntil <= 3;
   return (
     <EmailLayout
@@ -29,7 +40,7 @@ export function ClassReminder({ studentName, classTitle, classDate, classTime, h
           {classDate} &middot; {classTime}
         </Text>
         <Text style={{ margin: '4px 0 0', color: EMAIL_BRAND.muted, fontSize: '13px' }}>
-          533 Montauk Hwy, East Moriches, NY
+          {studioAddress}
         </Text>
       </EmailCard>
 

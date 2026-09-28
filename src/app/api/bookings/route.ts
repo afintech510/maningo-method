@@ -9,6 +9,7 @@ import { googleCalendarUrl, icsUrl } from '@/lib/calendar';
 import { formatStudioDate, formatStudioTime } from '@/lib/timezone';
 import { getBaseUrl } from '@/lib/utils';
 import { getStudioSettings } from '@/lib/studio-settings';
+import { classAddress } from '@/lib/studio-location';
 
 export async function POST(request: Request) {
   const correlationId = generateCorrelationId();
@@ -193,6 +194,7 @@ export async function POST(request: Request) {
           creditsRemaining: newBalance,
           googleCalUrl: googleCalendarUrl(calEvent),
           icsUrl: `${baseUrl}${icsUrl(String(bookingId))}`,
+          studioAddress: classAddress(cls.starts_at),
         });
       } catch (err) {
         log.error({ err, bookingId }, 'Booking confirmation email failed');

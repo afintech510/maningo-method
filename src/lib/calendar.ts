@@ -1,6 +1,6 @@
 // Calendar export helpers — Google Calendar URL + ICS file generation.
 
-import { STUDIO_ADDRESS, STUDIO_VENUE } from '@/lib/studio-location';
+import { classCalendarLocation } from '@/lib/studio-location';
 
 interface CalendarEvent {
   id: string;            // unique id (booking id)
@@ -11,7 +11,6 @@ interface CalendarEvent {
   description?: string;
 }
 
-const STUDIO_LOCATION = `Maningo Method · ${STUDIO_VENUE}, ${STUDIO_ADDRESS}`;
 const STUDIO_DESCRIPTION = 'Maningo Method Pilates class. See dashboard at https://www.maningomethod.com/dashboard';
 
 function toGoogleDateUtc(d: Date): string {
@@ -41,7 +40,7 @@ export function googleCalendarUrl(event: CalendarEvent): string {
     text: event.title,
     dates: `${toGoogleDateUtc(start)}/${toGoogleDateUtc(end)}`,
     details: event.description || STUDIO_DESCRIPTION,
-    location: event.location || STUDIO_LOCATION,
+    location: event.location || classCalendarLocation(start),
   });
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
@@ -63,7 +62,7 @@ export function buildIcs(event: CalendarEvent): string {
     `DTEND:${toGoogleDateUtc(end)}`,
     `SUMMARY:${escapeIcs(event.title)}`,
     `DESCRIPTION:${escapeIcs(event.description || STUDIO_DESCRIPTION)}`,
-    `LOCATION:${escapeIcs(event.location || STUDIO_LOCATION)}`,
+    `LOCATION:${escapeIcs(event.location || classCalendarLocation(start))}`,
     'STATUS:CONFIRMED',
     'BEGIN:VALARM',
     'ACTION:DISPLAY',

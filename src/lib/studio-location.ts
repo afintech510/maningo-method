@@ -1,9 +1,15 @@
+import { fromZonedTime } from 'date-fns-tz';
+import { STUDIO_TIMEZONE } from '@/lib/timezone';
+
 // Where classes are held. Every page, email, calendar invite and schema block
 // reads the address from here, so the next move is a one-file change.
 //
 // From October 1, 2026 classes are at U Gotta Dance in East Moriches. The venue
 // name is deliberately kept out of branding and page headlines — it appears
 // only where someone needs it to find the door (FAQ, calendar invite).
+
+/** First day of classes in East Moriches, as a UTC instant (studio midnight). */
+export const MOVE_DATE = fromZonedTime('2026-10-01T00:00:00', STUDIO_TIMEZONE);
 
 export const STUDIO_VENUE = 'U Gotta Dance';
 export const STUDIO_STREET = '533 Montauk Highway';
@@ -25,3 +31,35 @@ export const STUDIO_GEO = { latitude: 40.8033, longitude: -72.7648 };
 const MAPS_QUERY = encodeURIComponent(STUDIO_ADDRESS);
 export const STUDIO_MAPS_URL = `https://maps.google.com/?q=${MAPS_QUERY}`;
 export const STUDIO_MAPS_EMBED_URL = `https://www.google.com/maps?q=${MAPS_QUERY}&output=embed`;
+
+// ─── Per-class address across the move ────────────────────────────────────
+// Marketing pages show the new studio straight away (the move banner explains
+// the date), but anything tied to one specific class — booking and reminder
+// emails, calendar invites, class cards — must send people to the room that
+// class is actually in. Classes before MOVE_DATE are still at the previous
+// studio. Safe to delete this block, and PREVIOUS_*, once October 2026 has
+// passed.
+
+const PREVIOUS_ADDRESS = '295 Montauk Highway, Suite 7, Speonk, NY 11972';
+const PREVIOUS_ADDRESS_SHORT = '295 Montauk Hwy, Speonk';
+
+function isAtNewStudio(startsAt: string | Date): boolean {
+  return new Date(startsAt).getTime() >= MOVE_DATE.getTime();
+}
+
+/** Full address for the class starting at `startsAt`. */
+export function classAddress(startsAt: string | Date): string {
+  return isAtNewStudio(startsAt) ? STUDIO_ADDRESS : PREVIOUS_ADDRESS;
+}
+
+/** Short address for the class starting at `startsAt`. */
+export function classAddressShort(startsAt: string | Date): string {
+  return isAtNewStudio(startsAt) ? STUDIO_ADDRESS_SHORT : PREVIOUS_ADDRESS_SHORT;
+}
+
+/** Calendar-invite location for the class starting at `startsAt`. */
+export function classCalendarLocation(startsAt: string | Date): string {
+  return isAtNewStudio(startsAt)
+    ? `Maningo Method · ${STUDIO_VENUE}, ${STUDIO_ADDRESS}`
+    : `Maningo Method · ${PREVIOUS_ADDRESS}`;
+}

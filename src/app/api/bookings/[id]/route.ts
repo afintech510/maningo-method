@@ -8,6 +8,7 @@ import { sendBookingCancellation, sendWaitlistPromoted, sendAdminBookingCancella
 
 const ADMIN_EMAIL = 'chelsea@maningomethod.com';
 import { formatStudioDate, formatStudioTime } from '@/lib/timezone';
+import { classAddress } from '@/lib/studio-location';
 
 export async function PATCH(
   request: NextRequest,
@@ -208,6 +209,7 @@ export async function PATCH(
               classTitle: cls.title,
               classDate: formatStudioDate(cls.starts_at, 'EEEE, MMM d'),
               classTime: formatStudioTime(cls.starts_at),
+              studioAddress: classAddress(cls.starts_at),
             });
             await sendAdminWaitlistPromotion(ADMIN_EMAIL, {
               promotedMemberName: profile.full_name || 'Unknown member',

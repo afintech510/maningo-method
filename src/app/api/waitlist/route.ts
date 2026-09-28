@@ -5,6 +5,7 @@ import { requireAuth, isAuthError } from '@/lib/auth';
 import { logger, generateCorrelationId } from '@/lib/logger';
 import { sendWaitlistJoined } from '@/lib/resend';
 import { formatStudioDate, formatStudioTime } from '@/lib/timezone';
+import { classAddress } from '@/lib/studio-location';
 
 export async function POST(request: Request) {
   const correlationId = generateCorrelationId();
@@ -82,6 +83,7 @@ export async function POST(request: Request) {
           classDate: formatStudioDate(cls.starts_at, 'EEEE, MMM d'),
           classTime: formatStudioTime(cls.starts_at),
           position,
+          studioAddress: classAddress(cls.starts_at),
         });
       } catch (err) {
         log.error({ err, waitlistId }, 'Waitlist joined email failed');

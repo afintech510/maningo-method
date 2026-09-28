@@ -13,6 +13,8 @@ interface BookingConfirmationProps {
   googleCalUrl?: string;
   /** Public ICS download URL (Apple / Outlook). */
   icsUrl?: string;
+  /** Where this class is held — callers pass classAddress(starts_at). */
+  studioAddress?: string;
 }
 
 export function BookingConfirmation({
@@ -24,6 +26,7 @@ export function BookingConfirmation({
   creditsRemaining,
   googleCalUrl,
   icsUrl,
+  studioAddress = '533 Montauk Hwy, East Moriches, NY',
 }: BookingConfirmationProps) {
   return (
     <EmailLayout
@@ -41,7 +44,7 @@ export function BookingConfirmation({
           {classDate} &middot; {classTime} &middot; {duration} min
         </Text>
         <Text style={{ margin: '4px 0 0', color: EMAIL_BRAND.muted, fontSize: '13px' }}>
-          533 Montauk Hwy, East Moriches, NY
+          {studioAddress}
         </Text>
       </EmailCard>
 

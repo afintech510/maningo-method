@@ -5,6 +5,7 @@ import { sendClassReminderBatch } from '@/lib/resend';
 import { googleCalendarUrl, icsUrl } from '@/lib/calendar';
 import { formatStudioDate, formatStudioTime } from '@/lib/timezone';
 import { getBaseUrl } from '@/lib/utils';
+import { classAddress } from '@/lib/studio-location';
 
 // Sends a 24h class reminder to every confirmed booker who hasn't been
 // notified yet. Run this every 15-60 minutes via VPS cron:
@@ -80,6 +81,7 @@ export async function GET(request: NextRequest) {
         hoursUntil,
         googleCalUrl: googleCalendarUrl(calEvent),
         icsUrl: `${baseUrl}${icsUrl(r.id)}`,
+        studioAddress: classAddress(cls.starts_at),
       };
     });
 

@@ -2,6 +2,7 @@ import { Card } from '@/components/ui/Card';
 import { CapacityBadge } from '@/components/ui/CapacityBadge';
 import { BookingButton } from '@/components/booking/BookingButton';
 import { formatStudioTime, formatStudioDate } from '@/lib/timezone';
+import { classAddressShort } from '@/lib/studio-location';
 
 interface ClassCardProps {
   classData: {
@@ -77,7 +78,7 @@ export function ClassCard({
         ) : (
           <span>
             <span className="font-medium text-foreground">Maningo Method</span>
-            <br />533 Montauk Hwy, East Moriches, NY
+            <br />{classAddressShort(classData.starts_at)}, NY
           </span>
         )}
       </div>

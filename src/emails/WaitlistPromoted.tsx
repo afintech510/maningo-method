@@ -6,6 +6,8 @@ interface WaitlistPromotedProps {
   classTitle: string;
   classDate: string;
   classTime: string;
+  /** Where this class is held — callers pass classAddress(starts_at). */
+  studioAddress?: string;
 }
 
 export function WaitlistPromoted({
@@ -13,6 +15,7 @@ export function WaitlistPromoted({
   classTitle,
   classDate,
   classTime,
+  studioAddress = '533 Montauk Hwy, East Moriches, NY',
 }: WaitlistPromotedProps) {
   return (
     <EmailLayout
@@ -32,7 +35,7 @@ export function WaitlistPromoted({
           {classDate} &middot; {classTime}
         </Text>
         <Text style={{ margin: '4px 0 0', color: EMAIL_BRAND.muted, fontSize: '13px' }}>
-          533 Montauk Hwy, East Moriches, NY
+          {studioAddress}
         </Text>
       </EmailCard>
 

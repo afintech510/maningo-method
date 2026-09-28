@@ -43,6 +43,7 @@ export async function sendBookingConfirmation(
     creditsRemaining?: number;
     googleCalUrl?: string;
     icsUrl?: string;
+    studioAddress?: string;
   }
 ) {
   try {
@@ -363,6 +364,7 @@ export async function sendClassReminderBatch(
     hoursUntil: number;
     googleCalUrl?: string;
     icsUrl?: string;
+    studioAddress?: string;
   }>
 ) {
   if (recipients.length === 0) return;
@@ -385,6 +387,7 @@ export async function sendClassReminderBatch(
           hoursUntil: r.hoursUntil,
           googleCalUrl: r.googleCalUrl,
           icsUrl: r.icsUrl,
+          studioAddress: r.studioAddress,
         }),
       }))
     );
@@ -482,6 +485,7 @@ export async function sendWaitlistJoined(
     classDate: string;
     classTime: string;
     position: number;
+    studioAddress?: string;
   }
 ) {
   try {
@@ -505,6 +509,7 @@ export async function sendWaitlistPromoted(
     classTitle: string;
     classDate: string;
     classTime: string;
+    studioAddress?: string;
   }
 ) {
   try {
