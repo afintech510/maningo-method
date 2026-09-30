@@ -11,6 +11,7 @@ const PACK_LABEL: Record<string, string> = {
   single: 'Drop-In Class',
   '5pack': '5-Class Pack',
   '10pack': '10-Class Pack',
+  '7pack': '7-Class Pack',
 };
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {

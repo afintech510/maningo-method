@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/Card';
 import { formatCents } from '@/lib/pricing';
 
 interface Props {
-  packType: 'single' | '5pack' | '10pack';
+  packType: 'single' | '5pack' | '10pack' | '7pack';
   amountCents: number;
   discountCode?: string;
 }

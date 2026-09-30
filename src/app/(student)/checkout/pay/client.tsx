@@ -13,6 +13,7 @@ const PACK_INFO: Record<string, CheckoutSummary> = {
   single: { label: 'Drop-In Class', price_display: '$25.00', amount_cents: 2500, credits: 1, description: 'One mat Pilates / sculpt class' },
   '5pack': { label: '5-Class Pack', price_display: '$112.00', amount_cents: 11200, credits: 5, description: 'Five classes, 10% off' },
   '10pack': { label: '10-Class Pack', price_display: '$200.00', amount_cents: 20000, credits: 10, description: 'Ten classes, 20% off' },
+  '7pack': { label: '7-Class Pack', price_display: '$119.00', amount_cents: 11900, credits: 7, description: 'October flash sale — $17/class, save $56' },
 };
 
 export function CheckoutPayClient() {
@@ -59,7 +60,7 @@ export function CheckoutPayClient() {
       <div className="max-w-5xl mx-auto mb-4">
         <RedeemGiftInline />
       </div>
-      <PackCheckoutWithToggle pack={pack as 'single' | '5pack' | '10pack'} summary={base} />
+      <PackCheckoutWithToggle pack={pack as 'single' | '5pack' | '10pack' | '7pack'} summary={base} />
     </>
   );
 }
@@ -68,7 +69,7 @@ function PackCheckoutWithToggle({
   pack,
   summary,
 }: {
-  pack: 'single' | '5pack' | '10pack';
+  pack: 'single' | '5pack' | '10pack' | '7pack';
   summary: CheckoutSummary;
 }) {
   const [method, setMethod] = useState<'card' | 'manual'>('card');

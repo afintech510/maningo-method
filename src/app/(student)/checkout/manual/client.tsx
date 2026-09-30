@@ -13,11 +13,17 @@ import {
   type AppliedDiscount,
 } from '@/components/checkout/DiscountField';
 import { formatCents } from '@/lib/pricing';
+import { OCTOBER_7PACK } from '@/lib/promos';
 
 const PACK_INFO: Record<string, { label: string; amountCents: number; credits: number }> = {
   single: { label: 'Drop-In Class', amountCents: 2500, credits: 1 },
   '5pack': { label: '5-Class Pack', amountCents: 11200, credits: 5 },
   '10pack': { label: '10-Class Pack', amountCents: 20000, credits: 10 },
+  [OCTOBER_7PACK.packType]: {
+    label: OCTOBER_7PACK.label,
+    amountCents: OCTOBER_7PACK.amountCents,
+    credits: OCTOBER_7PACK.credits,
+  },
 };
 
 function ManualCheckoutContent() {

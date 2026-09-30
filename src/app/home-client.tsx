@@ -8,6 +8,7 @@ import { UpcomingClassesPanel } from '@/components/schedule/UpcomingClassesPanel
 import { StudioMoveBanner } from '@/components/marketing/StudioMoveBanner';
 import { STRIPE_ENABLED } from '@/lib/feature-flags';
 import { PurchasesClosedNotice } from '@/components/marketing/PurchasesClosedNotice';
+import { OctoberPackPromo, OctoberPackHeroRibbon } from '@/components/marketing/OctoberPackPromo';
 import {
   STUDIO_ADDRESS,
   STUDIO_ENTRANCE_NOTE,
@@ -23,9 +24,11 @@ import {
 export function HomeClient({
   sellablePacks,
   giftsEnabled,
+  purchasesEnabled,
 }: {
   sellablePacks: string[];
   giftsEnabled: boolean;
+  purchasesEnabled: boolean;
 }) {
   const anyPackSellable = sellablePacks.length > 0;
   const allPacksSellable = ['single', '5pack', '10pack'].every((p) => sellablePacks.includes(p));
@@ -78,6 +81,7 @@ export function HomeClient({
           <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a]/70 via-[#1a1a1a]/30 to-transparent" />
           {/* October flash-sale ribbon — the hero copy is pinned bottom-0, so
               the top of the image is free. Auto-hides after Oct 4. */}
+          <OctoberPackHeroRibbon purchasesEnabled={purchasesEnabled} />
           <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-12 lg:p-16 max-w-6xl mx-auto">
             <span className="inline-block bg-[#1a1a1a]/70 backdrop-blur-sm text-[#c9a96e] text-xs sm:text-sm font-medium tracking-[0.2em] uppercase mb-3 px-3 py-1.5 rounded-full">
               Pilates on the Edge of the Hamptons
@@ -217,6 +221,11 @@ export function HomeClient({
           <p className="text-center text-[#6b6b6b] mb-12 max-w-md mx-auto">
             Buy a pack and book at your pace. The more you commit, the more you save.
           </p>
+
+          {/* October flash sale — its own block above the grid, which already
+              holds four cards. Shows only Oct 1–4, and not when the master
+              purchases switch is off. */}
+          <OctoberPackPromo purchasesEnabled={purchasesEnabled} />
 
           {/* Every price stays on the page regardless; a pack that isn't on
               sale simply stops being a buy button. The gift tile drops out of

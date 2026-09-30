@@ -12,6 +12,7 @@ import {
 } from '@/lib/resend';
 import { rewardReferrerOnce } from '@/lib/referrals';
 import { getBaseUrl } from '@/lib/utils';
+import { OCTOBER_7PACK } from '@/lib/promos';
 
 const ADMIN_EMAIL = 'chelsea@maningomethod.com';
 
@@ -19,6 +20,7 @@ const PACK_LABEL: Record<string, string> = {
   single: 'Drop-In Class',
   '5pack': '5-Class Pack',
   '10pack': '10-Class Pack',
+  [OCTOBER_7PACK.packType]: OCTOBER_7PACK.label,
   custom: 'Custom Gift Pack',
 };
 

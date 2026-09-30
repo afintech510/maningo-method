@@ -6,11 +6,17 @@ import { logger, generateCorrelationId } from '@/lib/logger';
 import { withServiceFee } from '@/lib/pricing';
 import { validateDiscountCode, applyDiscount } from '@/lib/marketing/discountCode';
 import { packClosedGuard, giftClosedGuard } from '@/lib/purchases';
+import { OCTOBER_7PACK, hasClaimedOctober7Pack } from '@/lib/promos';
 
 const PACKS: Record<string, { credits: number; amount_cents: number; label: string }> = {
   single: { credits: 1, amount_cents: 2500, label: 'Drop-In Class' },
   '5pack': { credits: 5, amount_cents: 11200, label: '5-Class Pack' },
   '10pack': { credits: 10, amount_cents: 20000, label: '10-Class Pack' },
+  [OCTOBER_7PACK.packType]: {
+    credits: OCTOBER_7PACK.credits,
+    amount_cents: OCTOBER_7PACK.amountCents,
+    label: OCTOBER_7PACK.label,
+  },
 };
 
 export async function POST(request: NextRequest) {
@@ -52,7 +58,11 @@ export async function POST(request: NextRequest) {
       const closed = await giftClosedGuard();
       if (closed) return closed;
 
-      const pack = packType ? PACKS[packType] : null;
+      // The October 7-pack is deliberately not giftable — gift_packs.pack_type
+      // has a CHECK constraint that excludes it, and a gift code has no expiry,
+      // so a code bought Oct 4 could be redeemed months later at a price that
+      // was only meant to exist for four days.
+      const pack = packType && packType !== OCTOBER_7PACK.packType ? PACKS[packType] : null;
       if (!pack) {
         return NextResponse.json({ error: { code: 'VALIDATION_ERROR', message: 'Invalid gift pack.' } }, { status: 400 });
       }
@@ -78,6 +88,18 @@ export async function POST(request: NextRequest) {
       metadata.gift_amount_cents = String(amountCents);
     } else {
       return NextResponse.json({ error: { code: 'VALIDATION_ERROR', message: 'Invalid kind.' } }, { status: 400 });
+    }
+
+    // One 7-pack per member. The sale window itself is enforced by
+    // packClosedGuard above.
+    if (metadata.pack_type === OCTOBER_7PACK.packType) {
+      const supabase = createAdminClient();
+      if (await hasClaimedOctober7Pack(supabase, auth.user.id)) {
+        return NextResponse.json(
+          { error: { code: 'PROMO_ALREADY_PURCHASED', message: 'You can only buy one 7-class pack.' } },
+          { status: 400 }
+        );
+      }
     }
 
     // Intro pack guard (still applies if pack=intro is reintroduced)

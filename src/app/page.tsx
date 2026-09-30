@@ -6,6 +6,12 @@ import { getPurchaseAvailability } from '@/lib/purchases';
 // admin show up here within getStudioSettings' 30s cache TTL — no redeploy,
 // and no NEXT_PUBLIC_* rebuild.
 export default async function Home() {
-  const { sellablePacks, giftsEnabled } = await getPurchaseAvailability();
-  return <HomeClient sellablePacks={sellablePacks} giftsEnabled={giftsEnabled} />;
+  const { enabled, sellablePacks, giftsEnabled } = await getPurchaseAvailability();
+  return (
+    <HomeClient
+      purchasesEnabled={enabled}
+      sellablePacks={sellablePacks}
+      giftsEnabled={giftsEnabled}
+    />
+  );
 }

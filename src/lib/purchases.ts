@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getStudioSettings } from '@/lib/studio-settings';
+import { OCTOBER_7PACK, isPromoPurchasable } from '@/lib/promos';
 
 /**
  * Member-facing copy shown wherever a buy action used to be, and returned as
@@ -58,7 +59,14 @@ export async function arePurchasesEnabled(): Promise<boolean> {
 
 export async function isPackSellable(packType: string | undefined | null): Promise<boolean> {
   if (!packType) return false;
-  return (await getPurchaseAvailability()).sellablePacks.includes(packType);
+  const availability = await getPurchaseAvailability();
+  // The October 7-pack has no admin tickbox — it's on sale for its fixed
+  // window, subject only to the master switch. One-per-member is checked by
+  // the purchase routes, which know who's buying.
+  if (packType === OCTOBER_7PACK.packType) {
+    return availability.enabled && isPromoPurchasable();
+  }
+  return availability.sellablePacks.includes(packType);
 }
 
 export async function areGiftsSellable(): Promise<boolean> {

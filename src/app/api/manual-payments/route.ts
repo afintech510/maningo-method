@@ -6,6 +6,7 @@ import { sendManualPaymentSubmitted } from '@/lib/resend';
 import { applyCreditDelta } from '@/lib/credits';
 import { validateDiscountCode, applyDiscount } from '@/lib/marketing/discountCode';
 import { packClosedGuard } from '@/lib/purchases';
+import { OCTOBER_7PACK, hasClaimedOctober7Pack } from '@/lib/promos';
 
 const ADMIN_EMAIL = 'chelsea@maningomethod.com';
 
@@ -13,6 +14,11 @@ const PACK_PRICING: Record<string, { credits: number; amount_cents: number; labe
   single: { credits: 1, amount_cents: 2500, label: 'Drop-In Class' },
   '5pack': { credits: 5, amount_cents: 11200, label: '5-Class Pack' },
   '10pack': { credits: 10, amount_cents: 20000, label: '10-Class Pack' },
+  [OCTOBER_7PACK.packType]: {
+    credits: OCTOBER_7PACK.credits,
+    amount_cents: OCTOBER_7PACK.amountCents,
+    label: OCTOBER_7PACK.label,
+  },
 };
 
 const VALID_METHODS = new Set(['cash']);
@@ -40,6 +46,15 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = createAdminClient();
+
+    // One 7-pack per member, across card AND cash — cash credits land at
+    // submission, so this has to be checked here as well as on the card route.
+    if (pack_type === OCTOBER_7PACK.packType && (await hasClaimedOctober7Pack(supabase, auth.user.id))) {
+      return NextResponse.json(
+        { error: { code: 'PROMO_ALREADY_PURCHASED', message: 'You can only buy one 7-class pack.' } },
+        { status: 400 }
+      );
+    }
 
     // Optional discount code — reduces the dollar amount owed to Chelsea; the
     // credit grant is unchanged. Validated server-side so the client can't

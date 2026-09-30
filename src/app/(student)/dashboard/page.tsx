@@ -7,6 +7,7 @@ import { BuyPacks } from '@/components/dashboard/BuyPacks';
 import { GiftCardCard } from '@/components/dashboard/GiftCardCard';
 import { ReferralCard } from '@/components/dashboard/ReferralCard';
 import { WeeklySchedule } from '@/components/dashboard/WeeklySchedule';
+import { OctoberPackPromo } from '@/components/marketing/OctoberPackPromo';
 import { StudioMoveBanner } from '@/components/marketing/StudioMoveBanner';
 import { ToastProvider } from '@/components/feedback/Toast';
 import { Card } from '@/components/ui/Card';
@@ -22,7 +23,7 @@ export default async function DashboardPage() {
   if (auth.user.role === 'admin' || auth.user.role === 'superadmin') redirect('/admin');
 
   const supabase = createAdminClient();
-  const { sellablePacks, giftsEnabled } = await getPurchaseAvailability();
+  const { enabled: purchasesEnabled, sellablePacks, giftsEnabled } = await getPurchaseAvailability();
 
   // Fetch profile with credits, referral code, signup timestamp, and waiver status
   const { data: profile } = await supabase
@@ -183,8 +184,10 @@ export default async function DashboardPage() {
           <UpcomingBookings bookings={upcoming} />
         </div>
 
-        {/* Add Credits */}
-        <div className="mt-8">
+        {/* Add Credits — October flash sale sits on top and shows only
+            Oct 1–4 */}
+        <div className="mt-8 space-y-4">
+          <OctoberPackPromo variant="compact" purchasesEnabled={purchasesEnabled} />
           <BuyPacks sellablePacks={sellablePacks} />
         </div>
 

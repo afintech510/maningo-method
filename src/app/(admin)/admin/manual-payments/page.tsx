@@ -42,6 +42,7 @@ const PACK_LABEL: Record<string, string> = {
   single: 'Drop-In',
   '5pack': '5-Pack',
   '10pack': '10-Pack',
+  '7pack': '7-Pack (Oct sale)',
   custom: 'Custom Gift',
 };
 
