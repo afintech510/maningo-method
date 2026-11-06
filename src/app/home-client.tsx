@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { BackButton } from '@/components/layout/BackButton';
 import { UpcomingClassesPanel } from '@/components/schedule/UpcomingClassesPanel';
 import { StudioMoveBanner } from '@/components/marketing/StudioMoveBanner';
+import { OutcastCollabBanner } from '@/components/marketing/OutcastCollabBanner';
 import { STRIPE_ENABLED } from '@/lib/feature-flags';
 import { PurchasesClosedNotice } from '@/components/marketing/PurchasesClosedNotice';
 import { OctoberPackPromo, OctoberPackHeroRibbon } from '@/components/marketing/OctoberPackPromo';
@@ -122,9 +123,11 @@ export function HomeClient({
       </section>
 
       {/* Studio move announcement — "moving" until Oct 1, "moved" through
-          October, then hides itself. Replaces the expired 9/11 banner slot. */}
-      <section className="px-5 pt-10 sm:pt-12 max-w-6xl mx-auto">
+          October, then hides itself. Replaces the expired 9/11 banner slot.
+          Outcast collab promo (Nov 29) shares the slot and hides after it. */}
+      <section className="px-5 pt-10 sm:pt-12 max-w-6xl mx-auto space-y-4">
         <StudioMoveBanner />
+        <OutcastCollabBanner />
       </section>
 
       {/* Class Types */}
