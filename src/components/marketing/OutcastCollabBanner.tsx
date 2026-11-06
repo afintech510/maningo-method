@@ -4,20 +4,14 @@ import { useEffect, useState } from 'react';
 import { fromZonedTime } from 'date-fns-tz';
 import { Card } from '@/components/ui/Card';
 import { STUDIO_TIMEZONE } from '@/lib/timezone';
+import { OUTCAST_COLLAB } from '@/lib/partner-events';
 
-// Collab class with Outcast Fitness at their gym, not ours. It is deliberately
-// not a class in our booking system: Outcast takes the bookings and the $30,
-// and class credits can't be used, so this banner only points people to them.
-// Hides at the end of Nov 29, 2026 studio time — same reasoning as
-// MemorialClassBanner.tsx.
+// Collab class with Outcast Fitness at their gym, not ours. Details live in
+// partner-events.ts, shared with its card on the schedule. Hides at the end of
+// Nov 29, 2026 studio time — same reasoning as MemorialClassBanner.tsx.
 const HIDE_AFTER = fromZonedTime('2026-11-30T00:00:00', STUDIO_TIMEZONE);
 
-// Outcast's Mindbody booking page for the class.
-const BOOKING_URL =
-  'https://go.mindbodyonline.com/book/app/classes/5756561?date=2026-11-29&mbo_src=links-shortcuts';
-
-const ADDRESS = '333 Main St, Center Moriches, NY 11934';
-const MAPS_URL = `https://maps.google.com/?q=${encodeURIComponent(`Outcast Fitness, ${ADDRESS}`)}`;
+const { address: ADDRESS, bookingUrl: BOOKING_URL, mapsUrl: MAPS_URL } = OUTCAST_COLLAB;
 
 export function OutcastCollabBanner({
   className = '',
@@ -55,11 +49,10 @@ export function OutcastCollabBanner({
       </p>
       <p className="text-sm text-[#6b6b6b] mt-2 leading-relaxed">
         Sunday, November 29 · 9:30 AM at Outcast Fitness, {ADDRESS}.{' '}
-        <strong className="text-[#2d2d2d]">$30 · 21 spots · bring your own mat.</strong> Booked
+        <strong className="text-[#2d2d2d]">{OUTCAST_COLLAB.details}.</strong> Booked
         through Outcast &mdash; Maningo class credits can&rsquo;t be used.
       </p>
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mt-4">
-        <a
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mt-4">        <a
           href={BOOKING_URL}
           target="_blank"
           rel="noopener noreferrer"

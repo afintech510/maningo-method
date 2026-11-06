@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { DayPicker } from './DayPicker';
 import { ClassCard } from './ClassCard';
+import { PartnerEventCard } from './PartnerEventCard';
+import { PARTNER_EVENTS } from '@/lib/partner-events';
 import { Skeleton } from '@/components/feedback/Skeleton';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { format } from 'date-fns';
@@ -120,6 +122,14 @@ export function ClassSchedule({
     return set;
   }, [allClasses]);
 
+  // The picker also dots days that only have a partner class. Kept out of
+  // datesWithClasses so the auto-advance below still lands on our own classes.
+  const datesWithAnything = useMemo(() => {
+    const set = new Set(datesWithClasses);
+    PARTNER_EVENTS.forEach((e) => set.add(e.day));
+    return set;
+  }, [datesWithClasses]);
+
   // After classes load, if the user landed on /schedule with no date param and
   // today happens to have no classes, jump to the next day that does. The
   // request: "View Schedule / Book" should always open on the day with the next
@@ -192,6 +202,11 @@ export function ClassSchedule({
     });
   }, [allClasses, selectedDate]);
 
+  const dayPartnerEvents = useMemo(() => {
+    const dayKey = format(selectedDate, 'yyyy-MM-dd');
+    return PARTNER_EVENTS.filter((e) => e.day === dayKey);
+  }, [selectedDate]);
+
   // Filter view: classes matching chip filters, sorted by chosen direction.
   const filteredClasses = useMemo(() => {
     const matched = allClasses.filter((c) => {
@@ -227,6 +242,17 @@ export function ClassSchedule({
       waitlistEntry={waitlistByClassId[cls.id]}
     />
   );
+
+  // Our classes and partner classes for the day, in start-time order.
+  const dayCards = [
+    ...dayClasses.map((c) => ({ at: new Date(c.starts_at).getTime(), node: renderClassCard(c) })),
+    ...dayPartnerEvents.map((e) => ({
+      at: e.startsAt.getTime(),
+      node: <PartnerEventCard key={e.id} event={e} />,
+    })),
+  ]
+    .sort((a, b) => a.at - b.at)
+    .map((c) => c.node);
 
   return (
     <div>
@@ -265,7 +291,7 @@ export function ClassSchedule({
           <DayPicker
             selectedDate={selectedDate}
             onSelectDate={handleSelectDate}
-            datesWithClasses={datesWithClasses}
+            datesWithClasses={datesWithAnything}
           />
           <p className="text-[11px] text-muted-foreground mt-2">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 align-middle mr-1.5" />
@@ -277,13 +303,13 @@ export function ClassSchedule({
                 <Skeleton variant="card" />
                 <Skeleton variant="card" />
               </>
-            ) : dayClasses.length === 0 ? (
+            ) : dayCards.length === 0 ? (
               <EmptyState
                 title={`No classes on ${format(selectedDate, 'EEEE')}`}
                 description="Check another day!"
               />
             ) : (
-              dayClasses.map(renderClassCard)
+              dayCards
             )}
           </div>
         </>
